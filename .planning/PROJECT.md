@@ -127,6 +127,8 @@ Without video, the app degrades to "local notes + Claude chat" and loses the lec
 
 **Open questions**: cookie expiration behavior; cross-course video reuse; whether Tauri webview honors all Echo360 client-side checks
 
+**⚠ Implementation gate**: This requirement MAY NOT begin implementation until `/gsd-spike echo360-webview-auth` passes. Reason: macOS WKWebView's ITP blocks third-party cookies by default (`tauri-apps/wry#848`); USYD SSO via Echo360 LTI 1.3 IS a third-party cookie scenario; if the cookie cannot be persisted, the entire embedded-webview approach is invalidated and we need an alternative (external browser + deep links, or persistent per-domain webview instance).
+
 ---
 
 #### REQ-05 · Caption capture + Claude-translated bilingual VTT
@@ -184,7 +186,7 @@ Markdown is the universal format AI can read. PARA + course-root gives both huma
 - Memento bitemporal KG (LongMemEval 92.4%)
 - Mem0 / Cognee / Zep (open-source agent memory; see RQ-01)
 - agentmemory (rohitg00) — three-tier memory pipeline
-- Heptabase (whiteboard spatial thinking)
+- Heptabase (whiteboard spatial thinking — concept inspiration; library implementation is **Excalidraw v0.18.1 MIT**, not tldraw)
 - Obsidian Canvas / Graph view (human-side reference)
 - User's original insight: "给人看 vs 给 AI 看分开织一张网"
 
@@ -266,6 +268,174 @@ Inverts the conventional RAG-first wisdom; aligns with Anthropic's own validated
 
 ---
 
+#### REQ-11 · Command palette (Cmd+P / Cmd+O)
+
+**Status**: hypothesis (v1) — added after FEATURES research (CRITICAL: first-week abandonment risk).
+
+**Sources of inspiration**:
+- VS Code (Cmd+P file picker)
+- Notion (Cmd+P universal command palette)
+- Cursor (Cmd+K inline + Cmd+P navigation)
+- `cmdk` library (community standard for command palettes — KP-02 candidate)
+
+**What it does**:
+- Cmd+P: jump to file (vault file fuzzy-search)
+- Cmd+O: jump to course / concept page
+- Cmd+Shift+P: command palette (any user-actionable verb in the app)
+- Keyboard-first; should reach 80% of all navigation without mouse
+
+**Why it matters**:
+Power-user muscle memory; without this the app feels mouse-bound and slow vs Cursor / Notion / VS Code. Personal-use power users especially abandon mouse-only apps.
+
+#### REQ-12 · Multi-session sidebar
+
+**Status**: hypothesis (v1) — added after FEATURES research (CRITICAL).
+
+**Sources of inspiration**:
+- Claude Desktop App (April 2026 redesign rebuilt around exactly this)
+- Cursor (multiple AI chats in tabs)
+- VS Code (multi-terminal pattern)
+
+**What it does**:
+- Left sidebar (or collapsible panel): list of active chat sessions
+- Each session = one claude subprocess (independent state, independent system prompt, independent vault scope)
+- Drag to reorder, click to switch, shortcut to spawn new
+- Session names auto-generated from first user message (renamable)
+- Sessions survive app restart (resume via `--resume <session-id>` claude flag)
+
+**Why it matters**:
+Realistic learning workflow has parallel threads ("explain matrix decomp" + "debug my COMP3221 assignment" + "summarize this lecture") — single-session forces context pollution.
+
+**Open questions**: how many concurrent sessions to allow before resource exhaustion (each is a node + Rust subprocess); sub-second context-switch budget?
+
+#### REQ-13 · Sync status surface (Canvas / Ed)
+
+**Status**: hypothesis (v1) — added after FEATURES research (HIGH).
+
+**Sources of inspiration**:
+- Obsidian Sync status indicator
+- iCloud / Dropbox sync status pattern
+- Canvas API webhook semantics
+
+**What it does**:
+- Status bar widget: "synced 2m ago · 0 errors · next in 13m"
+- Click → modal with per-course sync history, errors, retry controls
+- New items toast (announcement / new file / new assignment)
+- Failure surfaces explicitly (not silent) — auth expiry, rate limit, network error all show distinct icons
+
+**Why it matters**:
+Silent sync failures = stale content = wrong AI answers. The user must always know whether the AI is operating on current Canvas state.
+
+#### REQ-14 · Settings / preferences UI
+
+**Status**: hypothesis (v1) — added after FEATURES research (HIGH).
+
+**Sources of inspiration**:
+- Claude Code's `~/.claude/settings.json` model
+- macOS System Preferences pattern
+- KP-04 compliance requirements (must control: which dirs claude can access, which tools enabled, model profile, etc.)
+
+**What it does**:
+Categories: General · Vault · Sync · Claude · Privacy · Appearance · Keybindings · Advanced
+
+Specific levers (non-exhaustive):
+- Vault path (move + re-index)
+- Sync frequency (Canvas + Ed)
+- Default `claude` permission mode (`bypassPermissions` toggle with explicit warning)
+- Add-dir scope for claude (default: vault root only)
+- Model profile (passthrough to claude — not session-overridden by app)
+- Cost cap per session (REQ-13-related — kill switch when exceeded)
+- Theme (dark / light / system)
+- Keybindings (overrides for command palette + send + new session)
+
+**Why it matters**:
+Personal use means no other admin — every setting must be self-discoverable + self-explanatory. Hidden flags = forgotten features.
+
+#### REQ-15 · Review focus mode (FSRS dedicated screen)
+
+**Status**: hypothesis (v1) — extends REQ-09 with focused UX.
+
+**Sources of inspiration**:
+- Anki desktop's review-mode (whole UI collapses to one card)
+- Roam Research / Obsidian "no distraction" mode
+
+**What it does**:
+- When entering FSRS review queue, three-pane shell collapses
+- Full-screen single-concept view
+- Keyboard 1/2/3/4 evaluates (Anki bindings)
+- AI generates a fresh test question on the spot (varied each review — no cached prompts)
+- Answer flows back into FSRS scheduler
+
+**Why it matters**:
+Active recall + zero distraction is the recipe Anki proved. Three-pane during review would defeat the purpose.
+
+#### REQ-16 · First-run onboarding wizard
+
+**Status**: hypothesis (v1) — added after FEATURES research (MEDIUM).
+
+**Sources of inspiration**:
+- Claude Code onboarding (`claude` first run guides through API key + first command)
+- Cursor's onboarding (3-step setup)
+
+**What it does**:
+- Step 1: Welcome + brief tour (3 screens)
+- Step 2: Confirm Claude Code install + auth (auto-detect existing OAuth subscription)
+- Step 3: Pick vault path (default: `~/StudyVault/`)
+- Step 4: MCP detection — Canvas/Ed MCP auto-found; offer to enable; if missing, link to setup docs
+- Step 5: Course selection — list enrolled courses, choose which to ingest first
+- Step 6: First sync — progress bar with cancel
+- Done → land in main UI with example chat suggestion
+
+**Why it matters**:
+Even self-use, "future-me 6 months from now after wiping the laptop" is the user. Onboarding makes setup deterministic.
+
+#### REQ-17 · Per-course system prompts via `.learnos/rules/`
+
+**Status**: hypothesis (v1) — added after FEATURES research (DIFFERENTIATOR — small effort, big leverage).
+
+**Sources of inspiration**:
+- Cursor `.cursor/rules` MDC pattern (the user-pointed-out design)
+- Claude Code's `~/.claude/CLAUDE.md` pattern (project-level instructions)
+- No precedent in learning apps yet
+
+**What it does**:
+- Per-course directory: `courses/<COURSE>/.learnos/rules/<rule>.md`
+- Each rule has YAML frontmatter (`enabled: true`, `priority: 10`, `applies_to: assignment|notes|review`) + markdown body (the prompt fragment)
+- When user opens a chat in COURSE context, all enabled rules are concatenated into Claude's `--append-system-prompt`
+- Examples:
+  - `MATH1062/.learnos/rules/proof-style.md`: "Prefer formal proofs with explicit lemmas; show counterexamples when stating necessity vs sufficiency."
+  - `COMP3221/.learnos/rules/style.md`: "Stick to Java idioms; avoid stream API in performance-critical paths."
+
+**Why it matters**:
+Differentiator — no learning app does this. Costs almost nothing to implement; gives Claude course-specific persona without asking the student to repeat instructions every session. Composes with REQ-08 (anchored mode) — anchored answers can still respect course rules.
+
+**Open questions**: default rule priority semantics; how to debug "which rules fired"; precedence vs the user's own `~/.claude/CLAUDE.md`.
+
+#### REQ-18 · Document → markdown ingestion (Marker for PDF + markitdown for Office)
+
+**Status**: hypothesis (v1.x) — replaces RQ-02 with locked dual pipeline.
+
+**Sources of inspiration**:
+- Marker (datalab-to/marker) v1.10.2 — math-formula leader for PDF (validated via 2026 ecosystem reviews)
+- markitdown (Microsoft) — multi-format breadth winner (Word / Excel / PPT / HTML / image OCR)
+- KP-02 (use community-validated tools, not in-house parser)
+
+**What it does**:
+- On Canvas/Ed sync, classify each new file by extension:
+  - `.pdf` → Marker subprocess (`marker_single <file> --use_llm` for math; `--use_llm` routes through local Claude for high-quality inline math)
+  - `.docx`, `.xlsx`, `.pptx`, `.html` → markitdown subprocess
+  - `.md`, `.txt` → passthrough
+  - other → flag in sync status (no-op)
+- Output stored at `courses/<COURSE>/_source/<original-name>.md` alongside original file
+- Conversion errors logged to sync status (REQ-13) — never silently dropped
+
+**Why it matters**:
+Lecture slides are PDF (math-heavy → Marker); tutorials are often Word/PPT (markitdown). Both flows must just work without user thought. KP-02 honored: no in-house parser.
+
+**Open questions**: cost when Marker `--use_llm` routes through claude (per-page LLM calls); markitdown's PPT extraction quality with embedded images.
+
+---
+
 ### Out of Scope (deliberate exclusions)
 
 #### OOS-01 · Multi-user / collaboration / distribution / commercialization
@@ -287,6 +457,22 @@ Inverts the conventional RAG-first wisdom; aligns with Anthropic's own validated
 #### OOS-05 · Manual flashcard authoring (Anki-style)
 
 **Why excluded**: see REQ-09 — manual card-building is Anki's death spiral; FSRS scheduling on concept pages with AI-generated test questions removes the friction.
+
+#### OOS-06 · Manual mind-map drawing
+
+**Why excluded**: We *auto-generate* the mind-map from the knowledge graph. User-drawn mind-maps would create a parallel source of truth competing with the KG (anti-pattern flagged in ARCHITECTURE research).
+
+#### OOS-07 · Plugin / extensibility API
+
+**Why excluded**: Claude Code's own `skills` mechanism is already the per-project extensibility layer. Personal use does not need an additional plugin marketplace; risk of fragmenting the codebase outweighs benefit.
+
+#### OOS-08 · Multi-LLM-provider support (OpenAI / Gemini / local Ollama LLM)
+
+**Why excluded**: KP-04 (compliant subprocess wrapping) is specifically about Claude Code. Adding Gemini / OpenAI providers requires a parallel runtime + parallel auth + parallel cost model. Scope creep with no offsetting value for a personal tool.
+
+#### OOS-09 · Voice / audio dictation input
+
+**Why excluded**: Lecture captions (REQ-05) already cover the audio-content side. User input is keyboard-driven; voice-to-text adds a major UX surface (mic permission, error recovery, ambient noise) for marginal benefit in a desk-only learning tool.
 
 ---
 
@@ -374,11 +560,11 @@ Reduces review count 20-30% vs SM-2. `open-spaced-repetition/ts-fsrs` is the can
 
 Vector DB only added later for narrow real-time-relevance hot paths.
 
-#### KD-08 · Mind-map (default) + whiteboard (toggle), both human-side; knowledge-graph (always-on, AI-side)
+#### KD-08 · Mind-map (Cytoscape.js, default) + whiteboard (Excalidraw, toggle); knowledge-graph (always-on, AI-side)
 
-**Source**: Synthesis of Obsidian Canvas/Graph (mind-map natural for course structure) + Heptabase (whiteboard spatial freedom).
+**Source**: Synthesis of Obsidian Canvas/Graph (mind-map natural for course structure) + Heptabase (whiteboard spatial freedom). **Library picks corrected after STACK research (commit c87eadc)**: tldraw rejected because v4.x is proprietary (commercial license required or mandatory watermark) — violates KP-02. Excalidraw v0.18.1 (MIT) is the equivalent OSS replacement.
 
-Mind-map handles the strong-structure default for course material; whiteboard available for free-form weekly integration sessions; both render from the same underlying knowledge-graph.
+Mind-map handles the strong-structure default for course material; whiteboard available for free-form weekly integration sessions; both render from the same underlying knowledge-graph. Excalidraw is React-only — Svelte 5 integration uses the `svelte-react` host pattern (or `createRoot` in `onMount`) — to be validated when whiteboard phase begins.
 
 #### KD-09 · Tiptap as block editor; markdown as storage
 
@@ -386,11 +572,31 @@ Mind-map handles the strong-structure default for course material; whiteboard av
 
 Tiptap UI layer for block selection / `/` slash menu / drag, but persists to plain markdown via `getMarkdown()`. Best of both.
 
-#### KD-10 · Three-tier memory architecture (working / episodic / long-term)
+#### KD-11 · Phase entry gate — Echo360 spike must pass before Phase 3 implementation
 
-**Source**: agentmemory (rohitg00) pipeline.
+**Source**: PITFALLS research (commit c87eadc) + Tauri wry#848 + Echo360 LTI 1.3 architecture analysis.
+
+REQ-04 (video) and REQ-05 (captions) cannot be implemented until `/gsd-spike echo360-webview-auth` validates: (a) USYD SSO completes inside Tauri webview, (b) the resulting authenticated session cookie persists across app restarts, (c) Echo360's video player initializes inside the webview without breaking due to client-side same-origin checks. If the spike fails, requirements design changes (alternative auth path needed) before phase entry.
+
+#### KD-10 · Three-tier memory architecture (working / episodic / long-term) — **library choice deferred**
+
+**Source**: Architectural concept inspired by `agentmemory` (rohitg00) pipeline.
 
 Per-message: SHA-256 dedup → privacy filter → LLM compress → embed → indexed in BM25 + vector + graph. Tiers compress and stabilize as facts move from recent to consolidated.
+
+**⚠ Library is NOT locked**. After RQ-01 deeper research (commit c87eadc surfaced):
+- agentmemory has architecture alignment but **no public benchmarks**, niche fork — risk
+- The 2026 mainstream for this pattern is **Cognee (GraphRAG, multi-doc)** or **Zep + Graphiti (temporal knowledge graph with validity windows)** — both well-benchmarked
+- Mem0 lacks the temporal model needed for "concept evolves as student learns"
+- Letta is poorly matched (long-horizon agent ≠ student concept memory)
+
+**RQ-01 is now BLOCKING for Phase 3 entry**: must produce a 4-project comparison + 1-week dogfood result before any KG implementation. See `.planning/research/questions.md`.
+
+#### KD-12 · `claude-code-parser` (MIT) as vendored reference, not npm dependency
+
+**Source**: STACK research surfaced this 9KB MIT library as a stream-json parser, but the user flagged unmaintained risk (no commits since creation).
+
+We **copy** its source into `vendor/claude-code-parser/` for reference, attribution preserved, and adapt as needed. Not as `npm install`. Insulates us from the abandoned-dependency tax while keeping the open-source pattern for honesty + KP-02 reuse.
 
 ---
 

@@ -8,16 +8,22 @@ status: open
 
 研究原则：**不造轮子。每个问题先扫开源生态，找最佳实践，能照搬就照搬。**
 
-## RQ-01 · Claude Code memory / agent persistence 开源项目调研
+## RQ-01 · Claude Code memory / agent persistence 开源项目调研 — **BLOCKING (Phase 3 entry gate)**
 
 **问题**：社区有哪些 "Claude Code memory" / "AI agent persistent memory" / "second brain for LLM" 类的开源项目？哪些适配我们"AI-native 双层数据架构（knowledge graph 给 AI、脑图白板给人）+ 三层 memory tier（working/episodic/long-term）+ confidence tracking" 的诉求？
 
-**候选起点**（这一晚的对话中已浮现）：
-- Mem0 — persistent agent memory layer
-- Cognee — open-source structured graph-native memory
-- Zep — temporal knowledge-graph memory platform
-- agentmemory (rohitg00) — pipeline: SHA-256 dedup → privacy filter → LLM compress → embed → BM25+vector index → graph
-- SimpleMem — efficient lifelong memory for LLM agents
+**候选起点**（2026 web 调研后更新）：
+- **Cognee** — GraphRAG, multi-doc 结构化 KG ⭐⭐⭐⭐ 多课程跨文档关联匹配
+- **Zep + Graphiti** — temporal KG（fact 有 validity window，新概念 supersede 旧）⭐⭐⭐⭐ 概念演化场景完美
+- Mem0 — 3-tier memory + 混合 store ⭐⭐ **缺 temporal 模型**，弱
+- Letta — long-horizon agent（self-improving）⭐ 偏 chatbot，不匹配学生概念
+- agentmemory (rohitg00) — 架构对齐 KD-10 但 **无 benchmark**、niche fork — 红旗，仅作 fall-back
+- SimpleMem — 64% LoCoMo benchmark 但功能集小
+
+**Phase 3 entry 之前必须产出**：
+- [ ] 4 个候选（Cognee / Zep+Graphiti / Mem0 / agentmemory）的 license / 维护活跃度 / KD-10 三层架构契合度对比表
+- [ ] 至少 2 个候选的 1 周 dogfood 实测（导入一个 lecture，跑 50+ user/assistant turns，看记得几条、引用准不准）
+- [ ] 决策报告 + 推荐 + 兜底（如果首选失败迁移路径）
 
 **评估维度**：
 - license 是否兼容（MIT/Apache 优先）
