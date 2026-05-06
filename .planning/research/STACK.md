@@ -1,7 +1,18 @@
 # Stack Research — learn-os Layered Libraries
 
+> **⚠ POST-RESEARCH USER DECISIONS (2026-05-07) — reading this file standalone? Read PROJECT.md first.**
+>
+> Several recommendations below have been **overridden by user decisions** after this file was written. The content remains as the research record; conflicts with PROJECT.md are resolved IN FAVOR OF PROJECT.md.
+>
+> **Specifically**:
+> - **Memory / KG library — NOT LOCKED.** agentmemory is shown as PRIMARY HIGH below but the user demoted it to "candidate, no public benchmark, fall-back only". Phase 5.5 (RQ-01 BLOCKING gate) must do a 4-project comparison + 1-week dogfood including Cognee + Zep+Graphiti + Mem0 + agentmemory before Phase 7 entry.
+> - **`claude-code-parser` — DO NOT npm install.** Vendor the source into `vendor/claude-code-parser/` (KD-12). Project is effectively unmaintained.
+> - **Whiteboard library is Excalidraw v0.18.1 MIT** (locked KD-08). tldraw v4.x rejected (proprietary).
+> - **PDF/document ingestion is dual pipeline**: Marker for PDF, markitdown for Office (REQ-18).
+
 **Domain:** Personal desktop learning app (Tauri 2 + SvelteKit shell wrapping local Claude Code)
 **Researched:** 2026-05-06
+**Decisions applied:** 2026-05-07
 **Overall Confidence:** HIGH (verified versions on npm/Context7/GitHub as of research date)
 **Scope:** This research covers the **additional OSS libraries to LAYER ON TOP of the locked Tauri 2 + SvelteKit + tauri-plugin-shell foundation**. It does NOT re-research the foundation (already validated by spikes 001 + 002). All recommendations honor KP-02 (50% rule), KP-04 (compliant subprocess wrapping), and KD-01..KD-09.
 
