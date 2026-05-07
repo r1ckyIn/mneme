@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
 status: ready_to_plan
-last_updated: "2026-05-07T07:30:00Z"
+last_updated: "2026-05-07T06:35:00Z"
 progress:
   total_phases: 12
   completed_phases: 1
@@ -160,9 +160,9 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Session Continuity
 
-**Last GSD command**: `/gsd-spec-phase 1` (auto-mode)
-**Last action**: Phase 1 SPEC.md written at `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-SPEC.md` — 9 requirements locked, ambiguity 0.16 (gate ≤ 0.20), 16 pass/fail acceptance criteria, 16 explicit out-of-scope boundaries with phase pointers. All 4 CRITICAL pitfalls (zombies / capability wildcards / cost runaway / streaming XSS) named as locked closure targets. `--add-dir` placeholder = `~/.mneme/scratch/` (Phase 2 swaps for real vault root).
-**Next recommended action**: `/gsd-discuss-phase 1` — implementation decisions (CONTEXT.md will inherit SPEC.md as locked).
+**Last GSD command**: `/gsd-execute-phase 0`
+**Last action**: Phase 0 retired 2026-05-07: codename `learn-os` → Mneme; icon committed at `icon-assets/icon.icns` (8-petal cream sparkle on terra cotta, hand-drawn rough.js aesthetic); bundle id flipped (spike 002: `dev.mneme.spike`); README.md (bilingual EN+ZH) + LICENSE (MIT) created; project skill renamed (`spike-findings-mneme`); PROJECT.md OOS-01 amended; **public repo live at https://github.com/r1ckyIn/mneme** (PUBLIC, MIT, 7 topics: tauri/sveltekit/claude-code/learning-app/personal-knowledge-management/ai-native/macos); local path moved to `/Users/qinyuan/claude/r1ckyIn_GitHub/mneme`.
+**Next recommended action**: `/gsd-discuss-phase 1` or `/gsd-plan-phase 1` — Tauri Shell Foundation + Subprocess Hardening.
 
 **Session boundaries**:
 
