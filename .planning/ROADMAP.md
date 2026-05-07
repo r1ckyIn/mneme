@@ -40,7 +40,12 @@
   3. Bundle identifier transitioned from `dev.learn-os.spike` to `dev.<finalname>.app` in `tauri.conf.json` (or chosen reverse-DNS).
   4. README + window title + macOS Dock display reflect the locked name.
 **OSS adoption note (KP-02)**: Pure naming/branding decision phase — no code adoption needed. Icon generation goes through Claude Design (KP-05), no third-party icon library.
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 00-01-PLAN.md — Naming finalist selection + user pick (Wave 1; checkpoint:decision)
+- [ ] 00-02-PLAN.md — Icon asset production via gpt-image-1 + sips/iconutil pipeline (Wave 2)
+- [ ] 00-03-PLAN.md — Atomic content rename + skill rename + README/LICENSE creation (Wave 2)
+- [ ] 00-04-PLAN.md — Pre-publish gate + atomic commit + GitHub publish + local-path move (Wave 3)
 
 ### Phase 1: Tauri Shell Foundation + Subprocess Hardening
 **Goal**: Three-pane resizable shell with single-session Claude chat works end-to-end, with all CRITICAL pitfalls (zombies, cost runaway, XSS, capability wildcards) closed before user starts dogfooding.
@@ -215,7 +220,7 @@ These items are deferred from REQUIREMENTS.md v2+ section. They get phase mappin
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Identity & Branding Lock | 0/0 | Not started | - |
+| 0. Identity & Branding Lock | 0/4 | Not started | - |
 | 1. Tauri Shell Foundation + Subprocess Hardening | 0/0 | Not started | - |
 | 2. Vault + Canvas/Ed Sync + Onboarding | 0/0 | Not started | - |
 | 3. Multi-Session + Command Palette + Editor | 0/0 | Not started | - |
