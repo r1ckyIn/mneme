@@ -21,7 +21,7 @@ progress:
 ## Project Reference
 
 **Name (codename)**: mneme (final name TBD in Phase 0)
-**Core value**: Wrap the user's Claude Code (with all its tools, MCPs, memory) in a desktop GUI that turns chat sessions into a continuously-growing local knowledge graph + browsable markdown vault, indexed against actual lecture content. The whole loop — *learn → AI teaches → notes captured automatically → reviewed via FSRS* — must feel like one product, not five glued together.
+**Core value**: **5-dimension composite** (re-framed 2026-05-07 per `/gsd-explore` session — see PROJECT.md "Core Value" section for full structure: philosophy / experience / architecture / boundaries / landing context). One-line summary (does NOT replace 5-dim structure): *local-first + AI-native personal learning infrastructure whose end-experience is "this AI truly understands me" — proactively surfacing where I am, where I struggle, and how knowledge connects, rather than only answering what I ask*. ⚠ Quoting this single sentence alone loses ~80% of identity.
 **Stack (locked by spike 002)**: Tauri 2 + SvelteKit (`adapter-static`) + `tauri-plugin-shell` + `marked` + KaTeX + DOMPurify + Svelte 5 runes
 **User**: USYD CS S1 2026 student, MacBook Pro 2019 Intel, macOS Ventura 13.4
 **Granularity**: fine (11 phases mapping 18 v1+v1.x requirements)
@@ -73,8 +73,9 @@ Phase 10 ─ FSRS-6 Reviews + Focus Mode                 [pending]
 | v1.x requirements satisfied | 0 / 8 |
 | Spikes validated | 2 (001 stream-json-recon, 002 tauri-claude-shell) |
 | Spikes pending | 1 (echo360-webview-auth, scheduled in Phase 5) |
-| Research questions resolved | 1 / 4 (RQ-02 resolved via REQ-18; RQ-01/03/04 still open) |
+| Research questions resolved | 1 / 5 (RQ-02 resolved via REQ-18; RQ-01/03/04 still open; RQ-05 ongoing non-blocking) |
 | Research questions blocking phase entry | 1 (RQ-01 → Phase 7) |
+| v1.x candidates lifted from OOS | 1 (REQ-19 voice input — was OOS-09, lifted 2026-05-07) |
 
 ---
 
@@ -102,6 +103,7 @@ See PROJECT.md for full text. Quick reference:
 - **RQ-01** [BLOCKING for Phase 7]: Memory project survey → resolved in Phase 5.5
 - **RQ-03**: GUI wrapper community implementations → absorbed into Phase 1 hardening (TOKENICODE pattern study during plan-phase 1)
 - **RQ-04**: GSD `graphify` skill reuse decision → resolved within Phase 7 design
+- **RQ-05** [ongoing, non-blocking]: Learning-method epistemic humility — informal observation of higher-achieving students' learning methods (sample n=2 → broaden); findings feed new REQ candidates / OOS revisions / new KP candidates throughout v1 ship + 3-month dogfood window
 
 ### Critical Pitfalls Tracked (research/PITFALLS.md)
 
@@ -120,7 +122,7 @@ Phase-by-phase pitfall ownership (must be addressed during the named phase):
 | 9. FSRS Hard misuse + concept calibration drift | HIGH | Phase 10 |
 | 10. Solo-dev abandonment at 30% | HIGH | Roadmap structure (front-loaded shipping; v1 = phases 1-4) |
 
-### Key Principles (KP-01 through KP-06)
+### Key Principles (KP-01 through KP-08)
 
 Honored across the roadmap; no phase contradicts:
 
@@ -130,6 +132,8 @@ Honored across the roadmap; no phase contradicts:
 - KP-04 Compliant subprocess wrapping (no token extraction)
 - KP-05 UI initial design via Claude Design
 - KP-06 Reject reinvented wheels
+- **KP-07 Proactive contextual recall** ("懂我" experience commitment — added 2026-05-07; AI proactively surfaces session context unprompted; acceptance ≥3/session, ≥90% relevance — gates REQ-07 acceptance)
+- **KP-08 OSS dependency tracking + upstream monitoring** (added 2026-05-07; every adopted OSS library registered in `.planning/dependencies.md`; post-v1 automated upstream check at per-row cadence)
 
 ### Project Skills (auto-loaded)
 
@@ -164,7 +168,8 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - The roadmap deliberately puts the spike (Phase 5) and research-resolution (Phase 5.5) as standalone phases between v1 (Phases 0-4) and v1.x (Phases 6-10). This is intentional — each is a real piece of work that needs scope discipline (`/gsd-spike` budget = 2 days, RQ-01 dogfood budget = 1 week).
 - If Phase 5 spike INVALIDATES the WKWebView path, Phase 6 MUST be replanned before entry — likely shifting to "external browser + deep links" or "persistent per-domain webview instance" alternatives. Update KD-04 in PROJECT.md at that point.
 - `_source/` write-policy enforcement (Sync Controller is the only writer) is set up in Phase 2 and reused throughout Phase 4 (document ingestion outputs go to `_source/`). Don't relax this — PITFALLS Pitfall 20.
+- **Foundation-first re-framing (2026-05-07)**: PROJECT.md Core Value is now a 5-dimension composite (not a single sentence); ROADMAP.md adds a Layer Architecture overlay (Foundation / Application / Replacement) on top of existing phase numbers; KP-07 (proactive contextual recall) + KP-08 (OSS dependency tracking) are new non-negotiable principles; OOS-09 (voice input) lifted to REQ-19 v1.x candidate; RQ-05 (learning-method epistemic humility) opened as ongoing non-blocking research line; `.planning/dependencies.md` created as KP-08 registry. The deepest reason behind this re-framing: current 18 REQs derive from n=2 sample (user + partner) — foundation must be agnostic to which feature set wins so REQ collection can evolve as observation of higher-achieving students' learning methods accumulates.
 
 ---
 
-*Last updated: 2026-05-07 — `/gsd-plan-phase 0` complete (4 plans, 1 revision cycle, plan-checker APPROVED).*
+*Last updated: 2026-05-07 — `/gsd-explore` foundation-first re-framing applied (8 atomic edits across PROJECT.md / ROADMAP.md / research/questions.md + new file dependencies.md). Prior: `/gsd-plan-phase 0` complete (4 plans, 1 revision cycle, plan-checker APPROVED).*

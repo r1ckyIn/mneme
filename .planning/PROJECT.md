@@ -18,9 +18,61 @@ A locally-run desktop app for one user (myself) that combines:
 
 Three-pane main UI: **course files (left) · video + course material preview (middle) · Claude conversation (right)**. Top bar: live mind-map of the current course that grows as you converse.
 
-## Core Value (the ONE thing that must work)
+## Core Value (5 dimensions defining product identity; losing any one dimension is identity death)
 
-Wrap the user's Claude Code (with all its tools, MCPs, memory) in a desktop GUI that turns chat sessions into a continuously-growing local knowledge graph + browsable markdown vault, indexed against actual lecture content. The whole loop — *learn → AI teaches → notes captured automatically → reviewed via FSRS* — must feel like one product, not five glued together.
+> **Re-framed 2026-05-07** (per `/gsd-explore` session): Core Value is **not a single sentence** — it is a 5-dimension composite. Each dimension is non-negotiable; losing any one degrades mneme into a different product (Obsidian + plugins, NotebookLM, Cursor for notes, etc.). Treat any feature/decision through all 5 lenses.
+
+### Dimension 1 — Product philosophy (8 non-negotiable beliefs)
+The 8 Key Principles (KP-01 through KP-08, see "Key Principles" section below):
+- **KP-01 Local-first** — all data on local disk, offline-functional, no automatic cloud
+- **KP-02 50% OSS-driven** — half the surface area is community-validated open source
+- **KP-03 AI-native data model** — embeddings + graph + confidence + provenance + timestamps as first-class
+- **KP-04 Compliant subprocess wrapping** — user's own claude CLI + own subscription, no token theft
+- **KP-05 Claude Design starts UI** — first iteration via prompt-to-prototype, not Figma
+- **KP-06 Reject reinvented wheels** — fork-and-extend before write-from-scratch
+- **KP-07 Proactive contextual recall** — the "懂我" experience: AI surfaces context unprompted
+- **KP-08 OSS dependency tracking + upstream monitoring** — every adopted library is owned, not just imported
+
+### Dimension 2 — Experience commitments (5 user-facing promises)
+1. **"懂我" AI** (KP-07) — agent memory + KG + proactive contextual recall: AI proactively surfaces last session progress, cross-week prerequisites, recurring mistakes — without being asked
+2. **Learning loop** — `learn → AI teaches → notes captured automatically → reviewed via FSRS` feels like one product, not five glued together
+3. **Dual mode** — *free Claude as teacher* + *anchored Claude as textbook search* (REQ-08); same UI, one-click switch — no other app combines both
+4. **One product feel** — three-pane UI (REQ-01) with cohesive interaction, not five-app stitching
+5. **Power-user UX** — command palette (REQ-11) + multi-session sidebar (REQ-12) + keyboard-first navigation
+
+### Dimension 3 — Architectural foundation (12 locked Key Decisions)
+The 12 Key Decisions (KD-01 through KD-12, see "Key Decisions" section below) lock irreversible technical commitments:
+- **Stack**: Tauri 2 + SvelteKit + Rust ≥1.88 (KD-01/02/03)
+- **Search**: agentic search replaces vector DB in v1 (KD-07 + REQ-10)
+- **Data**: dual-layer (KG for AI + mind-map/whiteboard for human, KD-08) + three-tier memory (working/episodic/long-term, KD-10) + Tiptap UI on markdown storage (KD-09 + REQ-06)
+- **Protocol scoping**: MCP is for *external services only* (Canvas / Ed / Echo360 — REQ-03/04/05) — vault read/write goes through filesystem + Claude Code's native `--add-dir` agentic search, NOT through MCP
+- **External integrations**: Echo360 via Tauri webview + persistent SSO cookie (KD-04); Anchored mode via Anthropic Citations API (KD-05); FSRS-6 via ts-fsrs (KD-06)
+
+### Dimension 4 — Boundaries (8 deliberate exclusions)
+The 8 Out-of-Scope items (OOS-01 through OOS-08, see "Out of Scope" section; OOS-09 voice input was lifted to REQ-19 v1.x candidate on 2026-05-07). Saying "no" with the same precision as saying "yes" is part of the identity:
+- No multi-user / commercialization (OSS portfolio release allowed)
+- No mobile, no vector DB in v1, no audio overview, no manual flashcards, no manual mind-map drawing, no plugin API (Claude Code skills already serve this), no multi-LLM-provider
+
+### Dimension 5 — First landing context (who / why-now / where)
+- **User**: USYD CS student, S1 2026, four courses (math + programming heavy)
+- **Why now**: terminal can't render LaTeX/code visually; Obsidian occupied by another workstream; NotebookLM lacks local + agent; Claude Code Desktop is dev-focused not learning-focused
+- **Where**: MacBook Pro 2019 Intel, macOS Ventura 13.4 — single-user, personal-use codebase
+
+> **Critical caveat — REQ sample-size epistemic humility (added 2026-05-07)**:
+>
+> The 18 v1 + v1.x requirements derive from a **single learning duo** (the user + partner). They reflect what works for *this* sample — they are NOT a validated map of optimal learning methods. Higher-achieving students plausibly use methods this sample is blind to (different note formats, different review cadences, different visual / spatial scaffolding, different AI-collaboration patterns).
+>
+> **Implication for foundation-first**: this is the deepest reason behind the 5-dimension Core Value structure. Foundation (Dimension 1 KP / Dimension 3 KD) must remain **agnostic to which feature set wins**. Application-layer phases (REQ-09 FSRS / REQ-08 anchored / REQ-15 review-focus / future REQs / etc.) can be replaced, supplemented, or retired as observation of better learning methods accumulates — without disturbing data, vault format, or AI ↔ vault contract.
+>
+> **Ongoing observation line**: see `.planning/research/questions.md` **RQ-05** — informal observation of higher-achieving students' learning methods (no formal interviews required; opportunistic capture). Findings feed new REQ candidates / OOS revisions / new KP candidates. Does NOT block any v1 phase.
+
+---
+
+**One-sentence summary** (does NOT replace the 5-dimension structure above; quoting this alone loses ~80% of identity):
+
+> mneme gives one user (me) a **local-first + AI-native personal learning infrastructure** whose end-experience is *"this AI truly understands me"* — proactively surfacing where I am, where I struggle, and how knowledge connects, rather than only answering what I ask. All features (three-pane UI / Echo360 / whiteboard / FSRS / mind-map / etc.) serve that experience, AND any single feature can be retired / rebuilt / replaced without disturbing the foundation or the data.
+
+---
 
 ## Context (who, why, when)
 
@@ -195,9 +247,10 @@ Markdown is the universal format AI can read. PARA + course-root gives both huma
 - **AI layer**: knowledge graph — concept nodes (id + embedding + confidence + provenance + timestamps) + typed edges (auto-maintained by AI via embedding similarity)
 - **Three-tier memory**: working (recent N raw msgs) → episodic (session summaries) → long-term (consolidated facts; high confidence; cross-session)
 - New session writes are streamed in real-time: each user/assistant message → fact extraction → embed → indexed → graph edges updated → mind-map node may animate in
+- **Proactive contextual recall (KP-07)**: at every chat session start AND at conversational pivot points (new topic, "I'm stuck", error correction), AI auto-surfaces relevant prior-session context (last progress on this topic / cross-week prerequisite knowledge / user's recent recurring mistakes) WITHOUT user having to ask. Acceptance: in a one-week conversation sample, AI proactively surfaces ≥3 relevant prior-session contexts per session with ≥90% relevance accuracy.
 
 **Why it matters**:
-This is the project's signature "AI-native" differentiator. Obsidian + plugins can fake the human layer; nothing on the market combines it with a continuously-maintained AI knowledge graph backed by a frontier LLM.
+This is the project's signature "AI-native" differentiator. Obsidian + plugins can fake the human layer; nothing on the market combines it with a continuously-maintained AI knowledge graph backed by a frontier LLM **plus proactive contextual recall** (the "懂我" experience that defines KP-07).
 
 **Open questions**: see RQ-01 (which memory project to base this on); see RQ-04 (whether GSD graphify can be reused)
 
@@ -436,6 +489,34 @@ Lecture slides are PDF (math-heavy → Marker); tutorials are often Word/PPT (ma
 
 ---
 
+#### REQ-19 · Voice input via OSS speech-to-text
+
+**Status**: hypothesis (v1.x — added 2026-05-07; reverses prior OOS-09 exclusion per user direction)
+
+**Sources of inspiration**:
+- whisper.cpp (OpenAI Whisper port; C++/Rust friendly; local inference)
+- distil-whisper (faster, smaller, MIT-compatible)
+- Vosk (lightweight offline, multi-language)
+- macOS native dictation (system-level alternative; non-OSS, fallback only)
+
+**What it does**:
+- Hotkey trigger for voice input mode (default `Cmd+Shift+V`)
+- Local STT (Whisper / Vosk) transcribes speech → markdown injected into the active chat input
+- Optional Claude pass for punctuation / formatting (e.g. "format as numbered list")
+- Coexists with REQ-11 command palette without hotkey conflict
+
+**Why it matters**:
+Long prompts (problem descriptions, concept disambiguations) are slow to type; voice can be 3-5x faster. Students often think of questions while watching lecture videos — keyboard input breaks that flow.
+
+**Constraints**:
+- Local inference only (KP-01 — no cloud STT API)
+- OSS library required (KP-02)
+- v1.x, NOT v1 — must first validate Intel Mac CPU inference latency is acceptable (whisper.cpp small/medium model spike)
+
+**Open questions**: which OSS library has acceptable inference latency on Intel Mac CPU; how to surface "voice mode active" UI affordance; whether to share microphone permission with browser-based future features.
+
+---
+
 ### Out of Scope (deliberate exclusions)
 
 #### OOS-01 · Multi-user / collaboration / commercialization
@@ -472,9 +553,7 @@ Lecture slides are PDF (math-heavy → Marker); tutorials are often Word/PPT (ma
 
 **Why excluded**: KP-04 (compliant subprocess wrapping) is specifically about Claude Code. Adding Gemini / OpenAI providers requires a parallel runtime + parallel auth + parallel cost model. Scope creep with no offsetting value for a personal tool.
 
-#### OOS-09 · Voice / audio dictation input
-
-**Why excluded**: Lecture captions (REQ-05) already cover the audio-content side. User input is keyboard-driven; voice-to-text adds a major UX surface (mic permission, error recovery, ambient noise) for marginal benefit in a desk-only learning tool.
+> **Note (2026-05-07)**: OOS-09 (voice/audio dictation input) was removed from this list and reborn as **REQ-19** (v1.x candidate, OSS local STT). See REQ-19 for the new framing.
 
 ---
 
@@ -515,6 +594,43 @@ First UI iteration goes through Claude Design's prompt-to-prototype flow, produc
 **Source**: User's original direction (most recent: 2026-05-06).
 
 For each atomic feature, scan open-source ecosystem first. If something exists and works, copy/integrate the pattern (with attribution). If nothing fits exactly, fork the closest open-source project and extend on top — never write from scratch when a community-tested foundation exists. Implementation patterns (subprocess wrapping, knowledge-graph maintenance, etc.) should reference how leading projects do it (Claude Desktop, GSD graphify skill, Mem0/Cognee, etc.).
+
+#### KP-07 · Proactive contextual recall ("懂我" 体验承诺)
+
+**Source**: User insight (2026-05-07 explore session — "ai能根据课件资料进行回答, 比如'我们这周老师上完的那个tut的材料我上次做到了第几题, 它和第几周的知识是关联的'... 这些不仅仅是用户问你才说而是在日常输出里面也能够有相应的表达, 让用户觉得, 这个 AI 懂我").
+
+AI must not only respond to user-initiated queries — it must **proactively surface relevant historical context** in everyday outputs:
+- Last session's tut progress, mistakes, sticking points
+- Cross-week knowledge connections (this week's content → prerequisite weeks)
+- The user's recurring conceptual misunderstandings
+- Recent learning habits and frequent error patterns
+
+**Implementation path**: Three-tier memory (KD-10 working/episodic/long-term) + knowledge-graph association (REQ-07) + session-aware system-prompt injection (REQ-17 + REQ-12).
+
+**Acceptance metric**: In a one-week sample of everyday conversations, the AI proactively surfaces relevant prior-session context **≥3 times per session** with **≥90% relevance accuracy** (judged by user against a held-out test).
+
+**Non-negotiable rationale**: Without proactive recall, mneme degrades into another passive Q&A tool, indistinguishable from Cursor or NotebookLM. The "懂我" experience is the product's experiential differentiator — losing it kills the identity.
+
+#### KP-08 · OSS dependency tracking + upstream monitoring
+
+**Source**: User direction (2026-05-07 explore session — "所有我们用到的其他库我们都要记录下来, 虽然我们进行了二次开发, 但是上线后还是要随时监控这些库的更新, 然后对我们的系统和软件随时进行更新").
+
+Every external open-source library the project uses (whether vendored, forked-and-extended, or directly depended on) must be **registered** and **continuously monitored** for upstream changes after v1 ship.
+
+**Registry**: All such libraries are tracked in `.planning/dependencies.md` with the following fields per entry:
+- Library name + version + license
+- Purpose (which REQ / KD it serves)
+- Integration mode: `npm-dep` / `cargo-dep` / `vendored` / `forked-extended` / `subprocess-cli`
+- Upstream URL + maintainer health signal (last commit, issue activity, release cadence)
+- Our local modifications (if any)
+- Monitoring cadence: `weekly` / `monthly` / `release-only` / `frozen`
+- Last-checked timestamp
+
+**Monitoring**:
+- Pre-v1: registry must be populated before each phase ship; new dependencies added in the same PR that introduces them
+- Post-v1 ship: automated upstream check (GitHub Actions cron / dependabot) at the configured cadence; any **security patch / API breaking change / license change** triggers a manual review issue
+
+**Non-negotiable rationale**: KP-02 (50% OSS) + KP-06 (fork + extend) creates a long-term debt — forks rot if upstream isn't tracked; vendored code accumulates CVEs if frozen. KP-08 closes the loop: every OSS we adopt is owned, not just imported.
 
 ---
 

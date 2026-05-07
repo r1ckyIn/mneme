@@ -11,6 +11,49 @@
 
 ---
 
+## Layer Architecture (foundation-first interpretation, 2026-05-07)
+
+> Per the Core Value re-framing in PROJECT.md (5-dimension structure), the 11 phases below are NOT equal — they sort into 3 layers. Phase numbers and `Depends on` edges remain authoritative; this section adds a **second axis (layer)** so any planner can see at a glance whether a delay is killing foundation or just a feature bet.
+
+### Layer 1 — Foundation (locks the invariants ALL application phases assume)
+
+| Phase | Anchors which KP / KD / REQ |
+|---|---|
+| **Phase 0** Identity & Branding Lock | Naming + bundle ID are irreversible — touches every downstream artifact |
+| **Phase 1** Tauri Shell + Subprocess Hardening | KD-01 / 02 / 03 stack lock + KP-04 compliant subprocess |
+| **Phase 2** Vault + Canvas/Ed Sync + Onboarding | REQ-06 vault structure + KP-01 local-first |
+| **Phase 5.5** KG Memory Project Survey + Dogfood | KD-10 library lock — gates Phase 7 (RQ-01 BLOCKING) |
+| **Phase 7** Knowledge Graph + Three-Tier Memory | REQ-07 + KP-03 AI-native data + **KP-07 proactive contextual recall** ("懂我" experience) |
+
+### Layer 2 — Application (replaceable feature bets atop foundation)
+
+| Phase | What we lose if cut / replanned |
+|---|---|
+| **Phase 3** Multi-Session + Command Palette + Editor | Power-user UX polish; app stays single-session, mouse-driven |
+| **Phase 4** Document Ingestion (Marker + markitdown) | Lecture PDFs stay opaque to AI agentic search |
+| **Phase 5** Echo360 Spike Resolution | Gate; alternative auth-path required if invalidated |
+| **Phase 6** Echo360 Video + Bilingual Captions | App degrades to "local notes + Claude chat" |
+| **Phase 8** Mind-Map View + Per-Course Rules | KG has no human-side visual surface |
+| **Phase 9** Anchored Mode + Citations API | Loses "学习用 Claude / 复习用 NotebookLM" dual-mode |
+| **Phase 10** FSRS-6 Reviews + Focus Mode | Loses learning-loop closure (learn → review) |
+
+### Layer 3 — Replacement (implementations behind stable contracts; can swap without rebuild)
+
+Not separate phases — these are **library / algorithm choices INSIDE phases** that should be replaceable without rebuilding the phase. All tracked in `.planning/dependencies.md` per **KP-08** (OSS dependency tracking).
+
+| What | Decided in | Replaceable because |
+|---|---|---|
+| KG memory library (Mem0 / Cognee / Zep / agentmemory) | Phase 5.5 → Phase 7 | Hidden behind stable read/write contract; vault data + KG schema unchanged |
+| Whiteboard library (Excalidraw locked, deferred to v2+) | v2+ phase | `.excalidraw.json` files survive library deprecation |
+| Voice STT library (whisper.cpp / Vosk — REQ-19 v1.x) | v1.x phase TBD | Audio → text is lossy; only transcribed markdown commits to vault |
+| Embedding model (when v2 vector DB lands) | Future v2 phase | Embeddings re-generatable from vault — no data migration |
+
+### Ordering rule (strict)
+
+**Foundation → Application** for dependency graph (already enforced via `Depends on`). Within each layer, existing `Depends on` edges stay authoritative. **If a Foundation phase slips, Application phases pause** — do NOT parallelize Application work over a Foundation regression.
+
+---
+
 ## Phases
 
 - [ ] **Phase 0: Identity & Branding Lock** - Final app name + icon + bundle identifier locked before any production code

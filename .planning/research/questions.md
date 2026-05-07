@@ -83,6 +83,27 @@ status: open
 
 **输出**：照搬决策（直接用 graphify / fork 二开 / 替换）
 
+## RQ-05 · 学习方式认知谦逊（learning-method epistemic humility）— **non-blocking, ongoing**
+
+**问题**：当前 18 个 v1 + v1.x REQ 全部来自 **n=2 样本**（用户 + 女朋友）的学习方式。**成绩更好的同学是不是有我们盲区里的更好方法？**（不同的笔记格式 / 不同的复习节奏 / 不同的 visual+spatial 脚手架 / 不同的 AI 协作模式）。这些"更好方法"如果存在，会怎么改变 / 替换 / 增加我们当前的 REQs？
+
+**为什么这个问题存在**：foundation-first 决策（PROJECT.md Core Value 5 维度结构）的最深底层动机就是这个——**承认产品功能假设的样本量太小**，地基必须能容纳"功能集合演化"。如果不持续观察更好学习方法的可能性，地基设计可能在错误的功能假设上 over-fit。
+
+**研究方式**（informal, **不**做正式访谈）：
+- **观察**：GitHub repos / Reddit `/r/GetStudying` `/r/medicalschool` / HN / 学校论坛上 top-performing 学生的工具栈和工作流
+- **朋友网络非正式聊**：碰到自然机会就闲聊问 1-2 个问题，不预设结构化提问
+- **机会式 capture**：偶遇有用 finding 就丢到 `.planning/notes/learning-method-observations.md`
+- **不做**：正式 user interview / 问卷 / 招募 / 受控试验 — 这些过度工程化、成本高、对个人项目不合适
+
+**评估维度**（findings 怎么处理）：
+- finding 是不是揭示了**当前 REQ 的 bug**？（如果是 → 加候选 REQ revision 到 .planning/notes/）
+- finding 是不是建议**新的 KP**？（如果是 → 升级到 PROJECT.md Key Principles 候选讨论）
+- finding 是不是**确认**当前方向？（如果是 → 增加我们对当前 18 REQ 的 confidence）
+
+**触发窗口**：v1 ship 期间持续 + v1 ship 之后 3 个月 dogfood 期间持续；不阻塞任何 v1 phase。
+
+**输出 destination**：`.planning/notes/learning-method-observations.md`（按需创建）→ 累积到一定量后 promote 到 PROJECT.md Active REQ / OOS 修订 / 新 KP 候选。
+
 ---
 
-*Each question gets resolved before its corresponding spike or implementation phase. RQ-01/RQ-02/RQ-03 should resolve before P0-1 spike passes; RQ-04 before knowledge graph phase plans.*
+*Each question gets resolved before its corresponding spike or implementation phase. RQ-01/RQ-02/RQ-03 should resolve before P0-1 spike passes; RQ-04 before knowledge graph phase plans. RQ-05 is ongoing throughout the project lifecycle (non-blocking).*
