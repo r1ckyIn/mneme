@@ -42,7 +42,7 @@
 **OSS adoption note (KP-02)**: Pure naming/branding decision phase — no code adoption needed. Icon generation goes through Claude Design (KP-05), no third-party icon library.
 **Plans:** 4 plans
 Plans:
-- [ ] 00-01-PLAN.md — Naming finalist selection + user pick (Wave 1; checkpoint:decision)
+- [x] 00-01-PLAN.md — Naming finalist selection + user pick (Wave 1; checkpoint:decision)
 - [ ] 00-02-PLAN.md — Icon asset production via gpt-image-1 + sips/iconutil pipeline (Wave 2)
 - [ ] 00-03-PLAN.md — Atomic content rename + skill rename + README/LICENSE creation (Wave 2)
 - [ ] 00-04-PLAN.md — Pre-publish gate + atomic commit + GitHub publish + local-path move (Wave 3)
