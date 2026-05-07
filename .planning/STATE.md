@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
-status: unknown
-last_updated: "2026-05-07T05:27:16.668Z"
+status: phase-0-complete
+last_updated: "2026-05-07T06:18:00Z"
 progress:
   total_phases: 12
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 0
-  percent: 0
+  completed_plans: 4
+  percent: 9
 ---
 
 # mneme Project State
@@ -20,7 +20,7 @@ progress:
 
 ## Project Reference
 
-**Name (codename)**: mneme (final name TBD in Phase 0)
+**Name**: Mneme (codename `learn-os` retired 2026-05-07)
 **Core value**: **5-dimension composite** (re-framed 2026-05-07 per `/gsd-explore` session — see PROJECT.md "Core Value" section for full structure: philosophy / experience / architecture / boundaries / landing context). One-line summary (does NOT replace 5-dim structure): *local-first + AI-native personal learning infrastructure whose end-experience is "this AI truly understands me" — proactively surfacing where I am, where I struggle, and how knowledge connects, rather than only answering what I ask*. ⚠ Quoting this single sentence alone loses ~80% of identity.
 **Stack (locked by spike 002)**: Tauri 2 + SvelteKit (`adapter-static`) + `tauri-plugin-shell` + `marked` + KaTeX + DOMPurify + Svelte 5 runes
 **User**: USYD CS S1 2026 student, MacBook Pro 2019 Intel, macOS Ventura 13.4
@@ -31,16 +31,13 @@ progress:
 
 ## Current Position
 
-Phase: 00 (identity-branding-lock) — EXECUTING
-Plan: 1 of 4
-**Phase**: 0 — Identity & Branding Lock (planned, awaiting execution)
-**Plan**: 4 plans across 3 waves — next is `/gsd-execute-phase 0`
-**Status**: phase-0-planned
-**Progress**: 0/11 phases complete · 0/4 plans complete (Phase 0)
-**Resume file**: `.planning/phases/00-identity-branding-lock/00-01-PLAN.md`
+**Phase**: 1 — Tauri Shell Foundation + Subprocess Hardening (Phase 0 retired 2026-05-07)
+**Plan**: none yet — next is `/gsd-discuss-phase 1` or `/gsd-plan-phase 1`
+**Status**: phase-0-complete
+**Progress**: 1/11 phases complete · 4/4 plans complete (Phase 0)
 
 ```
-[░░░░░░░░░░░░░░░░░░░░] 0% (0/11 phases)
+[██░░░░░░░░░░░░░░░░░░] 9% (1/11 phases)
 ```
 
 ---
@@ -68,7 +65,7 @@ Phase 10 ─ FSRS-6 Reviews + Focus Mode                 [pending]
 
 | Metric | Value |
 |--------|-------|
-| Phases completed | 0 / 11 |
+| Phases completed | 1 / 11 |
 | v1 requirements satisfied | 0 / 10 |
 | v1.x requirements satisfied | 0 / 8 |
 | Spikes validated | 2 (001 stream-json-recon, 002 tauri-claude-shell) |
@@ -163,9 +160,9 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Session Continuity
 
-**Last GSD command**: `/gsd-plan-phase 0`
-**Last action**: Spawned gsd-phase-researcher → 00-RESEARCH.md (1319 lines: 3 verified finalists Mneme · Theoria · Scholea, D-09 icon pipeline resolution — Apple Icon Composer blocked on Ventura → sips+iconutil pipeline locked, full atomic-rename inventory with `.mneme/` lockstep gotcha, security STRIDE). Spawned gsd-planner → 4 PLAN.md (3 waves). Spawned gsd-plan-checker × 2 (1 revision cycle): caught 2 BLOCKERS (D-12 atomic-commit closure + V-07 skip-list 3-layer consistency) + 6 WARNINGs; planner revised; 2nd checker pass returned `## PLANS APPROVED` (all 6 dimensions PASS).
-**Next recommended action**: `/gsd-execute-phase 0` — Wave 1 (00-01 finalist pick, autonomous: false — user picks name) → Wave 2 (00-02 icon production + 00-03 atomic rename, parallel) → Wave 3 (00-04 publish + STATE.md update + atomic D-12 commit).
+**Last GSD command**: `/gsd-execute-phase 0`
+**Last action**: Phase 0 retired 2026-05-07: codename `learn-os` → Mneme; icon committed at `icon-assets/icon.icns` (8-petal cream sparkle on terra cotta, hand-drawn rough.js aesthetic); bundle id flipped (spike 002: `dev.mneme.spike`); README.md (bilingual EN+ZH) + LICENSE (MIT) created; project skill renamed (`spike-findings-mneme`); PROJECT.md OOS-01 amended; published to https://github.com/r1ckyIn/mneme (pending push).
+**Next recommended action**: `/gsd-discuss-phase 1` or `/gsd-plan-phase 1` — Tauri Shell Foundation + Subprocess Hardening.
 
 **Session boundaries**:
 
@@ -176,7 +173,10 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Notes for Future-Self
 
-- Codename `mneme` will be retired in Phase 0. After Phase 0 completes, all references in PROJECT.md, ROADMAP.md, STATE.md, README, tauri.conf.json should reflect the locked name.
+- Codename `learn-os` was retired 2026-05-07; final name is `Mneme` (Phase 0 complete).
+- **Phase 1 productName + window title contract**: `Mneme` (per Phase 0 D-14, no view-aware suffix).
+- **Phase 1 production tauri.conf.json bundle identifier**: `dev.mneme.app` (per Phase 0 D-10; spike 002 keeps `.spike` suffix per RESEARCH.md Q4).
+- **Phase 1 production icon source**: copy `icon-assets/icon.icns` into `src-tauri/icons/` (the entire iconset folder is at repo root for re-runnability).
 - The roadmap deliberately puts the spike (Phase 5) and research-resolution (Phase 5.5) as standalone phases between v1 (Phases 0-4) and v1.x (Phases 6-10). This is intentional — each is a real piece of work that needs scope discipline (`/gsd-spike` budget = 2 days, RQ-01 dogfood budget = 1 week).
 - If Phase 5 spike INVALIDATES the WKWebView path, Phase 6 MUST be replanned before entry — likely shifting to "external browser + deep links" or "persistent per-domain webview instance" alternatives. Update KD-04 in PROJECT.md at that point.
 - `_source/` write-policy enforcement (Sync Controller is the only writer) is set up in Phase 2 and reused throughout Phase 4 (document ingestion outputs go to `_source/`). Don't relax this — PITFALLS Pitfall 20.

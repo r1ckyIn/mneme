@@ -57,7 +57,7 @@ Not separate phases — these are **library / algorithm choices INSIDE phases** 
 
 ## Phases
 
-- [ ] **Phase 0: Identity & Branding Lock** - Final app name + icon + bundle identifier locked before any production code
+- [x] **Phase 0: Identity & Branding Lock** - Final app name + icon + bundle identifier locked before any production code
 - [ ] **Phase 1: Tauri Shell Foundation + Subprocess Hardening** - Three-pane shell, single-session chat, cost meter, zombie cleanup, capability hardening, agentic search scope
 - [ ] **Phase 2: Vault + Canvas/Ed Sync + Onboarding** - Local-first markdown vault, Canvas/Ed import + incremental sync, sync status surface, settings UI, first-run wizard
 - [ ] **Phase 3: Multi-Session + Command Palette + Editor** - Multi-session sidebar, Cmd+P/O/Shift+P palette, Tiptap block editor with markdown round-trip
@@ -264,7 +264,7 @@ These items are deferred from REQUIREMENTS.md v2+ section. They get phase mappin
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Identity & Branding Lock | 0/4 | Not started | - |
+| 0. Identity & Branding Lock | 4/4 | Complete    | 2026-05-07 |
 | 1. Tauri Shell Foundation + Subprocess Hardening | 0/0 | Not started | - |
 | 2. Vault + Canvas/Ed Sync + Onboarding | 0/0 | Not started | - |
 | 3. Multi-Session + Command Palette + Editor | 0/0 | Not started | - |
