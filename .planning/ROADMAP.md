@@ -89,7 +89,7 @@ Plans:
 - [x] 00-01-PLAN.md — Naming finalist selection + user pick (Wave 1; checkpoint:decision)
 - [x] 00-02-PLAN.md — Icon asset production via gpt-image-1 + sips/iconutil pipeline (Wave 2)
 - [x] 00-03-PLAN.md — Atomic content rename + skill rename + README/LICENSE creation (Wave 2)
-- [ ] 00-04-PLAN.md — Pre-publish gate + atomic commit + GitHub publish + local-path move (Wave 3)
+- [x] 00-04-PLAN.md — Pre-publish gate + atomic commit + GitHub publish + local-path move (Wave 3)
 
 ### Phase 1: Tauri Shell Foundation + Subprocess Hardening
 **Goal**: Three-pane resizable shell with single-session Claude chat works end-to-end, with all CRITICAL pitfalls (zombies, cost runaway, XSS, capability wildcards) closed before user starts dogfooding.

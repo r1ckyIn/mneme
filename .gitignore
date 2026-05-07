@@ -30,3 +30,6 @@ npm-debug.log*
 # Claude Code
 CLAUDE.md
 *_CN.md
+
+# Claude Code per-user local overrides
+.claude/settings.local.json
