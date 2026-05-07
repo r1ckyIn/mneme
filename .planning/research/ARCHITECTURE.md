@@ -4,6 +4,13 @@
 **Researched:** 2026-05-06
 **Confidence:** HIGH (stack locked by spike 002; subsystem decomposition derives directly from PROJECT.md REQ-01..REQ-10 + KP/KD constraints)
 
+> **⚠ Status drift notice (sync 2026-05-07)**: This research artifact is a **frozen snapshot from 2026-05-06**. Subsequent decisions in PROJECT.md / REQUIREMENTS.md have evolved beyond this snapshot:
+> - **REQ scope** has expanded from REQ-01..10 (header above) to **REQ-01..19** — added REQ-11..18 from FEATURES research, plus REQ-19 (voice input lifted from OOS-09 on 2026-05-07). Architecture below was decomposed only against the original 10 REQs; new REQ-11..19 may need additional subsystem decomposition not captured here.
+> - **KP scope** has expanded from KP-01..06 to **KP-01..09** — added KP-07 (proactive contextual recall), KP-08 (OSS dependency tracking), **KP-09 (Anthropic/Claude aesthetic family)**. KP-09 in particular implies UI-layer decomposition (design token system, theme injection across Marker/Tiptap/Cytoscape/Excalidraw) not present in the original architecture below.
+> - **KD scope** has expanded to **KD-01..13** — added KD-13 (visual aesthetic system locked to Anthropic/Claude family per KP-09; full spec in `.planning/references/design/`).
+>
+> When this file's architecture conflicts with PROJECT.md / REQUIREMENTS.md, **PROJECT.md / REQUIREMENTS.md win**.
+
 > **Spike-validated stack — DO NOT propose alternatives**: Tauri 2 + SvelteKit (`adapter-static` SPA) + `tauri-plugin-shell` spawning real `claude` CLI + JSONL stream parse. All architecture below honors this and KP-01 (local-first), KP-03 (AI-native data), KP-04 (compliant subprocess wrapping), KD-07 (no vector DB by default).
 
 ---

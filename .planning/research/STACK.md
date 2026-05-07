@@ -9,6 +9,7 @@
 > - **`claude-code-parser` — DO NOT npm install.** Vendor the source into `vendor/claude-code-parser/` (KD-12). Project is effectively unmaintained.
 > - **Whiteboard library is Excalidraw v0.18.1 MIT** (locked KD-08). tldraw v4.x rejected (proprietary).
 > - **PDF/document ingestion is dual pipeline**: Marker for PDF, markitdown for Office (REQ-18).
+> - **KP/KD scope expanded post-2026-05-07**: header below says "honor ... KD-01..KD-09" but KP has since extended to **KP-01..09** (added KP-07 proactive recall, KP-08 OSS dependency tracking, **KP-09 Anthropic/Claude aesthetic family**) and KD has extended to **KD-01..13** (added KD-13 visual aesthetic system per KP-09). The "Scope" line below is the original 2026-05-06 statement, kept for historical accuracy. New KP-09 + KD-13 imply that any UI library recommendation in this file must be cross-checked against `.planning/references/design/` for aesthetic compliance — when in doubt, see PROJECT.md KP-09 + KD-13.
 
 **Domain:** Personal desktop learning app (Tauri 2 + SvelteKit shell wrapping local Claude Code)
 **Researched:** 2026-05-06
