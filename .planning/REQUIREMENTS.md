@@ -1,6 +1,6 @@
 # mneme Requirements
 
-> Scoped, testable, atomic requirements derived from `.planning/PROJECT.md` (REQ-01 through REQ-18, OOS-01 through OOS-09, KP-01 through KP-06, KD-01 through KD-12) and `.planning/research/SUMMARY.md`.
+> Scoped, testable, atomic requirements derived from `.planning/PROJECT.md` (REQ-01 through REQ-19, OOS-01 through OOS-08, KP-01 through KP-09, KD-01 through KD-13) and `.planning/research/SUMMARY.md`. **Last sync 2026-05-07** — added REQ-19 (voice input lifted from OOS-09), KP-07/08/09, KD-13, RQ-05 per `/gsd-explore` foundation-first re-framing + aesthetic family lock.
 
 Status legend:
 - `[ ]` — hypothesis (in scope, not yet shipped)
@@ -85,6 +85,11 @@ Status legend:
 - [ ] **REQ-15 · Review focus mode (FSRS dedicated UI)**
   Acceptance: entering review queue collapses three-pane shell to single-concept full-screen view; keyboard `1/2/3/4` evaluates; AI generates a fresh test question per concept (no cached prompts); answer flows into FSRS via REQ-09; press Esc returns to main UI.
 
+### Voice input (lifted from OOS-09 on 2026-05-07)
+
+- [ ] **REQ-19 · Voice input via OSS speech-to-text** *(v1.x candidate; gated by Intel Mac CPU latency spike)*
+  Acceptance: Hotkey (default `Cmd+Shift+V`) triggers voice mode; local STT (whisper.cpp / distil-whisper / Vosk — pick after spike) transcribes speech into the active chat input; optional Claude pass for punctuation/formatting; coexists with REQ-11 command palette without hotkey conflict; local inference only (KP-01); OSS library required (KP-02). **NOT v1** — must validate Intel Mac CPU inference latency on `whisper.cpp small/medium` first.
+
 ---
 
 ## v2+ (deferred — differentiator polish + experimental)
@@ -111,7 +116,8 @@ Status legend:
 | OOS-06 | Manual mind-map drawing | Auto-generated from KG; user-drawn would create parallel source-of-truth (anti-pattern). |
 | OOS-07 | Plugin / extensibility API | Claude Code's `skills` already serve this layer. |
 | OOS-08 | Multi-LLM-provider support (OpenAI / Gemini / local Ollama) | KP-04 incompatibility; parallel auth + cost runtime is scope creep. |
-| OOS-09 | Voice / audio dictation input | Captions cover audio content; voice input adds UX surface for marginal gain. |
+
+> **Note (2026-05-07)**: OOS-09 (voice / audio dictation input) was removed from this list and lifted to **REQ-19** (v1.x candidate, OSS local STT) per user direction during `/gsd-explore` session. The exclusion rationale — "captions cover audio content; UX surface for marginal gain" — was reversed because voice can be 3-5x faster than typing for long prompts (problem descriptions, concept disambiguations) and students often think of questions while watching lecture videos. Local OSS STT (whisper.cpp etc.) keeps it KP-01 + KP-02 compliant. See REQ-19 for new framing.
 
 ---
 
@@ -123,6 +129,7 @@ Status legend:
 | `/gsd-spike echo360-webview-auth` | REQ-04 + REQ-05 / Phase 6 entry | SSO + cookie persistence verified in Tauri webview (Phase 5 in ROADMAP.md) |
 | RQ-03 (GUI wrapper community implementations) | Phase 1 production hardening | Survey of opcode / TOKENICODE / others; pattern adoption decision (absorbed into Phase 1 plan-phase) |
 | RQ-04 (graphify skill mechanics) | REQ-07 / Phase 7 design | Decide: reuse `graphify` directly / fork / replace (resolved during plan-phase 7) |
+| RQ-05 (learning-method epistemic humility) — **NON-BLOCKING informational** | nothing | Ongoing throughout v1 ship + 3-month dogfood; informal observation of higher-achieving students' learning methods; findings feed new REQ candidates / OOS revisions / new KP candidates; does NOT block any phase entry |
 
 ---
 
@@ -150,8 +157,9 @@ Every v1 + v1.x requirement maps to exactly one phase in ROADMAP.md. Phase numbe
 | REQ-16 (first-run onboarding wizard) | Phase 2 | Vault + Canvas/Ed Sync + Onboarding | Pending |
 | REQ-17 (per-course `.mneme/rules/`) | Phase 8 | Mind-Map View + Per-Course Rules | Pending |
 | REQ-18 (document → markdown ingestion) | Phase 4 | Document Ingestion (PDF + Office → markdown) | Pending |
+| REQ-19 (voice input via OSS STT) | TBD post-v1 | (v1.x candidate; phase TBD after Intel Mac CPU latency spike) | Pending — gated by spike |
 
-**Coverage:** 18 / 18 v1+v1.x requirements mapped. ✓ No orphans. ✓ No duplicates.
+**Coverage:** 19 / 19 v1+v1.x requirements mapped (v1: 10, v1.x: 8 + REQ-19 voice TBD). ✓ No orphans. ✓ No duplicates. (REQ-19 is v1.x but its phase mapping deferred — must validate STT latency on Intel Mac CPU before scheduling.)
 
 ### Phase-to-Requirement Cluster Density
 

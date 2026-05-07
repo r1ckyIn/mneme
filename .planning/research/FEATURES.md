@@ -5,6 +5,13 @@
 **Confidence:** HIGH
 **Researcher mode:** Ecosystem (cross-checking 8 reference products against user's REQ-01..10 / OOS-01..05 / KP-01..06)
 
+> **⚠ Status drift notice (sync 2026-05-07)**: This research artifact is a **frozen snapshot from 2026-05-06**. Subsequent decisions changed several recommendations:
+> - **OOS-09** (voice / audio dictation) referenced below as a "recommended OOS addition" was **lifted to REQ-19** (v1.x candidate, OSS local STT — whisper.cpp / distil-whisper / Vosk) on 2026-05-07. F-ANTI-10 in this file is no longer accurate as an exclusion.
+> - **KP scope** has expanded from KP-01..06 (header above) to **KP-01..09** — added KP-07 (proactive contextual recall), KP-08 (OSS dependency tracking), KP-09 (Anthropic/Claude aesthetic family). Consult PROJECT.md for current KP list.
+> - **REQ scope** expanded from REQ-01..10 (header) to **REQ-01..19**. Consult REQUIREMENTS.md for current list.
+>
+> When this file's recommendations conflict with PROJECT.md / REQUIREMENTS.md, **PROJECT.md / REQUIREMENTS.md win**.
+
 ---
 
 ## TL;DR — What's Missing From REQ-NN

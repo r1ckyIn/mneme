@@ -43,6 +43,16 @@ These are the design decisions that emerged from spike experiments. Every featur
 ### Tooling
 
 - **MUST** add `.gitignore` excluding `target/`, `node_modules/`, `.svelte-kit/`, `dist/`, `build/` (Rust target alone hits 1.9GB)
+
+### Visual aesthetic — added 2026-05-07 (post-spike)
+
+The spike validated the **technical** subprocess + UI streaming pattern, but did NOT lock visual style. After the spike, **KP-09 + KD-13** (added 2026-05-07) lock the visual aesthetic family:
+
+- **MUST** follow the Anthropic / Claude visual aesthetic family — warmth over modernity, accessibility over exclusivity, thoughtful restraint over flashy showmanship
+- **MUST** use the 4 mandatory color anchors (KD-13): `#d97757` (terra cotta orange), `#faf9f5` (cream background), `#141413` (text — NOT pure black), `#2b2a27` (warm dark mode — NOT cold gray-black)
+- **MUST** use serif body text where possible; **MUST NOT** use Arial or Inter (Anthropic internal guidance: produces "cheap AI feel")
+- **MUST** use motion ease curve `cubic-bezier(0.165, 0.85, 0.45, 1)` and soft 8% opacity borders + soft multi-layer shadows
+- See PROJECT.md KP-09 + KD-13 for full reasoning; full token palette + recommended OSS starting libraries (shadcn.io/theme/claude port, anthropics/skills/brand-guidelines, etc.) deferred to `.planning/references/design/`
 </requirements>
 
 <findings_index>

@@ -5,6 +5,13 @@
 **Researched:** 2026-05-06
 **Confidence:** HIGH (stack and subprocess pattern validated by spikes; features cross-checked against 8 live reference products; architecture derived from locked spike patterns; pitfalls verified against CVEs and GitHub issues)
 
+> **⚠ Status drift notice (sync 2026-05-07)**: This research artifact is a **frozen snapshot from 2026-05-06**. Subsequent decisions in PROJECT.md / REQUIREMENTS.md / ROADMAP.md have evolved beyond this snapshot:
+> - **OOS-09** (voice/audio dictation) mentioned below as a "recommended new OOS addition" was **lifted to REQ-19** (v1.x candidate, OSS local STT) on 2026-05-07. Treat OOS-09 references in this file as historical research output, not current truth.
+> - **KP-07** (proactive contextual recall), **KP-08** (OSS dependency tracking), **KP-09** (Anthropic/Claude aesthetic family), **KD-13** (visual aesthetic system) were added 2026-05-07 — not reflected in this research; consult PROJECT.md for current KP/KD list (9 KPs / 13 KDs as of 2026-05-07).
+> - **Core Value** is now a 5-dimension composite (not the single sentence quoted here) — see PROJECT.md "Core Value" section for current structure.
+>
+> When this file's recommendations conflict with PROJECT.md / REQUIREMENTS.md, **PROJECT.md / REQUIREMENTS.md win**.
+
 ---
 
 ## Executive Summary

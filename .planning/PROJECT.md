@@ -22,8 +22,8 @@ Three-pane main UI: **course files (left) · video + course material preview (mi
 
 > **Re-framed 2026-05-07** (per `/gsd-explore` session): Core Value is **not a single sentence** — it is a 5-dimension composite. Each dimension is non-negotiable; losing any one degrades mneme into a different product (Obsidian + plugins, NotebookLM, Cursor for notes, etc.). Treat any feature/decision through all 5 lenses.
 
-### Dimension 1 — Product philosophy (8 non-negotiable beliefs)
-The 8 Key Principles (KP-01 through KP-08, see "Key Principles" section below):
+### Dimension 1 — Product philosophy (9 non-negotiable beliefs)
+The 9 Key Principles (KP-01 through KP-09, see "Key Principles" section below):
 - **KP-01 Local-first** — all data on local disk, offline-functional, no automatic cloud
 - **KP-02 50% OSS-driven** — half the surface area is community-validated open source
 - **KP-03 AI-native data model** — embeddings + graph + confidence + provenance + timestamps as first-class
@@ -32,6 +32,7 @@ The 8 Key Principles (KP-01 through KP-08, see "Key Principles" section below):
 - **KP-06 Reject reinvented wheels** — fork-and-extend before write-from-scratch
 - **KP-07 Proactive contextual recall** — the "懂我" experience: AI surfaces context unprompted
 - **KP-08 OSS dependency tracking + upstream monitoring** — every adopted library is owned, not just imported
+- **KP-09 Aesthetic family — inherit Anthropic/Claude visual identity** — warmth/accessibility/restraint; full SSOT in `.planning/references/design/`; locked specs in KD-13
 
 ### Dimension 2 — Experience commitments (5 user-facing promises)
 1. **"懂我" AI** (KP-07) — agent memory + KG + proactive contextual recall: AI proactively surfaces last session progress, cross-week prerequisites, recurring mistakes — without being asked
@@ -40,13 +41,14 @@ The 8 Key Principles (KP-01 through KP-08, see "Key Principles" section below):
 4. **One product feel** — three-pane UI (REQ-01) with cohesive interaction, not five-app stitching
 5. **Power-user UX** — command palette (REQ-11) + multi-session sidebar (REQ-12) + keyboard-first navigation
 
-### Dimension 3 — Architectural foundation (12 locked Key Decisions)
-The 12 Key Decisions (KD-01 through KD-12, see "Key Decisions" section below) lock irreversible technical commitments:
+### Dimension 3 — Architectural foundation (13 locked Key Decisions)
+The 13 Key Decisions (KD-01 through KD-13, see "Key Decisions" section below) lock irreversible technical commitments:
 - **Stack**: Tauri 2 + SvelteKit + Rust ≥1.88 (KD-01/02/03)
 - **Search**: agentic search replaces vector DB in v1 (KD-07 + REQ-10)
 - **Data**: dual-layer (KG for AI + mind-map/whiteboard for human, KD-08) + three-tier memory (working/episodic/long-term, KD-10) + Tiptap UI on markdown storage (KD-09 + REQ-06)
 - **Protocol scoping**: MCP is for *external services only* (Canvas / Ed / Echo360 — REQ-03/04/05) — vault read/write goes through filesystem + Claude Code's native `--add-dir` agentic search, NOT through MCP
 - **External integrations**: Echo360 via Tauri webview + persistent SSO cookie (KD-04); Anchored mode via Anthropic Citations API (KD-05); FSRS-6 via ts-fsrs (KD-06)
+- **Visual aesthetic system (KD-13)**: locked to Anthropic/Claude family per KP-09 — 4 mandatory color anchors (`#d97757` orange / `#faf9f5` cream / `#141413` text / `#2b2a27` warm dark), serif body + ban Arial/Inter, ease curve `cubic-bezier(0.165, 0.85, 0.45, 1)`, soft 8% borders, multi-layer soft shadows. Full token palette + recommended OSS gallery deferred to `.planning/references/design/`.
 
 ### Dimension 4 — Boundaries (8 deliberate exclusions)
 The 8 Out-of-Scope items (OOS-01 through OOS-08, see "Out of Scope" section; OOS-09 voice input was lifted to REQ-19 v1.x candidate on 2026-05-07). Saying "no" with the same precision as saying "yes" is part of the identity:
