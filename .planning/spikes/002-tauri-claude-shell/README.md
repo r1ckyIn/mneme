@@ -59,6 +59,8 @@ A native window opens with a chat UI (dark theme).
 ## Investigation Trail
 
 1. **Scaffold via `npm create tauri-app@latest -- app -t svelte-ts -m npm -y --tauri-version 2 --identifier dev.mneme.spike`** — landed SvelteKit (not plain Svelte despite template name) with `adapter-static` SPA fallback. Good defaults.
+
+   > **Historical note (Phase 0 rename, 2026-05-07):** this scaffold command was originally executed on 2026-05-06 with identifier `dev.learn-os.spike` (codename retired 2026-05-07). The identifier was renamed in-place via `sed`. Re-running the (now-rewritten) command above would create a NEW empty Tauri app under `dev.mneme.spike`, NOT restore this spike. The canonical artifact is the working app under `.planning/spikes/002-tauri-claude-shell/app/`.
 2. **Added `@tauri-apps/plugin-shell` (npm) + `tauri-plugin-shell` 2.3.5 (Rust)**, registered in `src-tauri/src/lib.rs`.
 3. **Configured capabilities** with allow-list for `claude` command (both spawn and execute permissions).
 4. **Wrote chat UI in `src/routes/+page.svelte`** with Svelte 5 runes (`$state`):
