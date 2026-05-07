@@ -81,7 +81,7 @@ Phase 10 ─ FSRS-6 Reviews + Focus Mode                 [pending]
 
 ## Accumulated Context
 
-### Locked Decisions (KD-01 through KD-12)
+### Locked Decisions (KD-01 through KD-13)
 
 See PROJECT.md for full text. Quick reference:
 
@@ -123,7 +123,7 @@ Phase-by-phase pitfall ownership (must be addressed during the named phase):
 | 9. FSRS Hard misuse + concept calibration drift | HIGH | Phase 10 |
 | 10. Solo-dev abandonment at 30% | HIGH | Roadmap structure (front-loaded shipping; v1 = phases 1-4) |
 
-### Key Principles (KP-01 through KP-08)
+### Key Principles (KP-01 through KP-09)
 
 Honored across the roadmap; no phase contradicts:
 
@@ -153,7 +153,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 1 pending — captured during sessions, surface at appropriate phase:
 
-- **Evaluate thea for question generation** (research, 2026-05-07) — third-party question/题目 generation tool the user discovered; needs license + integration shape + fit-vs-duplication review against ts-fsrs / REQ-09 review surface. File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before Phase 10 (FSRS-6 Reviews) planning.
+- **Evaluate thea for question generation** (research, 2026-05-07, **evaluated — REJECT as dependency, STUDY-ONLY for Phase 10 UX**) — thea.study is a closed-source cloud SaaS K-12 study app (mobile-first, no API, no local mode); fails KP-01/KP-02/KD-06/form-factor on every axis. Useful only as Phase 10 UI inspiration: question-type taxonomy (MC/TF/match/rank/short), adaptive-difficulty loop, multi-input ingestion UX. File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before `/gsd-discuss-phase 10`.
 
 ---
 
