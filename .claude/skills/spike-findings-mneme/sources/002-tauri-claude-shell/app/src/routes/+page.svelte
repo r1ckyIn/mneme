@@ -266,7 +266,7 @@
 
 <div class="app">
   <header>
-    <h1>learn-os spike · Tauri × Claude Code</h1>
+    <h1>mneme spike · Tauri × Claude Code</h1>
     <div class="status">
       {#if isStreaming}
         <span class="dot streaming"></span> streaming · {lastEventCount} events

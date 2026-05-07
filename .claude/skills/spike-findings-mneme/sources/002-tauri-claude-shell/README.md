@@ -58,7 +58,7 @@ A native window opens with a chat UI (dark theme).
 
 ## Investigation Trail
 
-1. **Scaffold via `npm create tauri-app@latest -- app -t svelte-ts -m npm -y --tauri-version 2 --identifier dev.learn-os.spike`** — landed SvelteKit (not plain Svelte despite template name) with `adapter-static` SPA fallback. Good defaults.
+1. **Scaffold via `npm create tauri-app@latest -- app -t svelte-ts -m npm -y --tauri-version 2 --identifier dev.mneme.spike`** — landed SvelteKit (not plain Svelte despite template name) with `adapter-static` SPA fallback. Good defaults.
 2. **Added `@tauri-apps/plugin-shell` (npm) + `tauri-plugin-shell` 2.3.5 (Rust)**, registered in `src-tauri/src/lib.rs`.
 3. **Configured capabilities** with allow-list for `claude` command (both spawn and execute permissions).
 4. **Wrote chat UI in `src/routes/+page.svelte`** with Svelte 5 runes (`$state`):

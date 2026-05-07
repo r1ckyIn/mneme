@@ -1,10 +1,10 @@
 ---
-name: spike-findings-learn-os
-description: Implementation blueprint from spike experiments. Requirements, proven patterns, and verified knowledge for building learn-os (personal desktop learning app wrapping Claude Code). Auto-loaded during implementation work.
+name: spike-findings-mneme
+description: Implementation blueprint from spike experiments. Requirements, proven patterns, and verified knowledge for building mneme (personal desktop learning app wrapping Claude Code). Auto-loaded during implementation work.
 ---
 
 <context>
-## Project: learn-os
+## Project: mneme
 
 Personal desktop learning app for USYD CS coursework that wraps the local Claude Code CLI as a subprocess — three-pane UI (course files / Echo360 video / chat), local-first markdown vault, AI-native double-layer data model (human view: mindmap + whiteboard; AI view: knowledge graph), Echo360 lecture video integration via embedded webview, FSRS-based review of concept pages (no flashcards), and 50% open-source-integration philosophy.
 
