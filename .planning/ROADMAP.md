@@ -7,6 +7,7 @@
 **Driving constraints:**
 - KP-02 (50% open-source rule) — every phase introducing a feature names its OSS adoption/adaptation source.
 - KP-04 (compliant subprocess wrapping) — phases 1, 6, 9 carry explicit ToS-compliance criteria.
+- **KP-09 + KD-13 (Anthropic/Claude visual aesthetic family — added 2026-05-07)** — every UI-bearing phase (1, 2, 3, 6, 8, 9, 10) inherits the locked color tokens / typography rules / motion curve / soft-separation rules from KD-13; full spec lives in `.planning/references/design/` (do NOT improvise UI palette / fonts / shadows).
 - Solo-dev anti-abandonment (PITFALLS Pitfall 10) — phases 1-4 are dogfoodable shipping milestones; differentiator phases (7-10) are explicitly back-loaded so the user is using the app in real S1 2026 coursework before the ambitious AI-native layer.
 
 ---

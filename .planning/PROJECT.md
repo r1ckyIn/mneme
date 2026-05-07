@@ -106,6 +106,7 @@ The 8 Out-of-Scope items (OOS-01 through OOS-08, see "Out of Scope" section; OOS
 - Right: Claude conversation (streaming, with markdown / LaTeX / code blocks rendered after stream)
 - Three panes are user-resizable
 - Top bar: course-level mind-map that updates as conversation produces new concepts/notes
+- **Visual aesthetic compliance (KP-09 + KD-13)**: all panes use the locked Anthropic/Claude family — cream background `#faf9f5`, terra-cotta accent `#d97757`, serif body text, soft 8% borders, `cubic-bezier(0.165, 0.85, 0.45, 1)` motion. Full spec in `.planning/references/design/`.
 
 **Why it matters**:
 This layout is what NotebookLM users (myself included) already have muscle memory for. Adding video to the middle is the differentiator that anchors learning to lecture content.
@@ -632,6 +633,25 @@ Every external open-source library the project uses (whether vendored, forked-an
 
 **Non-negotiable rationale**: KP-02 (50% OSS) + KP-06 (fork + extend) creates a long-term debt — forks rot if upstream isn't tracked; vendored code accumulates CVEs if frozen. KP-08 closes the loop: every OSS we adopt is owned, not just imported.
 
+#### KP-09 · Aesthetic family — inherit Anthropic / Claude visual identity
+
+**Source**: User direction (2026-05-07). Curated reference materials stored in `.planning/references/design/` are the SSOT for everything below.
+
+mneme's UI culture, design, and aesthetics inherit the **Anthropic / Claude visual identity family** — the only major AI brand built on warm tones and humanist restraint, deliberately positioned against the industry's cold blue / black / metallic defaults.
+
+**Three core principles** (per Geist studio's founding direction, quoted in reference deep-dive):
+1. **warmth over modernity** — terra-cotta orange + cream backgrounds; never pure black/white; never gradients/glows
+2. **accessibility over exclusivity** — readable serifs over Arial/Inter; generous spacing; plain-language labels
+3. **thoughtful restraint over flashy showmanship** — soft multi-layer shadows; custom ease curves; no animation flexing
+
+**Non-negotiable rationale**: mneme is a Claude-Code-wrapper desktop shell — the user already lives inside Claude's aesthetic via the CLI. Departing from that aesthetic in mneme creates a "two products glued together" feel that **violates Core Value Dimension 2 ("one product feel")**. Inheriting the family means the user's eyes never have to context-switch between mneme and Claude.
+
+**Reference materials (SSOT — read these for all detailed specs / history / philosophy / OSS gallery)**:
+- [`.planning/references/design/anthropic-claude-aesthetic-deep-dive_zh.md`](references/design/anthropic-claude-aesthetic-deep-dive_zh.md) — 7-chapter deep-dive: brand visual system, color palette, typography, design philosophy, team, evolution timeline, community reception
+- [`.planning/references/design/claude-aesthetic-ui-libraries-gallery.html`](references/design/claude-aesthetic-ui-libraries-gallery.html) — curated gallery of 9 OSS libraries that already implement this aesthetic (open in browser to view rendered)
+
+**Relationship to KP-05** (UI initial design via Claude Design): KP-05 is about the **process** (use prompt-to-prototype tool to start UI), KP-09 is about the **aesthetic family** (what the result should look like). They compose: Claude Design's outputs already lean toward this aesthetic; KD-13 codifies the locked specs.
+
 ---
 
 ## Key Decisions (locked technical choices)
@@ -715,6 +735,48 @@ Per-message: SHA-256 dedup → privacy filter → LLM compress → embed → ind
 **Source**: STACK research surfaced this 9KB MIT library as a stream-json parser, but the user flagged unmaintained risk (no commits since creation).
 
 We **copy** its source into `vendor/claude-code-parser/` for reference, attribution preserved, and adapt as needed. Not as `npm install`. Insulates us from the abandoned-dependency tax while keeping the open-source pattern for honesty + KP-02 reuse.
+
+#### KD-13 · Visual aesthetic system locked to Anthropic/Claude family (per KP-09)
+
+**Source**: KP-09 + reference materials in `.planning/references/design/` (treated as SSOT — see KP-09 for file paths). Cross-validated against `anthropics/skills/brand-guidelines` (the only first-party color/typography source).
+
+This decision **locks the minimum mandatory rules**. The complete specification (full token palette, motion details, shadow system, recommended OSS libraries, Anthropic team's design rationale) lives in the reference files — do NOT duplicate it here; read those files when implementing.
+
+**Mandatory locks (must hold across all UI surfaces)**:
+
+1. **Primary palette anchors** (oklch derivations OK; these 4 hex values must be the visual core):
+   - `--orange: #d97757` (Anthropic terra cotta — primary accent)
+   - `--bg: #faf9f5` (cream background, light mode — NOT pure white)
+   - `--ink: #141413` (text — NOT pure black)
+   - `--ink-soft: #2b2a27` (warm dark mode background — NOT cold gray-black)
+
+2. **Typography rules**:
+   - Body / reading text: serif preferred (`'Iowan Old Style', 'Apple Garamond', 'Georgia', 'Songti SC', 'Source Han Serif SC', serif`)
+   - UI labels / code / monospace: `ui-monospace, 'SF Mono', Menlo, monospace`
+   - **Banned: Arial, Inter** — Anthropic internal guidance flags these as producing "cheap AI feel"
+
+3. **Motion**:
+   - Standard ease curve: `cubic-bezier(0.165, 0.85, 0.45, 1)` (modified ease-out — organic feel)
+   - Button press feedback: `active:scale-[0.98]` micro-shrink
+   - Animation philosophy: subtle and purposeful, never flashy
+
+4. **Soft separation** (no hard lines, no harsh shadows):
+   - Borders: ~8% opacity black (e.g. `rgba(20, 20, 19, 0.08)`)
+   - Shadows: soft multi-layer (e.g. `0 0.25rem 1.25rem rgba(0,0,0,0.035)` for floating elements)
+
+**Recommended starting libraries** (full list with previews in reference HTML gallery; choose by integration mode):
+- **shadcn.io/theme/claude** — drop-in oklch tokens; mneme uses Svelte not React, so **port the CSS variables directly**, do not import the React components
+- **anthropics/skills/brand-guidelines** — official first-party color/typography source; treat as ground truth when other sources disagree
+- **assistant-ui Claude Clone** — three-pane layout pattern reference (study only — React)
+- **tweakcn** — visual theme generator for shade variant extension
+- **VoltAgent/awesome-claude-design** — 68 DESIGN.md templates for prompt-driven UI scaffolding (composes with KP-05 + KP-09)
+- **jnahian/vscode-claude-theme** — for the `claude` CLI subprocess if user opens code in editor
+
+**Integration in mneme codebase**:
+- Tokens live in `app/src/styles/tokens.css` (or equivalent SvelteKit location)
+- Tauri webview honors them via global CSS injection
+- All third-party UI libs (Marker preview / Tiptap / Cytoscape / Excalidraw) consume the **same** tokens — no library-local color overrides
+- All recommended OSS above tracked in `.planning/dependencies.md` per KP-08
 
 ---
 

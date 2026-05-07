@@ -148,11 +148,41 @@ Phase TBD (post-v1 ship) will validate latency on Intel Mac CPU and lock ONE of:
 
 ---
 
+## Group 9 — Design system references (KP-09 + KD-13 SSOT)
+
+These are NOT code dependencies — they are **authoritative reference materials** for the visual aesthetic family. KD-13 explicitly defers all detailed specs (full token palette, motion details, OSS gallery, design philosophy) to these files.
+
+| Reference | Type | Local path / source | Authority |
+|---|---|---|---|
+| Anthropic / Claude aesthetic deep-dive (zh) | Curated 7-chapter analysis | `.planning/references/design/anthropic-claude-aesthetic-deep-dive_zh.md` | Secondary — research synthesis from public sources, design team interviews, Geist Behance, Anthropic GitHub |
+| Claude aesthetic OSS UI libraries gallery | Curated HTML gallery (9 libs across 3 categories) | `.planning/references/design/claude-aesthetic-ui-libraries-gallery.html` | Secondary — community curation; CSS preview tokens are accurate per Anthropic spec |
+| `anthropics/skills/brand-guidelines` | Official Anthropic brand skill | https://github.com/anthropics/skills/tree/main/skills/brand-guidelines | **PRIMARY (first-party SSOT)** — when other sources disagree on hex values / typography, this wins |
+
+**Maintenance rule for these references**: bump `Last-checked` if user provides updated reference materials, or if `anthropics/skills/brand-guidelines` releases a new version. Sub-version drift (e.g. `#d97757` vs `#da7756`) is documented in deep-dive Section 1; tolerate within Anthropic's own hue range.
+
+## Group 10 — KD-13 recommended starting libraries (Layer 3 — replaceable)
+
+Recommended OSS implementations of the Claude aesthetic; all replaceable per ROADMAP Layer 3. **mneme is Svelte-based** — favor library integrations that port CSS tokens / patterns rather than pulling React components.
+
+| Library | Version | License | Anchors | Integration mode | Health | Monitor | Last-checked |
+|---|---|---|---|---|---|---|---|
+| **shadcn.io/theme/claude** | latest | MIT (theme registry) | KD-13 primary recommendation | port-tokens-only (NOT React component import — mneme is Svelte) | active | release-only | 2026-05-07 |
+| **assistant-ui Claude Clone** | n/a | (per-project license) | KD-13, REQ-01 (three-pane pattern reference) | study-only (React) | active | release-only | 2026-05-07 |
+| **VoltAgent/awesome-claude-design** | latest (68 templates) | (per-template license) | KP-05 + KP-09 composition (DESIGN.md scaffold prompts for Claude Code) | reference-only | active | monthly | 2026-05-07 |
+| **tweakcn** | n/a (web tool) | open source | KD-13 (shade variant generation) | external-tool (web UI) | active | release-only | 2026-05-07 |
+| **`jnahian/vscode-claude-theme`** | latest | MIT | optional — for `claude` CLI consistency in editor | VS Code extension (user-installed, not bundled) | maintained | release-only | 2026-05-07 |
+| **`OpenCoworkAI/open-codesign`** | latest | MIT | future — alternative to KP-05 Claude Design (BYOK + multi-model + local-first) | reference-only (potential alternative) | active | monthly | 2026-05-07 |
+| **`Damienchakma/Open-claude`** | latest | (per repo) | reference — minimal Claude UI clone | study-only (React) | maintained | release-only | 2026-05-07 |
+| **`chihebnabil/claude-ui`** | latest | (per repo) | reference — Nuxt/Vue Claude UI | study-only (Nuxt) | maintained | release-only | 2026-05-07 |
+
+---
+
 ## Maintenance log
 
 | Date | Action |
 |---|---|
 | 2026-05-07 | Registry created per KP-08 (added 2026-05-07 in `/gsd-explore` session). Initial population from PROJECT.md KD-01 through KD-12 + STACK research artifacts. Pre-v1 maintenance rule active. |
+| 2026-05-07 | Added Group 9 (Design system references — KP-09 + KD-13 SSOT) and Group 10 (KD-13 recommended starting libraries) per user direction "软件 ui 文化, 设计, 美学都按照这两个文件走". Reference files copied into `.planning/references/design/`. |
 
 ---
 

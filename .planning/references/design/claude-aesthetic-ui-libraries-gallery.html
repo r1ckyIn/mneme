@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude 美学 · 开源 UI 库画廊</title>
+<style>
+  :root {
+    --bg: #faf9f5;
+    --bg-soft: #f1efe7;
+    --bg-deep: #e8e6dc;
+    --paper: #ffffff;
+    --ink: #141413;
+    --ink-soft: #2b2a27;
+    --ink-mute: #6b6a64;
+    --muted: #b0aea5;
+    --orange: #d97757;
+    --orange-deep: #ae5630;
+    --orange-soft: #f4dccd;
+    --orange-tint: #fbeee4;
+    --blue: #6a9bcc;
+    --green: #788c5d;
+    --border: rgba(20, 20, 19, 0.08);
+    --border-strong: rgba(20, 20, 19, 0.14);
+    --shadow-sm: 0 0.25rem 1.25rem rgba(0,0,0,0.035);
+    --shadow-md: 0 0.5rem 2rem rgba(20,20,19,0.06);
+    --ease: cubic-bezier(0.165, 0.85, 0.45, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Iowan Old Style', 'Apple Garamond', 'Georgia', 'Songti SC', 'Source Han Serif SC', serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    padding: 96px 0 64px;
+    text-align: center;
+  }
+
+  .logo {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 36px;
+    display: block;
+    color: var(--orange);
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: clamp(40px, 5vw, 60px);
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.08;
+    margin-bottom: 20px;
+  }
+
+  h1 .accent {
+    font-style: italic;
+    color: var(--orange-deep);
+  }
+
+  .subtitle {
+    font-size: 19px;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  /* ---------- Intro ---------- */
+  .intro {
+    padding: 56px 0 32px;
+    border-top: 1px solid var(--border);
+  }
+
+  .intro-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .intro-label {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 6px;
+  }
+
+  .intro-text {
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 720px;
+  }
+
+  .intro-text strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ---------- Section ---------- */
+  .section {
+    padding: 64px 0 32px;
+  }
+
+  .section-head {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 48px;
+    margin-bottom: 40px;
+    align-items: start;
+  }
+
+  .section-num {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--orange);
+    padding-top: 14px;
+  }
+
+  h2 {
+    font-size: 36px;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+
+  .section-desc {
+    color: var(--ink-soft);
+    font-size: 17px;
+    max-width: 640px;
+  }
+
+  /* ---------- Cards ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+  }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .card.featured {
+    border: 1px solid var(--orange-soft);
+    box-shadow: 0 0.5rem 2rem rgba(217, 119, 87, 0.08);
+  }
+
+  .preview {
+    height: 240px;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-body {
+    padding: 24px 24px 22px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    padding: 4px 9px;
+    border-radius: 20px;
+    background: var(--bg-deep);
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .tag.pick {
+    background: var(--orange-deep);
+    color: var(--bg);
+  }
+
+  .tag.outline {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--ink-mute);
+  }
+
+  .card h3 {
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    letter-spacing: -0.005em;
+  }
+
+  .card h3 .mono {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.82em;
+    color: var(--ink-soft);
+  }
+
+  .card-desc {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-bottom: 18px;
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--orange-deep);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    letter-spacing: 0.02em;
+    transition: gap 0.3s var(--ease);
+    margin-top: auto;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+
+  .card-link:hover { gap: 11px; }
+
+  .card-link::after {
+    content: '→';
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+  }
+
+  /* ============================
+     Preview 1: shadcn.io/theme/claude
+     ============================ */
+  .p-shadcn {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  }
+  .p-shadcn .ui-card {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .p-shadcn .ui-label {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .p-shadcn .ui-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-style: italic;
+  }
+  .p-shadcn .ui-row {
+    display: flex;
+    gap: 8px;
+  }
+  .p-shadcn .btn {
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: inherit;
+    border: none;
+    font-weight: 500;
+  }
+  .p-shadcn .btn-primary {
+    background: var(--orange);
+    color: white;
+  }
+  .p-shadcn .btn-outline {
+    background: var(--paper);
+    border: 1px solid var(--border-strong);
+    color: var(--ink-soft);
+  }
+
+  /* ============================
+     Preview 2: assistant-ui Claude Clone
+     ============================ */
+  .p-assistant {
+    display: grid;
+    grid-template-columns: 60px 1fr 90px;
+    height: 100%;
+    background: var(--bg);
+  }
+  .p-assistant .a-sidebar {
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    padding: 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .p-assistant .a-sidebar .item {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--bg-deep);
+  }
+  .p-assistant .a-sidebar .item.active {
+    background: var(--orange-soft);
+  }
+  .p-assistant .a-chat {
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .p-assistant .a-bubble {
+    background: #ddd9ce;
+    border-radius: 12px;
+    padding: 8px 11px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    align-self: flex-end;
+    max-width: 75%;
+  }
+  .p-assistant .a-text {
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+  }
+  .p-assistant .a-text::after {
+    content: '▍';
+    color: var(--orange);
+    font-style: normal;
+  }
+  .p-assistant .a-art {
+    background: var(--ink-soft);
+    border-left: 1px solid var(--border);
+    padding: 10px 6px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 7px;
+    color: #d8c4b3;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+  .p-assistant .a-art .kw { color: #c89878; }
+  .p-assistant .a-art .str { color: #94a584; }
+
+  /* ============================
+     Preview 3: anthropics/skills
+     ============================ */
+  .p-brand {
+    padding: 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: center;
+    background: var(--bg);
+  }
+  .p-brand .swatches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .p-brand .swatch {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .p-brand .swatch::after {
+    content: attr(data-hex);
+    position: absolute;
+    bottom: 4px;
+    left: 5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 7px;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.05em;
+  }
+  .p-brand .swatch.light::after { color: rgba(20,20,19,0.6); }
+  .p-brand .typo {
+    text-align: center;
+    border-left: 1px solid var(--border);
+    padding-left: 16px;
+  }
+  .p-brand .typo .aa {
+    font-family: 'Iowan Old Style', 'Georgia', serif;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+  }
+  .p-brand .typo .aa .slash {
+    color: var(--orange);
+    font-style: italic;
+  }
+  .p-brand .typo .meta {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 9px;
+    color: var(--ink-mute);
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  /* ============================
+     Preview 4: VS Code theme
+     ============================ */
+  .p-vscode {
+    height: 100%;
+    background: #2b2a27;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px;
+  }
+  .p-vscode .v-side {
+    background: #232220;
+    padding: 12px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #6b6863;
+    align-items: center;
+  }
+  .p-vscode .v-side .dot {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: rgba(217,119,87,0.18);
+  }
+  .p-vscode .v-side .dot.active { background: var(--orange); }
+  .p-vscode .v-main {
+    padding: 14px 16px;
+    color: #d8c4b3;
+    line-height: 1.7;
+    overflow: hidden;
+  }
+  .p-vscode .ln {
+    color: #5c5853;
+    margin-right: 12px;
+    user-select: none;
+  }
+  .p-vscode .kw { color: #d97757; }
+  .p-vscode .fn { color: #b8a37e; }
+  .p-vscode .str { color: #889c6c; }
+  .p-vscode .com { color: #6b6863; font-style: italic; }
+  .p-vscode .var { color: #d8c4b3; }
+
+  /* ============================
+     Preview 5: Open-claude (simple chat)
+     ============================ */
+  .p-openclaude {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg);
+    justify-content: center;
+  }
+  .p-openclaude .bubble {
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 78%;
+  }
+  .p-openclaude .bubble.user {
+    background: #ddd9ce;
+    align-self: flex-end;
+    color: var(--ink);
+    border-bottom-right-radius: 4px;
+  }
+  .p-openclaude .bubble.bot {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    align-self: flex-start;
+    color: var(--ink-soft);
+    border-bottom-left-radius: 4px;
+    font-style: italic;
+  }
+  .p-openclaude .input-bar {
+    margin-top: 8px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 0.25rem 1.25rem rgba(0,0,0,0.035);
+  }
+  .p-openclaude .send {
+    width: 22px; height: 22px;
+    background: var(--orange);
+    border-radius: 50%;
+    color: white;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ============================
+     Preview 6: Nuxt claude-ui
+     ============================ */
+  .p-nuxt {
+    height: 100%;
+    background: var(--bg);
+    display: grid;
+    grid-template-columns: 110px 1fr;
+  }
+  .p-nuxt .n-side {
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .p-nuxt .n-side .new {
+    background: var(--orange);
+    color: white;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .p-nuxt .n-side .conv {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 9px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .p-nuxt .n-side .conv.active {
+    background: var(--orange-tint);
+    border-color: var(--orange-soft);
+    color: var(--orange-deep);
+  }
+  .p-nuxt .n-main {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .p-nuxt .n-main .greet {
+    font-family: 'Iowan Old Style', 'Georgia', serif;
+    font-size: 16px;
+    color: var(--ink);
+    margin-bottom: 6px;
+    font-style: italic;
+  }
+  .p-nuxt .n-main .sub {
+    font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .p-nuxt .n-input {
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 10px;
+    color: var(--muted);
+    font-style: italic;
+    background: var(--paper);
+  }
+
+  /* ============================
+     Preview 7: awesome-claude-design (DESIGN.md stack)
+     ============================ */
+  .p-design {
+    height: 100%;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg-soft) 100%);
+    padding: 22px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    align-items: center;
+  }
+  .p-design .design-card {
+    aspect-ratio: 0.78;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transform: translateY(0);
+    transition: transform 0.4s var(--ease);
+  }
+  .p-design .design-card:nth-child(1) { transform: rotate(-3deg) translateY(4px); }
+  .p-design .design-card:nth-child(2) { transform: translateY(-6px); z-index: 2; box-shadow: 0 4px 14px rgba(20,20,19,0.06); }
+  .p-design .design-card:nth-child(3) { transform: rotate(3deg) translateY(4px); }
+  .p-design .design-card .stripe {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bg-deep);
+  }
+  .p-design .design-card .stripe.short { width: 60%; }
+  .p-design .design-card .stripe.color { background: var(--orange); }
+  .p-design .design-card .stripe.color2 { background: var(--blue); }
+  .p-design .design-card .stripe.color3 { background: var(--green); }
+  .p-design .design-card .stripe.title {
+    height: 7px;
+    background: var(--ink);
+  }
+
+  /* ============================
+     Preview 8: tweakcn (theme generator)
+     ============================ */
+  .p-tweakcn {
+    padding: 20px;
+    background: var(--bg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+  }
+  .p-tweakcn .palette {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+  }
+  .p-tweakcn .palette .chip {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .p-tweakcn .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .p-tweakcn .slider {
+    height: 6px;
+    background: linear-gradient(90deg,
+      hsl(0 60% 60%) 0%,
+      hsl(30 60% 60%) 16%,
+      hsl(60 60% 60%) 32%,
+      hsl(120 60% 60%) 48%,
+      hsl(200 60% 60%) 64%,
+      hsl(260 60% 60%) 80%,
+      hsl(320 60% 60%) 100%);
+    border-radius: 3px;
+    position: relative;
+  }
+  .p-tweakcn .slider .knob {
+    position: absolute;
+    top: 50%;
+    left: 18%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: var(--paper);
+    border: 2px solid var(--orange);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .p-tweakcn .slider.lightness {
+    background: linear-gradient(90deg, #1a1a18 0%, var(--orange) 50%, #ffffff 100%);
+  }
+  .p-tweakcn .slider.lightness .knob { left: 60%; }
+  .p-tweakcn .label {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 8px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ============================
+     Preview 9: open-codesign (slides/PDF)
+     ============================ */
+  .p-codesign {
+    height: 100%;
+    background: var(--bg-soft);
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+  }
+  .p-codesign .slide {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .p-codesign .slide .title {
+    height: 6px;
+    background: var(--ink);
+    border-radius: 2px;
+    width: 70%;
+  }
+  .p-codesign .slide .line {
+    height: 3px;
+    background: var(--bg-deep);
+    border-radius: 2px;
+  }
+  .p-codesign .slide .line.short { width: 60%; }
+  .p-codesign .slide .accent {
+    margin-top: auto;
+    height: 18px;
+    background: var(--orange-tint);
+    border-radius: 4px;
+    border-left: 3px solid var(--orange);
+  }
+  .p-codesign .slide.dark {
+    background: var(--ink-soft);
+  }
+  .p-codesign .slide.dark .title { background: var(--orange); }
+  .p-codesign .slide.dark .line { background: rgba(255,255,255,0.15); }
+  .p-codesign .slide.dark .accent { background: rgba(217,119,87,0.2); border-color: var(--orange); }
+
+  /* ---------- Recommendation Footer ---------- */
+  .recommend {
+    margin: 96px 0 0;
+    padding: 56px 48px;
+    background: var(--ink-soft);
+    color: var(--bg);
+    border-radius: 24px;
+  }
+
+  .recommend .eyebrow {
+    color: var(--orange);
+    margin-bottom: 24px;
+  }
+
+  .recommend h2 {
+    color: var(--bg);
+    margin-bottom: 32px;
+    font-size: 32px;
+  }
+
+  .rec-list {
+    list-style: none;
+    display: grid;
+    gap: 20px;
+  }
+
+  .rec-list li {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .rec-list li:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .rec-when {
+    color: var(--orange);
+    font-style: italic;
+    font-size: 16px;
+  }
+
+  .rec-pick {
+    color: var(--bg);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .rec-pick code {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 14px;
+    background: rgba(255,255,255,0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--orange-soft);
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    padding: 64px 0 80px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    letter-spacing: 0.05em;
+  }
+
+  footer .slash { color: var(--orange); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 760px) {
+    .container { padding: 0 20px; }
+    header { padding: 64px 0 40px; }
+    .intro-grid, .section-head { grid-template-columns: 1fr; gap: 12px; }
+    .recommend { padding: 36px 24px; border-radius: 16px; }
+    .rec-list li { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ============================
+       HEADER
+       ============================ -->
+  <header>
+    <svg class="logo" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50 8 L54 42 L88 46 L54 50 L66 78 L50 56 L34 78 L46 50 L12 46 L46 42 Z"/>
+    </svg>
+    <div class="eyebrow">A Curated Gallery · 2026</div>
+    <h1>复刻 Claude 美学的<br><span class="accent">开源 UI 库</span></h1>
+    <p class="subtitle">
+      暖赤陶橙、奶油白、衬线体——这套被 Geist 工作室打磨两年半的视觉语言，<br>
+      在 GitHub 上已经有不少人用代码把它复刻了出来。
+    </p>
+  </header>
+
+  <!-- ============================
+       INTRO
+       ============================ -->
+  <section class="intro">
+    <div class="intro-grid">
+      <div class="intro-label">关于这份画廊</div>
+      <p class="intro-text">
+        画廊收录 9 个开源项目，覆盖 <strong>主题样式</strong>、<strong>聊天界面克隆</strong>、<strong>官方品牌资产</strong>三类。
+        每张卡片的预览图都是用 CSS 现场绘制的视觉特征还原，颜色严格遵循 Anthropic 官方品牌规范
+        （主色 <code style="font-family:ui-monospace,monospace;font-size:0.92em;color:var(--orange-deep);">#d97757</code>，背景
+        <code style="font-family:ui-monospace,monospace;font-size:0.92em;color:var(--orange-deep);">#faf9f5</code>）。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================
+       SECTION 1 · 主题层
+       ============================ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">01 / 主题层</div>
+      <div>
+        <h2>给现有项目<em>"贴一层 Claude 皮"</em></h2>
+        <p class="section-desc">
+          最快的路径——shadcn/ui 主题、VS Code 主题、调色生成器，几行命令装上即可。
+        </p>
+      </div>
+    </div>
+
+    <div class="cards">
+
+      <!-- Card: shadcn.io claude theme -->
+      <div class="card featured">
+        <div class="preview p-shadcn">
+          <div class="ui-card">
+            <div class="ui-label">Ask Claude</div>
+            <div class="ui-input">如何用衬线体做按钮…</div>
+          </div>
+          <div class="ui-row">
+            <button class="btn btn-primary">发送</button>
+            <button class="btn btn-outline">取消</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag pick">主推荐</span>
+            <span class="tag">React</span>
+            <span class="tag">shadcn/ui</span>
+          </div>
+          <h3>shadcn.io <span class="mono">/theme/claude</span></h3>
+          <p class="card-desc">
+            注册表里现成的 Claude 主题：暖橙主色、奶油背景、衬线字体栈、暖深棕深色模式，全部 oklch 色空间定义。<code>npx shadcn add</code> 一行装上即用。
+          </p>
+          <a class="card-link" href="https://www.shadcn.io/theme/claude" target="_blank" rel="noopener">查看主题</a>
+        </div>
+      </div>
+
+      <!-- Card: vscode-claude-theme -->
+      <div class="card">
+        <div class="preview p-vscode">
+          <div class="v-side">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="v-main">
+            <div><span class="ln">1</span><span class="com">// claude.ts</span></div>
+            <div><span class="ln">2</span><span class="kw">import</span> <span class="var">Anthropic</span></div>
+            <div><span class="ln">3</span><span class="kw">const</span> <span class="fn">client</span> = <span class="kw">new</span> <span class="fn">Anthropic</span>()</div>
+            <div><span class="ln">4</span></div>
+            <div><span class="ln">5</span><span class="kw">async function</span> <span class="fn">ask</span>() {</div>
+            <div><span class="ln">6</span>&nbsp;&nbsp;<span class="kw">return</span> <span class="str">"warmth"</span></div>
+            <div><span class="ln">7</span>}</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag">VS Code</span>
+            <span class="tag">主题</span>
+          </div>
+          <h3>jnahian / <span class="mono">vscode-claude-theme</span></h3>
+          <p class="card-desc">
+            把 Claude 的暖深棕背景、赤陶关键字、苔绿字符串搬进 VS Code。在 Marketplace 搜 "Claude Theme" 即可安装。
+          </p>
+          <a class="card-link" href="https://github.com/jnahian/vscode-claude-theme" target="_blank" rel="noopener">查看仓库</a>
+        </div>
+      </div>
+
+      <!-- Card: tweakcn -->
+      <div class="card">
+        <div class="preview p-tweakcn">
+          <div class="palette">
+            <div class="chip" style="background:#faf9f5"></div>
+            <div class="chip" style="background:#f1efe7"></div>
+            <div class="chip" style="background:#e8e6dc"></div>
+            <div class="chip" style="background:#d97757"></div>
+            <div class="chip" style="background:#ae5630"></div>
+            <div class="chip" style="background:#788c5d"></div>
+            <div class="chip" style="background:#6a9bcc"></div>
+            <div class="chip" style="background:#141413"></div>
+          </div>
+          <div class="slider-row">
+            <div class="label">HUE · 45°</div>
+            <div class="slider"><div class="knob"></div></div>
+            <div class="label">LIGHTNESS · 70%</div>
+            <div class="slider lightness"><div class="knob"></div></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag">主题生成器</span>
+            <span class="tag">在线工具</span>
+          </div>
+          <h3>tweakcn</h3>
+          <p class="card-desc">
+            shadcn 主题可视化生成器，可以直接拖滑块调出自己的 Claude 变体并导出 CSS 变量。无需注册。
+          </p>
+          <a class="card-link" href="https://tweakcn.com/" target="_blank" rel="noopener">打开 tweakcn</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================
+       SECTION 2 · 聊天界面克隆
+       ============================ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">02 / 聊天界面</div>
+      <div>
+        <h2>整套 Claude 风格的<em>对话产品</em></h2>
+        <p class="section-desc">
+          三栏布局、无气泡的助手回复、Artifacts 分屏、暖背景——可以直接 fork 改造的开源实现。
+        </p>
+      </div>
+    </div>
+
+    <div class="cards">
+
+      <!-- Card: assistant-ui Claude Clone -->
+      <div class="card featured">
+        <div class="preview p-assistant">
+          <div class="a-sidebar">
+            <div class="item active"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+            <div class="item"></div>
+          </div>
+          <div class="a-chat">
+            <div class="a-bubble">解释一下衬线体的历史</div>
+            <div class="a-text">衬线体起源于罗马石刻，最早可以追溯到</div>
+          </div>
+          <div class="a-art">
+            <span class="kw">function</span><br>
+            <span class="kw">const</span> x =<br>
+            <span class="str">"hello"</span><br>
+            { ... }<br>
+            <span class="kw">return</span><br>
+            ...
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag pick">主推荐</span>
+            <span class="tag">React</span>
+            <span class="tag">Vercel AI SDK</span>
+          </div>
+          <h3>assistant-ui <span class="mono">/ Claude Clone</span></h3>
+          <p class="card-desc">
+            最贴近 Claude.ai 的实现：三栏布局、无气泡的 Claude 回复、Artifacts 实时预览。基于 React + Vercel AI SDK，可直接 fork。
+          </p>
+          <a class="card-link" href="https://www.assistant-ui.com/examples/claude" target="_blank" rel="noopener">查看示例</a>
+        </div>
+      </div>
+
+      <!-- Card: Open-claude -->
+      <div class="card">
+        <div class="preview p-openclaude">
+          <div class="bubble user">帮我看一下这段代码</div>
+          <div class="bubble bot">我来帮你看一下，先把代码贴过来</div>
+          <div class="input-bar">
+            <span>Reply to Claude...</span>
+            <span class="send">↑</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag">React</span>
+            <span class="tag">精简</span>
+          </div>
+          <h3>Damienchakma / <span class="mono">Open-claude</span></h3>
+          <p class="card-desc">
+            最轻量的 Claude UI 复刻——支持多模型（GPT/Gemini/Groq/本地）。代码量小，适合作为脚手架起点。
+          </p>
+          <a class="card-link" href="https://github.com/Damienchakma/Open-claude" target="_blank" rel="noopener">查看仓库</a>
+        </div>
+      </div>
+
+      <!-- Card: chihebnabil/claude-ui (Nuxt) -->
+      <div class="card">
+        <div class="preview p-nuxt">
+          <div class="n-side">
+            <div class="new">+ NEW CHAT</div>
+            <div class="conv active">关于美学</div>
+            <div class="conv">代码 review</div>
+            <div class="conv">写作灵感</div>
+          </div>
+          <div class="n-main">
+            <div>
+              <div class="greet">Good evening.</div>
+              <div class="sub">How can I help today?</div>
+            </div>
+            <div class="n-input">Message Claude…</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag">Nuxt.js</span>
+            <span class="tag">Vue</span>
+          </div>
+          <h3>chihebnabil / <span class="mono">claude-ui</span></h3>
+          <p class="card-desc">
+            Nuxt.js 生态下最完整的 Claude 聊天界面：对话历史、文件夹、暖色主题。Vue 团队的首选。
+          </p>
+          <a class="card-link" href="https://github.com/chihebnabil/claude-ui" target="_blank" rel="noopener">查看仓库</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================
+       SECTION 3 · 官方品牌资产
+       ============================ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">03 / 官方资产 & 设计系统</div>
+      <div>
+        <h2>从源头取材<em>，做品牌物料</em></h2>
+        <p class="section-desc">
+          Anthropic 自己发布的品牌规范，加上社区整理的 DESIGN.md 模板库，可以一键脚手架出整套 UI。
+        </p>
+      </div>
+    </div>
+
+    <div class="cards">
+
+      <!-- Card: anthropics/skills brand-guidelines -->
+      <div class="card featured">
+        <div class="preview p-brand">
+          <div class="swatches">
+            <div class="swatch" style="background:#d97757" data-hex="d97757"></div>
+            <div class="swatch" style="background:#6a9bcc" data-hex="6a9bcc"></div>
+            <div class="swatch" style="background:#788c5d" data-hex="788c5d"></div>
+            <div class="swatch light" style="background:#faf9f5;border-color:rgba(0,0,0,0.1)" data-hex="faf9f5"></div>
+            <div class="swatch light" style="background:#e8e6dc" data-hex="e8e6dc"></div>
+            <div class="swatch" style="background:#141413" data-hex="141413"></div>
+          </div>
+          <div class="typo">
+            <div class="aa">Aa<span class="slash">/</span></div>
+            <div class="meta">STYRENE · TIEMPOS</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag pick">官方</span>
+            <span class="tag">Skill</span>
+          </div>
+          <h3>anthropics / <span class="mono">skills</span></h3>
+          <p class="card-desc">
+            Anthropic 自己发布的 brand-guidelines skill，含官方色板、字体、排版规则——这是<strong>唯一的一手来源</strong>，第三方标注的 #FF6B35 等色值不可信。
+          </p>
+          <a class="card-link" href="https://github.com/anthropics/skills/tree/main/skills/brand-guidelines" target="_blank" rel="noopener">查看 skill</a>
+        </div>
+      </div>
+
+      <!-- Card: VoltAgent/awesome-claude-design -->
+      <div class="card">
+        <div class="preview p-design">
+          <div class="design-card">
+            <div class="stripe color"></div>
+            <div class="stripe title"></div>
+            <div class="stripe"></div>
+            <div class="stripe short"></div>
+            <div class="stripe"></div>
+          </div>
+          <div class="design-card">
+            <div class="stripe color2"></div>
+            <div class="stripe title"></div>
+            <div class="stripe"></div>
+            <div class="stripe short"></div>
+            <div class="stripe"></div>
+          </div>
+          <div class="design-card">
+            <div class="stripe color3"></div>
+            <div class="stripe title"></div>
+            <div class="stripe"></div>
+            <div class="stripe short"></div>
+            <div class="stripe"></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag">DESIGN.md</span>
+            <span class="tag">68 模板</span>
+          </div>
+          <h3>VoltAgent / <span class="mono">awesome-claude-design</span></h3>
+          <p class="card-desc">
+            68 份开箱即用的 DESIGN.md 设计系统模板。投喂给 Claude Code，一句话脚手架出整套 UI——含暖橙、冷蓝、苔绿等多种家族。
+          </p>
+          <a class="card-link" href="https://github.com/VoltAgent/awesome-claude-design" target="_blank" rel="noopener">查看仓库</a>
+        </div>
+      </div>
+
+      <!-- Card: OpenCoworkAI/open-codesign -->
+      <div class="card">
+        <div class="preview p-codesign">
+          <div class="slide">
+            <div class="title"></div>
+            <div class="line"></div>
+            <div class="line short"></div>
+            <div class="accent"></div>
+          </div>
+          <div class="slide dark">
+            <div class="title"></div>
+            <div class="line"></div>
+            <div class="line short"></div>
+            <div class="accent"></div>
+          </div>
+          <div class="slide dark">
+            <div class="title"></div>
+            <div class="line short"></div>
+            <div class="line"></div>
+            <div class="accent"></div>
+          </div>
+          <div class="slide">
+            <div class="title"></div>
+            <div class="line"></div>
+            <div class="line short"></div>
+            <div class="accent"></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag">设计工具</span>
+            <span class="tag">MIT</span>
+          </div>
+          <h3>OpenCoworkAI / <span class="mono">open-codesign</span></h3>
+          <p class="card-desc">
+            开源 Claude Design 替代品：prompt → prototype / slides / PDF。多模型支持（Claude / GPT / Gemini），BYOK 本地优先。
+          </p>
+          <a class="card-link" href="https://github.com/OpenCoworkAI/open-codesign" target="_blank" rel="noopener">查看仓库</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================
+       RECOMMEND
+       ============================ -->
+  <section class="recommend">
+    <div class="eyebrow">推荐路径</div>
+    <h2>三种典型场景，三个最优解</h2>
+    <ul class="rec-list">
+      <li>
+        <span class="rec-when">现有 React 项目<br>想"贴一层 Claude 皮"</span>
+        <span class="rec-pick"><code>npx shadcn add</code> 装上 <strong>shadcn.io / theme / claude</strong> 即可。零侵入，30 秒内生效。</span>
+      </li>
+      <li>
+        <span class="rec-when">从 0 做一个<br>Claude 风格对话产品</span>
+        <span class="rec-pick">Fork <strong>assistant-ui Claude Clone</strong>，叠加上面的 shadcn 主题，得到三栏布局 + Artifacts。</span>
+      </li>
+      <li>
+        <span class="rec-when">做品牌物料<br>（Slides / PDF / 海报）</span>
+        <span class="rec-pick">直接挂 <strong>anthropics / skills</strong> 的 brand-guidelines，色板字体由 Anthropic 官方背书。</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ============================
+       FOOTER
+       ============================ -->
+  <footer>
+    <span class="slash">/</span> warmth over modernity <span class="slash">/</span> accessibility over exclusivity <span class="slash">/</span> <br>
+    <span class="slash">/</span> thoughtful restraint over flashy showmanship <span class="slash">/</span><br><br>
+    Generated · 2026-04-27 · for yqin0800@uni.sydney.edu.au
+  </footer>
+
+</div>
+
+</body>
+</html>

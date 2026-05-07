@@ -97,6 +97,7 @@ See PROJECT.md for full text. Quick reference:
 - **KD-10**: Three-tier memory architecture — **library choice DEFERRED until Phase 5.5**
 - **KD-11**: Phase entry gate — Echo360 spike must pass before Phase 6 implementation
 - **KD-12**: `claude-code-parser` (MIT) vendored in `vendor/`, NOT npm dependency
+- **KD-13**: Visual aesthetic system locked to Anthropic/Claude family (per KP-09; full spec deferred to `.planning/references/design/`)
 
 ### Active Open Questions (research/questions.md)
 
@@ -134,6 +135,7 @@ Honored across the roadmap; no phase contradicts:
 - KP-06 Reject reinvented wheels
 - **KP-07 Proactive contextual recall** ("懂我" experience commitment — added 2026-05-07; AI proactively surfaces session context unprompted; acceptance ≥3/session, ≥90% relevance — gates REQ-07 acceptance)
 - **KP-08 OSS dependency tracking + upstream monitoring** (added 2026-05-07; every adopted OSS library registered in `.planning/dependencies.md`; post-v1 automated upstream check at per-row cadence)
+- **KP-09 Aesthetic family — inherit Anthropic/Claude visual identity** (added 2026-05-07; warmth over modernity, accessibility over exclusivity, thoughtful restraint over flashy showmanship; full SSOT in `.planning/references/design/`; locked specs in KD-13)
 
 ### Project Skills (auto-loaded)
 
@@ -169,7 +171,8 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - If Phase 5 spike INVALIDATES the WKWebView path, Phase 6 MUST be replanned before entry — likely shifting to "external browser + deep links" or "persistent per-domain webview instance" alternatives. Update KD-04 in PROJECT.md at that point.
 - `_source/` write-policy enforcement (Sync Controller is the only writer) is set up in Phase 2 and reused throughout Phase 4 (document ingestion outputs go to `_source/`). Don't relax this — PITFALLS Pitfall 20.
 - **Foundation-first re-framing (2026-05-07)**: PROJECT.md Core Value is now a 5-dimension composite (not a single sentence); ROADMAP.md adds a Layer Architecture overlay (Foundation / Application / Replacement) on top of existing phase numbers; KP-07 (proactive contextual recall) + KP-08 (OSS dependency tracking) are new non-negotiable principles; OOS-09 (voice input) lifted to REQ-19 v1.x candidate; RQ-05 (learning-method epistemic humility) opened as ongoing non-blocking research line; `.planning/dependencies.md` created as KP-08 registry. The deepest reason behind this re-framing: current 18 REQs derive from n=2 sample (user + partner) — foundation must be agnostic to which feature set wins so REQ collection can evolve as observation of higher-achieving students' learning methods accumulates.
+- **Visual aesthetic family lock (2026-05-07)**: KP-09 + KD-13 added to inherit the Anthropic/Claude visual identity (warmth/restraint/serif). Two reference files copied into `.planning/references/design/` as SSOT (deep-dive zh + OSS UI gallery HTML). PROJECT.md REQ-01 acceptance, ROADMAP.md driving constraints, and `.planning/dependencies.md` Groups 9 + 10 all updated to point to KP-09 / KD-13 / reference files. Mandatory locks: `#d97757` orange + `#faf9f5` cream + `#141413` text + `#2b2a27` warm dark; serif body, ban Arial/Inter; ease `cubic-bezier(0.165, 0.85, 0.45, 1)`; soft 8% borders; multi-layer soft shadows. Full token palette + OSS gallery deferred to reference files (not duplicated in PROJECT.md). Recommended starting OSS: shadcn.io/theme/claude (port CSS variables only — mneme is Svelte not React) + anthropics/skills/brand-guidelines (first-party SSOT) + tweakcn (shade extension).
 
 ---
 
-*Last updated: 2026-05-07 — `/gsd-explore` foundation-first re-framing applied (8 atomic edits across PROJECT.md / ROADMAP.md / research/questions.md + new file dependencies.md). Prior: `/gsd-plan-phase 0` complete (4 plans, 1 revision cycle, plan-checker APPROVED).*
+*Last updated: 2026-05-07 — `/gsd-explore` aesthetic family lock applied (KP-09 + KD-13 + 2 reference files + ROADMAP/REQ-01/dependencies updates). Prior: foundation-first re-framing same day (8 atomic edits) + `/gsd-plan-phase 0` complete (4 plans, 1 revision cycle, plan-checker APPROVED).*
