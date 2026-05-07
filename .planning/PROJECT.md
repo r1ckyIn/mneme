@@ -438,9 +438,11 @@ Lecture slides are PDF (math-heavy → Marker); tutorials are often Word/PPT (ma
 
 ### Out of Scope (deliberate exclusions)
 
-#### OOS-01 · Multi-user / collaboration / distribution / commercialization
+#### OOS-01 · Multi-user / collaboration / commercialization
 
-**Why excluded**: personal-use only; introducing accounts, sharing, billing would 10x the surface area for no user benefit (myself).
+**Why excluded**: personal-use codebase; introducing accounts, sharing, billing would 10x the surface area for no user benefit (myself).
+
+**Note on distribution (amended 2026-05-07 per Phase 0 discussion)**: open-source release of the codebase as a portfolio piece **is allowed and planned**. The repo may eventually be published publicly (MIT-licensed) so others can fork it for personal use. This is **NOT** commercialization, multi-user support, or hosted SaaS — it's "look, here's how I built my own learning vault." No user accounts, no shared infrastructure, no billing, no contribution-management overhead. Public-release polish work (`CONTRIBUTING.md`, demo video, screenshots, code-of-conduct) is its own separate future phase, not bundled into v1 scope.
 
 #### OOS-02 · Mobile (iOS / Android)
 
