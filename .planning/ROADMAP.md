@@ -87,7 +87,7 @@ Not separate phases — these are **library / algorithm choices INSIDE phases** 
 **Plans:** 4 plans
 Plans:
 - [x] 00-01-PLAN.md — Naming finalist selection + user pick (Wave 1; checkpoint:decision)
-- [ ] 00-02-PLAN.md — Icon asset production via gpt-image-1 + sips/iconutil pipeline (Wave 2)
+- [x] 00-02-PLAN.md — Icon asset production via gpt-image-1 + sips/iconutil pipeline (Wave 2)
 - [x] 00-03-PLAN.md — Atomic content rename + skill rename + README/LICENSE creation (Wave 2)
 - [ ] 00-04-PLAN.md — Pre-publish gate + atomic commit + GitHub publish + local-path move (Wave 3)
 
