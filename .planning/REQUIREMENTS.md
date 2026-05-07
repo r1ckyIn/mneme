@@ -1,4 +1,4 @@
-# learn-os Requirements
+# mneme Requirements
 
 > Scoped, testable, atomic requirements derived from `.planning/PROJECT.md` (REQ-01 through REQ-18, OOS-01 through OOS-09, KP-01 through KP-06, KD-01 through KD-12) and `.planning/research/SUMMARY.md`.
 
@@ -34,7 +34,7 @@ Status legend:
   Acceptance: categorized panel (General / Vault / Sync / Claude / Privacy / Appearance / Keybindings / Advanced); reachable via Cmd+,; vault path move + re-index works; cost cap (REQ-13-related kill switch) functions; theme toggle works; keybinding override works for top 5 actions.
 
 - [ ] **REQ-16 · First-run onboarding wizard**
-  Acceptance: 6-step wizard (Welcome → Confirm Claude Code auth → Vault path → MCP detection → Course selection → First sync); cancellable; resumable from `~/.learnos/onboarding-state.json`; landing into main UI shows an example chat prompt.
+  Acceptance: 6-step wizard (Welcome → Confirm Claude Code auth → Vault path → MCP detection → Course selection → First sync); cancellable; resumable from `~/.mneme/onboarding-state.json`; landing into main UI shows an example chat prompt.
 
 ### Data & Sync
 
@@ -69,8 +69,8 @@ Status legend:
 - [ ] **REQ-08 · Anchored mode (sources panel + Citations API)**
   Acceptance: chat panel toggle (free ↔ anchored); anchored mode passes user-checked vault files as documents to Anthropic Citations API; every assistant sentence ends with `[file.md:42]` clickable citation; click → vault file opens to that line; mode-switch is per-session, not global.
 
-- [ ] **REQ-17 · Per-course system prompts via `.learnos/rules/`**
-  Acceptance: rules stored at `courses/<COURSE>/.learnos/rules/<rule>.md` with YAML frontmatter (`enabled`, `priority`, `applies_to`); when starting chat in COURSE context, all enabled rules concatenated into `--append-system-prompt`; debug overlay shows which rules fired.
+- [ ] **REQ-17 · Per-course system prompts via `.mneme/rules/`**
+  Acceptance: rules stored at `courses/<COURSE>/.mneme/rules/<rule>.md` with YAML frontmatter (`enabled`, `priority`, `applies_to`); when starting chat in COURSE context, all enabled rules concatenated into `--append-system-prompt`; debug overlay shows which rules fired.
 
 ### Document ingestion
 
@@ -148,7 +148,7 @@ Every v1 + v1.x requirement maps to exactly one phase in ROADMAP.md. Phase numbe
 | REQ-14 (settings / preferences UI) | Phase 2 | Vault + Canvas/Ed Sync + Onboarding | Pending |
 | REQ-15 (review focus mode) | Phase 10 | FSRS-6 Reviews + Focus Mode | Pending |
 | REQ-16 (first-run onboarding wizard) | Phase 2 | Vault + Canvas/Ed Sync + Onboarding | Pending |
-| REQ-17 (per-course `.learnos/rules/`) | Phase 8 | Mind-Map View + Per-Course Rules | Pending |
+| REQ-17 (per-course `.mneme/rules/`) | Phase 8 | Mind-Map View + Per-Course Rules | Pending |
 | REQ-18 (document → markdown ingestion) | Phase 4 | Document Ingestion (PDF + Office → markdown) | Pending |
 
 **Coverage:** 18 / 18 v1+v1.x requirements mapped. ✓ No orphans. ✓ No duplicates.
@@ -172,4 +172,4 @@ Every v1 + v1.x requirement maps to exactly one phase in ROADMAP.md. Phase numbe
 
 ---
 
-*Last updated: 2026-05-06 — traceability section populated by gsd-roadmapper after roadmap creation. Source documents: PROJECT.md, research/SUMMARY.md, spike-findings-learn-os skill, ROADMAP.md.*
+*Last updated: 2026-05-06 — traceability section populated by gsd-roadmapper after roadmap creation. Source documents: PROJECT.md, research/SUMMARY.md, spike-findings-mneme skill, ROADMAP.md.*

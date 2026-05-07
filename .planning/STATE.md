@@ -12,7 +12,7 @@ progress:
   percent: 0
 ---
 
-# learn-os Project State
+# mneme Project State
 
 > Project memory — the source of truth for "where am I right now and what's next?". Updated automatically by GSD commands; read by Claude on session start.
 
@@ -20,7 +20,7 @@ progress:
 
 ## Project Reference
 
-**Name (codename)**: learn-os (final name TBD in Phase 0)
+**Name (codename)**: mneme (final name TBD in Phase 0)
 **Core value**: Wrap the user's Claude Code (with all its tools, MCPs, memory) in a desktop GUI that turns chat sessions into a continuously-growing local knowledge graph + browsable markdown vault, indexed against actual lecture content. The whole loop — *learn → AI teaches → notes captured automatically → reviewed via FSRS* — must feel like one product, not five glued together.
 **Stack (locked by spike 002)**: Tauri 2 + SvelteKit (`adapter-static`) + `tauri-plugin-shell` + `marked` + KaTeX + DOMPurify + Svelte 5 runes
 **User**: USYD CS S1 2026 student, MacBook Pro 2019 Intel, macOS Ventura 13.4
@@ -133,14 +133,14 @@ Honored across the roadmap; no phase contradicts:
 
 ### Project Skills (auto-loaded)
 
-- `spike-findings-learn-os` — Implementation patterns + constraints + gotchas from spikes 001 + 002 (CONVENTIONS, claude-subprocess findings, tauri-shell-ui findings). Auto-loaded during all implementation work.
+- `spike-findings-mneme` — Implementation patterns + constraints + gotchas from spikes 001 + 002 (CONVENTIONS, claude-subprocess findings, tauri-shell-ui findings). Auto-loaded during all implementation work.
 
 ### Existing Validated Foundation
 
 Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subprocess + streaming chat with markdown + KaTeX + tool-use roundtrip). Phase 1's job is to **extend and harden** this validated seed — not redo it. Specifically:
 
 - Source: `.planning/spikes/sources/002-tauri-claude-shell/app/src/routes/+page.svelte`
-- Locked patterns documented in `spike-findings-learn-os/references/{claude-subprocess.md, tauri-shell-ui.md}`
+- Locked patterns documented in `spike-findings-mneme/references/{claude-subprocess.md, tauri-shell-ui.md}`
 - Phase 1 success criteria explicitly assume this seed; do NOT re-validate the basic subprocess+streaming pattern
 
 ---
@@ -148,7 +148,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 ## Session Continuity
 
 **Last GSD command**: `/gsd-plan-phase 0`
-**Last action**: Spawned gsd-phase-researcher → 00-RESEARCH.md (1319 lines: 3 verified finalists Mneme · Theoria · Scholea, D-09 icon pipeline resolution — Apple Icon Composer blocked on Ventura → sips+iconutil pipeline locked, full atomic-rename inventory with `.learnos/` lockstep gotcha, security STRIDE). Spawned gsd-planner → 4 PLAN.md (3 waves). Spawned gsd-plan-checker × 2 (1 revision cycle): caught 2 BLOCKERS (D-12 atomic-commit closure + V-07 skip-list 3-layer consistency) + 6 WARNINGs; planner revised; 2nd checker pass returned `## PLANS APPROVED` (all 6 dimensions PASS).
+**Last action**: Spawned gsd-phase-researcher → 00-RESEARCH.md (1319 lines: 3 verified finalists Mneme · Theoria · Scholea, D-09 icon pipeline resolution — Apple Icon Composer blocked on Ventura → sips+iconutil pipeline locked, full atomic-rename inventory with `.mneme/` lockstep gotcha, security STRIDE). Spawned gsd-planner → 4 PLAN.md (3 waves). Spawned gsd-plan-checker × 2 (1 revision cycle): caught 2 BLOCKERS (D-12 atomic-commit closure + V-07 skip-list 3-layer consistency) + 6 WARNINGs; planner revised; 2nd checker pass returned `## PLANS APPROVED` (all 6 dimensions PASS).
 **Next recommended action**: `/gsd-execute-phase 0` — Wave 1 (00-01 finalist pick, autonomous: false — user picks name) → Wave 2 (00-02 icon production + 00-03 atomic rename, parallel) → Wave 3 (00-04 publish + STATE.md update + atomic D-12 commit).
 
 **Session boundaries**:
@@ -160,7 +160,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Notes for Future-Self
 
-- Codename `learn-os` will be retired in Phase 0. After Phase 0 completes, all references in PROJECT.md, ROADMAP.md, STATE.md, README, tauri.conf.json should reflect the locked name.
+- Codename `mneme` will be retired in Phase 0. After Phase 0 completes, all references in PROJECT.md, ROADMAP.md, STATE.md, README, tauri.conf.json should reflect the locked name.
 - The roadmap deliberately puts the spike (Phase 5) and research-resolution (Phase 5.5) as standalone phases between v1 (Phases 0-4) and v1.x (Phases 6-10). This is intentional — each is a real piece of work that needs scope discipline (`/gsd-spike` budget = 2 days, RQ-01 dogfood budget = 1 week).
 - If Phase 5 spike INVALIDATES the WKWebView path, Phase 6 MUST be replanned before entry — likely shifting to "external browser + deep links" or "persistent per-domain webview instance" alternatives. Update KD-04 in PROJECT.md at that point.
 - `_source/` write-policy enforcement (Sync Controller is the only writer) is set up in Phase 2 and reused throughout Phase 4 (document ingestion outputs go to `_source/`). Don't relax this — PITFALLS Pitfall 20.

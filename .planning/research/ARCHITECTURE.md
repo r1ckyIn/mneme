@@ -10,7 +10,7 @@
 
 ## 1. Executive Architecture Summary
 
-learn-os is a **Rust-shell-thin / TypeScript-fat** desktop app. The Rust side (Tauri core + plugin layer) owns OS-level concerns: process spawning, filesystem, file-watching, native webview, OS keychain. The TypeScript/Svelte side owns the *entire* product semantics: chat UI, JSONL parsing, vault model, knowledge graph, mind-map render, FSRS, sync orchestration. There is **no in-house Rust business logic** beyond bridging.
+mneme is a **Rust-shell-thin / TypeScript-fat** desktop app. The Rust side (Tauri core + plugin layer) owns OS-level concerns: process spawning, filesystem, file-watching, native webview, OS keychain. The TypeScript/Svelte side owns the *entire* product semantics: chat UI, JSONL parsing, vault model, knowledge graph, mind-map render, FSRS, sync orchestration. There is **no in-house Rust business logic** beyond bridging.
 
 This split is deliberate:
 1. **Subprocess pattern** (KP-04) means Claude itself is the agent runtime — Rust doesn't need to host a "smart" backend.
@@ -358,7 +358,7 @@ export const bus = new EventBus();
 ## 6. Recommended Project Structure
 
 ```
-learn-os/
+mneme/
 ├── src-tauri/
 │   ├── src/lib.rs                          # Tauri builder + plugin registration only
 │   ├── capabilities/default.json           # shell:allow-spawn + fs allow-list
@@ -756,12 +756,12 @@ KD-07's "no vector DB by default" is the right choice — agentic search via gre
 ## 13. Sources
 
 **Spike-validated patterns** (HIGH confidence):
-- `/Users/qinyuan/claude/r1ckyIn_GitHub/learn-os/.planning/spikes/CONVENTIONS.md` — locked stack and subprocess pattern
-- `/Users/qinyuan/claude/r1ckyIn_GitHub/learn-os/.claude/skills/spike-findings-learn-os/references/claude-subprocess.md` — JSONL taxonomy + buffering rules
-- `/Users/qinyuan/claude/r1ckyIn_GitHub/learn-os/.claude/skills/spike-findings-learn-os/references/tauri-shell-ui.md` — Tauri 2 + SvelteKit shell architecture
+- `/Users/qinyuan/claude/r1ckyIn_GitHub/mneme/.planning/spikes/CONVENTIONS.md` — locked stack and subprocess pattern
+- `/Users/qinyuan/claude/r1ckyIn_GitHub/mneme/.claude/skills/spike-findings-mneme/references/claude-subprocess.md` — JSONL taxonomy + buffering rules
+- `/Users/qinyuan/claude/r1ckyIn_GitHub/mneme/.claude/skills/spike-findings-mneme/references/tauri-shell-ui.md` — Tauri 2 + SvelteKit shell architecture
 
 **Project requirements** (HIGH confidence — single source of truth for "what to build"):
-- `/Users/qinyuan/claude/r1ckyIn_GitHub/learn-os/.planning/PROJECT.md` — REQ-01..REQ-10, KP-01..KP-06, KD-01..KD-10
+- `/Users/qinyuan/claude/r1ckyIn_GitHub/mneme/.planning/PROJECT.md` — REQ-01..REQ-10, KP-01..KP-06, KD-01..KD-10
 
 **Domain references** (MEDIUM confidence — informed defaults but not yet locked by spike):
 - agentmemory (rohitg00) three-tier memory pipeline — pattern reference for KG tiers (KD-10)

@@ -350,7 +350,7 @@ Failory's post-mortem repository, multiple academic studies, and dev.to abandonm
 - Phase 3-4 starts (getting harder, more design tradeoffs surface)
 - Scope creep adds Phase 5/6/7 (the AI-native graph! whiteboard! FSRS! Echo360!)
 - Energy drops, dedicated hours decline, project enters "I'll come back next weekend" mode
-- 6 months later, repo last touched 5 months ago, learn-os never used in real coursework
+- 6 months later, repo last touched 5 months ago, mneme never used in real coursework
 
 This is amplified for THIS project because:
 - 10 active requirements (REQ-01 to REQ-10) is 5x what most successful solo projects ship in v1

@@ -79,7 +79,7 @@ context: Decisions made during initial exploration — to be picked up by /gsd-n
 
 ## 9. 临时代号
 
-- 当前目录名 `learn-os`（kebab-case 占位）
+- 当前目录名 `mneme`（kebab-case 占位）
 - 命名 + 图标敲定单独开 phase
 
 ---

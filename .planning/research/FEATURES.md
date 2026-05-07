@@ -1,4 +1,4 @@
-# Feature Research — learn-os
+# Feature Research — mneme
 
 **Domain:** Personal desktop learning app wrapping local Claude Code (USYD CS S1 2026; math + programming)
 **Researched:** 2026-05-06
@@ -33,7 +33,7 @@ The user's 10 REQs cover the **content + AI core** strongly, but miss **app-shel
 | **Obsidian** | Command palette (Cmd+P), Quick switcher (Cmd+O), Excalibrain plugin (auto mind-map from `[[wiki-links]]` + dataview + frontmatter), HiNote/LearnKit/True Recall (FSRS on notes via `ts-fsrs`) | REQ-06 (vault), REQ-09 (FSRS), F-MISS-01 (palette) | Excalibrain is the closest precedent for our human-side mind-map; `True Recall` proves note-level FSRS is shipped, not theoretical |
 | **Heptabase** | AI Tutor: add cards as sources, drag AI chat → whiteboard, Premium mode, Mindmap with fold/rotate; Web Cards (offline) | REQ-07 (whiteboard), REQ-08 (anchored sources) | Heptabase has **everything except the local Claude Code agent capabilities** — they're closest to our human-layer reference; their roadmap shows FSRS still in development → first-mover advantage for us |
 | **Anki** | FSRS-6 default since 23.12; reduces reviews 20-30% vs SM-2; image occlusion + cloze; review heatmap | REQ-09 (algorithm), KD-06 (`ts-fsrs`) | We keep the algorithm, drop the manual-card-building (OOS-05) |
-| **Cursor** | Cmd+K inline edit, Composer/Agent (Cmd+I), Tab completion (320ms), `.cursor/rules` MDC files for project-level system prompts, /multitask async subagents | REQ-01 (right-panel chat), KP-04 (subprocess wrapping pattern shared) | The **`.cursor/rules` pattern** is gold — we should replicate as `.learnos/rules/` for per-course system prompts (e.g. "MATH1062: prefer formal proofs"). **NOT YET IN REQ LIST** — see F-DIFF-08 |
+| **Cursor** | Cmd+K inline edit, Composer/Agent (Cmd+I), Tab completion (320ms), `.cursor/rules` MDC files for project-level system prompts, /multitask async subagents | REQ-01 (right-panel chat), KP-04 (subprocess wrapping pattern shared) | The **`.cursor/rules` pattern** is gold — we should replicate as `.mneme/rules/` for per-course system prompts (e.g. "MATH1062: prefer formal proofs"). **NOT YET IN REQ LIST** — see F-DIFF-08 |
 | **Claude Desktop App (Apr 2026)** | Multi-session sidebar (filter by status/project), side chat shortcut Cmd+; (branch question off running task), integrated terminal + file editor + diff viewer, Routines (scheduled prompt triggers) | F-MISS-02 (multi-session), F-MISS-07 (branching) | Anthropic's own app pivoted to multi-session because single-session was the #1 pain. We must not repeat that mistake. **Routines** is interesting → see F-DIFF-09 |
 | **Mem.ai / Reflect / Saner.ai** | Auto-organize without manual filing, Mem Chat queries entire note history with citations, voice→text via Whisper, end-to-end encryption (Reflect) | KP-03 (AI-native), KP-01 (local-first) | Mem.ai's "AI reads what you write and links related content automatically" = **the streaming-graph pattern we want**, but they use cloud. We do it local. |
 | **RemNote** | Flashcards-in-notes (cards live in their note context), FSRS-6 + SM-2, AI-powered flashcard generation, Exam Scheduler, PDF annotation→cards | REQ-09 (FSRS) — partial precedent | RemNote keeps cards-as-notes; we go one step further → **review the concept page itself**, AI generates fresh test on the spot. **Anti-feature confirmation**: don't build a card editor (OOS-05 holds) |
@@ -83,7 +83,7 @@ These are non-negotiable — the user (or any returning Obsidian/NotebookLM/Curs
 
 ### Differentiators (Competitive Moat)
 
-These are the features that make `learn-os` distinct from each individual reference product. Each is something **no single competitor ships**.
+These are the features that make `mneme` distinct from each individual reference product. Each is something **no single competitor ships**.
 
 | ID | Feature | Value Proposition | Complexity | Inspiration | REQ Map | OSS Foundation? |
 |----|---------|-------------------|------------|-------------|---------|-----------------|
@@ -94,7 +94,7 @@ These are the features that make `learn-os` distinct from each individual refere
 | F-DIFF-05 | **Bilingual auto-translated captions persisted as searchable transcript** | Echo360 has VTT; nobody marries Echo360 + Claude translation + grep search of caption corpus. International students get massive comprehension lift. | M | Echo360 VTT + Claude API + immersive translate concept | REQ-05 ✓ | Partial OSS (Read Frog, FluentRead for translation pattern) |
 | F-DIFF-06 | **Caption + video timestamp + PDF page three-way alignment** ("show me where the prof said `老师讲了 X` and the slide that was up") | QuickTakes does timestamp linking; HoverNotes does screenshot embedding; nobody does **caption + video time + slide page** all aligned for cross-search | L | HoverNotes, ScreenApp, OneNote (audio↔note), Echo360 + Tauri | Implicit in REQ-04 + REQ-05; **EXPAND** | Self-built (small alignment service) |
 | F-DIFF-07 | **Dual-layer data model: AI graph + human mind-map from same source-of-truth** | Mem.ai auto-links but it's cloud-only and one-layer. Heptabase has whiteboard but no AI graph. Obsidian has graph view but no AI maintenance. | XL | GraphRAG papers, Memento (LongMemEval 92.4%), Mem0/Cognee/Zep | REQ-07 ✓ | YES (KP-02) — base on Cognee or Graphiti, extend |
-| F-DIFF-08 | **Per-course system prompts via `.learnos/rules/` MDC files** (e.g. "MATH1062: always provide formal proofs; cite course-week") | Cursor has `.cursor/rules`; nobody has it for *learning* (course-specific tutor personas). Massive UX win for math vs CS courses needing different teaching styles. | S | Cursor's `.cursor/rules` MDC | **NOT IN REQ LIST — RECOMMEND ADD** | YES — copy Cursor's pattern |
+| F-DIFF-08 | **Per-course system prompts via `.mneme/rules/` MDC files** (e.g. "MATH1062: always provide formal proofs; cite course-week") | Cursor has `.cursor/rules`; nobody has it for *learning* (course-specific tutor personas). Massive UX win for math vs CS courses needing different teaching styles. | S | Cursor's `.cursor/rules` MDC | **NOT IN REQ LIST — RECOMMEND ADD** | YES — copy Cursor's pattern |
 | F-DIFF-09 | **Routine-style scheduled prompts** ("Every Sunday 8pm: summarize this week's COMP1100 lectures into a quiz") | Claude Desktop's Routines (Apr 2026); no learning app has scheduled study triggers | M | Claude Desktop App April 2026 redesign | **NOT IN REQ LIST — DEFER (v1.x)** | YES — Tauri tray + cron pattern |
 | F-DIFF-10 | **Agentic vault search (no vector DB)** | Inverts conventional RAG-first wisdom; aligns with Anthropic's own validated approach (Boris Cherny). Privacy + simplicity win. | S (just don't build) | Claude Code itself | REQ-10 ✓ (KD-07) | YES — already in Claude Code, free |
 
@@ -221,7 +221,7 @@ Defer until v1 + v1.x prove the user actually opens the app daily.
 - [ ] **F-DIFF-05** — Searchable bilingual transcript corpus
 - [ ] **F-DIFF-06** — Caption + video time + PDF page three-way alignment
 - [ ] **F-DIFF-07** — Dual-layer data: full AI graph layer (REQ-07; needs Mem0/Cognee/Graphiti foundation decision from RQ-01)
-- [ ] **F-DIFF-08** — `.learnos/rules/` per-course system prompts *[NEW, recommend add to REQ list]*
+- [ ] **F-DIFF-08** — `.mneme/rules/` per-course system prompts *[NEW, recommend add to REQ list]*
 - [ ] **F-DIFF-09** — Routine-style scheduled prompts *[NEW, defer to v2]*
 
 ---
@@ -268,7 +268,7 @@ Defer until v1 + v1.x prove the user actually opens the app daily.
 
 Each row = a feature axis. Each column = how each product handles it. Last column = our approach.
 
-| Feature axis | NotebookLM | Obsidian | Heptabase | Anki | Cursor | Claude Desktop | Mem.ai/Reflect | RemNote | **learn-os** |
+| Feature axis | NotebookLM | Obsidian | Heptabase | Anki | Cursor | Claude Desktop | Mem.ai/Reflect | RemNote | **mneme** |
 |--------------|-----------|----------|-----------|------|--------|---------------|----------------|---------|---------------|
 | Local-first vault | No (cloud) | Yes (`.md`) | Hybrid | Local sqlite | Workspace local | Local CLI sessions | Cloud (Mem) / E2EE cloud (Reflect) | Cloud-first, local export | **Yes (`.md` + YAML)** |
 | Three-pane shell | Sources/Chat/Studio | File/Editor/Outline | Map/Card/AI | n/a | File/Editor/Chat | Sidebar/Editor/Diff | n/a | Notes/Cards/AI | **Files/Video+PDF/Chat (lecture-anchored)** |
@@ -283,11 +283,11 @@ Each row = a feature axis. Each column = how each product handles it. Last colum
 | Bilingual captions | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | **VTT + Claude translate (F-TS-11)** ★ |
 | AI memory model | Single-doc context | n/a | Chat + cards | n/a | Project rules | Session-scoped | **Auto-link cloud** | Note-graph | **Three-tier (working/episodic/long-term) (KD-10)** ★ |
 | Vault search | RAG | grep-style | Card search | Card search | Cmd+P + agent | grep + agent | AI search | AI + tags | **Agentic grep (KD-07)** |
-| Per-context rules | n/a | n/a | n/a | n/a | **`.cursor/rules` MDC** | n/a | n/a | n/a | **`.learnos/rules/` (F-DIFF-08, NEW)** ★ |
+| Per-context rules | n/a | n/a | n/a | n/a | **`.cursor/rules` MDC** | n/a | n/a | n/a | **`.mneme/rules/` (F-DIFF-08, NEW)** ★ |
 | Scheduled prompts | n/a | Plugins | n/a | n/a | n/a | **Routines (Apr 2026)** | n/a | Exam Scheduler | **F-DIFF-09 (defer v2)** |
 | Open-source | No | Plugins yes | No | **Yes (AGPL)** | No | No | No | Limited | **Tauri + 50% OSS rule (KP-02)** |
 
-★ = features where `learn-os` differentiates (no competitor has the combo).
+★ = features where `mneme` differentiates (no competitor has the combo).
 
 **Strategic read:** The user already correctly identified the three differentiation moats — (1) lecture-anchored learning loop, (2) streaming-into-mind-map, (3) free/anchored toggle. The cross-check confirms these are unclaimed in the market. The MISSING gaps (F-MISS-01..09) are all **table-stakes hygiene**, not differentiation — fixing them is necessary cost-of-entry, not strategic risk.
 
@@ -317,7 +317,7 @@ Each row = a feature axis. Each column = how each product handles it. Last colum
 - **REQ-NEW-D** — Settings / preferences UI (covers F-MISS-04)
 - **REQ-NEW-E** — Review-mode focus screen (covers F-MISS-05; could be folded into REQ-09 expansion)
 - **REQ-NEW-F** — First-run onboarding (covers F-MISS-09)
-- **REQ-NEW-G** *(optional)* — `.learnos/rules/` per-course system prompts (covers F-DIFF-08)
+- **REQ-NEW-G** *(optional)* — `.mneme/rules/` per-course system prompts (covers F-DIFF-08)
 - **REQ-NEW-H** *(optional)* — PDF→markdown ingest (covers F-MISS-08; resolves RQ-02)
 
 ### OOS Coverage Audit
@@ -375,7 +375,7 @@ These are NEW questions raised during the cross-check, beyond what's in `questio
 
 3. **Q-NEW-3 (MEDIUM):** Should the multi-session sidebar (F-MISS-02) group conversations by **course** or by **topic across courses**? Claude Desktop groups by project; Cursor by file. For a learning app, course-grouping is the obvious match — but a "linear algebra" thread that spans both COMP1100 and MATH1062 needs cross-course visibility.
 
-4. **Q-NEW-4 (MEDIUM):** Is `.learnos/rules/` a per-vault, per-course, or per-folder concept? Cursor's `.cursor/rules` is per-project + glob-scoped. For us, per-course at minimum, with optional per-topic.
+4. **Q-NEW-4 (MEDIUM):** Is `.mneme/rules/` a per-vault, per-course, or per-folder concept? Cursor's `.cursor/rules` is per-project + glob-scoped. For us, per-course at minimum, with optional per-topic.
 
 5. **Q-NEW-5 (MEDIUM):** PDF→markdown library decision (RQ-02): research strongly suggests **Marker** as default for safety + good math handling, **MinerU** if formula-heavy + CJK content (Chinese textbook PDFs?), **Docling** for enterprise-tier multi-format. Single-recommendation pending: **Marker** (datalab-to/marker, GitHub-active, math-aware via `force_ocr`). Consider deferring final choice to Phase that needs it.
 

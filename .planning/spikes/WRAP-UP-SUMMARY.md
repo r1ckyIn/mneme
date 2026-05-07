@@ -3,7 +3,7 @@
 **Date:** 2026-05-06
 **Spikes processed:** 2
 **Feature areas:** Claude Code subprocess integration, Tauri desktop shell + streaming chat UI
-**Skill output:** `./.claude/skills/spike-findings-learn-os/`
+**Skill output:** `./.claude/skills/spike-findings-mneme/`
 
 ## Processed Spikes
 
@@ -27,7 +27,7 @@
 
 ## What's Next
 
-The `spike-findings-learn-os` skill is now auto-loaded in future build conversations. The next conversation can:
+The `spike-findings-mneme` skill is now auto-loaded in future build conversations. The next conversation can:
 
 1. Run `/gsd-new-project` (resume) to bake these decisions into PROJECT.md / REQUIREMENTS.md / ROADMAP.md
 2. Or run `/gsd-spike` (frontier mode) to surface what else is worth spiking before committing to the plan (P0-2 Echo360 webview SSO is the next-highest risk)

@@ -1,6 +1,6 @@
 # Project Research Summary
 
-**Project:** learn-os
+**Project:** mneme
 **Domain:** Personal desktop learning app — Tauri 2 shell wrapping local Claude Code, AI-native knowledge graph, FSRS-6 review, Echo360 lecture video
 **Researched:** 2026-05-06
 **Confidence:** HIGH (stack and subprocess pattern validated by spikes; features cross-checked against 8 live reference products; architecture derived from locked spike patterns; pitfalls verified against CVEs and GitHub issues)
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-learn-os is a "Rust-shell-thin / TypeScript-fat" desktop app where a Tauri 2 process wraps the user's local `claude` CLI subprocess inside a three-pane learning shell (course files / video+PDF / AI chat) and continuously grows a local knowledge graph from every conversation. The architectural pattern — `tauri-plugin-shell` spawning `claude --output-format stream-json`, JSONL line-buffering, finalize-on-result rendering — is fully validated by two spikes and confirmed by the community (TOKENICODE, claude-code-parser, claude-code-gui) as the correct approach. All four researchers converge on the same 6-phase build sequence, and there are no fundamental disagreements between research threads.
+mneme is a "Rust-shell-thin / TypeScript-fat" desktop app where a Tauri 2 process wraps the user's local `claude` CLI subprocess inside a three-pane learning shell (course files / video+PDF / AI chat) and continuously grows a local knowledge graph from every conversation. The architectural pattern — `tauri-plugin-shell` spawning `claude --output-format stream-json`, JSONL line-buffering, finalize-on-result rendering — is fully validated by two spikes and confirmed by the community (TOKENICODE, claude-code-parser, claude-code-gui) as the correct approach. All four researchers converge on the same 6-phase build sequence, and there are no fundamental disagreements between research threads.
 
 The research surfaces two categories of action required before roadmap finalization. First, FEATURES research identified 9 table-stakes gaps not present in PROJECT.md's REQ-01..10 — most critically command palette (F-MISS-01), multi-session sidebar (F-MISS-02), sync status surface (F-MISS-03), settings UI (F-MISS-04), and review-mode focus screen (F-MISS-05). These are first-week abandonment risks if missing. Second, STACK research recommends switching from tldraw (now proprietary, requiring watermark) to Excalidraw (MIT) — a KP-02 compliance issue that must be acknowledged by the user. PITFALLS research flags an Echo360 webview spike as a mandatory pre-condition before planning the video integration phase, as macOS WKWebView's ITP cookie handling has a documented failure mode (wry#848) that could silently block the entire REQ-04 + REQ-05 feature.
 
@@ -68,7 +68,7 @@ The locked Tauri 2 + SvelteKit + tauri-plugin-shell foundation is correct and ba
 - F-DIFF-01 Streaming-into-mind-map during chat (REQ-07 — signature feature)
 - F-DIFF-02 Free/anchored toggle in same UI (REQ-08 — "study Claude / revision NotebookLM" in one switch)
 - F-DIFF-03 Concept-page review with AI-generated question, not flashcards (REQ-09)
-- F-DIFF-08 Per-course system prompts via `.learnos/rules/` MDC files (Cursor pattern — NEW, not in REQ list)
+- F-DIFF-08 Per-course system prompts via `.mneme/rules/` MDC files (Cursor pattern — NEW, not in REQ list)
 
 **Defer to v2+:**
 - F-DIFF-04 Graph-weakness x FSRS-due ranked queue (needs graph layer stable first)
@@ -82,7 +82,7 @@ The locked Tauri 2 + SvelteKit + tauri-plugin-shell foundation is correct and ba
 - REQ-NEW-D: Settings / preferences UI
 - REQ-NEW-E: Review-mode focus screen (fold into REQ-09 expansion)
 - REQ-NEW-F: First-run onboarding
-- REQ-NEW-G (optional): `.learnos/rules/` per-course system prompts
+- REQ-NEW-G (optional): `.mneme/rules/` per-course system prompts
 
 **Recommended new OOS additions:**
 - OOS-06: Manual mind-map/whiteboard drawing tool (AI-generated, not user-drawn)
@@ -220,7 +220,7 @@ All four researchers agree on the same dependency-driven phase sequence. No conf
 
 **Rationale:** None block the core loop. Value-additive after daily use is proven.
 
-**Includes:** Excalidraw whiteboard view (Svelte + React interop via `createRoot` in `onMount`); streaming-into-mind-map at full F-DIFF-01 fidelity; optional sqlite-vec embedding worker; `.learnos/rules/` per-course prompts.
+**Includes:** Excalidraw whiteboard view (Svelte + React interop via `createRoot` in `onMount`); streaming-into-mind-map at full F-DIFF-01 fidelity; optional sqlite-vec embedding worker; `.mneme/rules/` per-course prompts.
 
 **Research flag:** Excalidraw + Svelte interop pattern needs a small spike (React peer dependency, font self-hosting).
 
@@ -268,7 +268,7 @@ No fundamental conflicts between the 4 researchers. Minor note: ARCHITECTURE.md 
 | REQ-NEW-D | Settings / preferences UI | HIGH | FEATURES F-MISS-04 |
 | REQ-NEW-E | Review-mode focus screen | HIGH | FEATURES F-MISS-05 |
 | REQ-NEW-F | First-run onboarding flow | MEDIUM | FEATURES F-MISS-09 |
-| REQ-NEW-G | `.learnos/rules/` per-course system prompts (optional) | MEDIUM | FEATURES F-DIFF-08 |
+| REQ-NEW-G | `.mneme/rules/` per-course system prompts (optional) | MEDIUM | FEATURES F-DIFF-08 |
 
 ### OOS additions recommended:
 - OOS-06: Manual mind-map/whiteboard drawing (AI-generated, not user-drawn)

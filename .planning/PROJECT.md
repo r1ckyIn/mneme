@@ -1,6 +1,6 @@
-# learn-os
+# mneme
 
-> Personal desktop learning app wrapping local Claude Code, for USYD CS S1 2026 coursework. Codename `learn-os` — final name + icon to be locked in a dedicated phase.
+> Personal desktop learning app wrapping local Claude Code, for USYD CS S1 2026 coursework. Codename `mneme` — final name + icon to be locked in a dedicated phase.
 
 ---
 
@@ -27,7 +27,7 @@ Wrap the user's Claude Code (with all its tools, MCPs, memory) in a desktop GUI 
 - **User**: USYD CS student, S1 2026, four courses (math + programming heavy)
 - **Why now**: Terminal can't render LaTeX/code blocks visually; Obsidian is occupied by another workstream; NotebookLM lacks local + agent capabilities; Claude Code Desktop App exists but is dev-focused, not learning-focused
 - **Constraints**: Personal use only, single-user, MacBook Pro 2019 Intel, macOS Ventura 13.4
-- **Identity**: `dev.learn-os.spike` (will become `dev.learn-os.app` post-naming-phase)
+- **Identity**: `dev.mneme.spike` (will become `dev.mneme.app` post-naming-phase)
 
 ---
 
@@ -389,7 +389,7 @@ Active recall + zero distraction is the recipe Anki proved. Three-pane during re
 **Why it matters**:
 Even self-use, "future-me 6 months from now after wiping the laptop" is the user. Onboarding makes setup deterministic.
 
-#### REQ-17 · Per-course system prompts via `.learnos/rules/`
+#### REQ-17 · Per-course system prompts via `.mneme/rules/`
 
 **Status**: hypothesis (v1) — added after FEATURES research (DIFFERENTIATOR — small effort, big leverage).
 
@@ -399,12 +399,12 @@ Even self-use, "future-me 6 months from now after wiping the laptop" is the user
 - No precedent in learning apps yet
 
 **What it does**:
-- Per-course directory: `courses/<COURSE>/.learnos/rules/<rule>.md`
+- Per-course directory: `courses/<COURSE>/.mneme/rules/<rule>.md`
 - Each rule has YAML frontmatter (`enabled: true`, `priority: 10`, `applies_to: assignment|notes|review`) + markdown body (the prompt fragment)
 - When user opens a chat in COURSE context, all enabled rules are concatenated into Claude's `--append-system-prompt`
 - Examples:
-  - `MATH1062/.learnos/rules/proof-style.md`: "Prefer formal proofs with explicit lemmas; show counterexamples when stating necessity vs sufficiency."
-  - `COMP3221/.learnos/rules/style.md`: "Stick to Java idioms; avoid stream API in performance-critical paths."
+  - `MATH1062/.mneme/rules/proof-style.md`: "Prefer formal proofs with explicit lemmas; show counterexamples when stating necessity vs sufficiency."
+  - `COMP3221/.mneme/rules/style.md`: "Stick to Java idioms; avoid stream API in performance-critical paths."
 
 **Why it matters**:
 Differentiator — no learning app does this. Costs almost nothing to implement; gives Claude course-specific persona without asking the student to repeat instructions every session. Composes with REQ-08 (anchored mode) — anchored answers can still respect course rules.
@@ -632,4 +632,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-05-06 — initialized via `/gsd-new-project` after `/gsd-explore` (foundation-decisions.md, 9 decisions) + `/gsd-spike` (2 validated spikes wrapped into `spike-findings-learn-os` skill).*
+*Last updated: 2026-05-06 — initialized via `/gsd-new-project` after `/gsd-explore` (foundation-decisions.md, 9 decisions) + `/gsd-spike` (2 validated spikes wrapped into `spike-findings-mneme` skill).*

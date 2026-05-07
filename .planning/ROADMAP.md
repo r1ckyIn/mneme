@@ -1,4 +1,4 @@
-# learn-os Roadmap
+# mneme Roadmap
 
 > Personal desktop learning app — Tauri 2 shell wrapping local Claude Code, AI-native knowledge graph, FSRS-6 review, Echo360 lecture video. Granularity: **fine** (config.json). Mode: **interactive**.
 
@@ -22,7 +22,7 @@
 - [ ] **Phase 5.5: KG Memory Project Survey + Dogfood (RQ-01)** - 4-project comparison + 1-week dogfood + decision report; gates Phase 7
 - [ ] **Phase 6: Echo360 Video + Bilingual Captions** - Embedded webview lecture video + auto-translated bilingual VTT (gated by Phase 5)
 - [ ] **Phase 7: Knowledge Graph + Three-Tier Memory** - Dual-layer data architecture: AI-side KG with confidence/provenance/bitemporal, three-tier memory pipeline (gated by Phase 5.5)
-- [ ] **Phase 8: Mind-Map View + Per-Course Rules** - Top-bar Cytoscape.js mind-map, click-to-navigate, `.learnos/rules/` per-course system prompts
+- [ ] **Phase 8: Mind-Map View + Per-Course Rules** - Top-bar Cytoscape.js mind-map, click-to-navigate, `.mneme/rules/` per-course system prompts
 - [ ] **Phase 9: Anchored Mode + Citations API** - Free/anchored toggle in chat input, Anthropic Citations API, clickable `[file.md:42]` citations
 - [ ] **Phase 10: FSRS-6 Reviews + Focus Mode** - Concept-page FSRS-6 scheduler, AI-generated test questions, review focus screen, graph-weakness × due-ness ranking
 
@@ -31,13 +31,13 @@
 ## Phase Details
 
 ### Phase 0: Identity & Branding Lock
-**Goal**: Final app name, icon, and macOS bundle identifier are locked before any production code carries the codename `learn-os`.
+**Goal**: Final app name, icon, and macOS bundle identifier are locked before any production code carries the codename `mneme`.
 **Depends on**: Nothing
 **Requirements**: (none — this is a pre-implementation phase)
 **Success Criteria** (what must be TRUE):
-  1. Final app name decided and recorded in PROJECT.md (codename `learn-os` retired).
+  1. Final app name decided and recorded in PROJECT.md (codename `mneme` retired).
   2. App icon (ICNS + PNG variants) generated via Claude Design (KP-05) and committed to repo.
-  3. Bundle identifier transitioned from `dev.learn-os.spike` to `dev.<finalname>.app` in `tauri.conf.json` (or chosen reverse-DNS).
+  3. Bundle identifier transitioned from `dev.mneme.spike` to `dev.<finalname>.app` in `tauri.conf.json` (or chosen reverse-DNS).
   4. README + window title + macOS Dock display reflect the locked name.
 **OSS adoption note (KP-02)**: Pure naming/branding decision phase — no code adoption needed. Icon generation goes through Claude Design (KP-05), no third-party icon library.
 **Plans:** 4 plans
@@ -66,7 +66,7 @@ Plans:
 **Depends on**: Phase 1
 **Requirements**: REQ-03 (Canvas + Ed sync), REQ-06 (markdown vault), REQ-13 (sync status surface), REQ-14 (settings UI), REQ-16 (first-run onboarding wizard)
 **Success Criteria** (what must be TRUE):
-  1. First-launch wizard completes 6 steps (welcome → Claude auth check → vault path picker → MCP detection → course selection → first sync) and lands in main UI; resumable from `~/.learnos/onboarding-state.json`.
+  1. First-launch wizard completes 6 steps (welcome → Claude auth check → vault path picker → MCP detection → course selection → first sync) and lands in main UI; resumable from `~/.mneme/onboarding-state.json`.
   2. Vault root is configurable (default `~/StudyVault/`); required dirs auto-created (`_system/`, `_inbox/`, `courses/`, `shared/`); each ingested course has `_source/` (chmod 444 — write-protected; Sync controller is the only writer), `notes/`, `concepts/`, `practice/`, `INDEX.md`; YAML frontmatter on all written notes.
   3. Canvas + Ed first-run import pulls all enrolled-course modules / files / pages / announcements into `courses/<COURSE_CODE>/_source/{lectures,tutorials,assignments,announcements.md}`; incremental sync on app launch uses `updated_at` + ETag; deletions move to `_system/trash/<date>/` (no hard delete).
   4. Status bar widget shows last-synced timestamp + error count + next-scheduled; click → modal with per-course detail; auth/rate-limit/network errors each have distinct icons; new-item toasts fire for announcements + new files.
@@ -159,16 +159,16 @@ Plans:
 **Plans**: TBD
 
 ### Phase 8: Mind-Map View + Per-Course Rules
-**Goal**: The top-bar mind-map renders the active course's KG live — concepts animate in as the user chats; per-course system prompts via `.learnos/rules/` give Claude course-specific persona without forcing the user to re-explain context every session.
+**Goal**: The top-bar mind-map renders the active course's KG live — concepts animate in as the user chats; per-course system prompts via `.mneme/rules/` give Claude course-specific persona without forcing the user to re-explain context every session.
 **Depends on**: Phase 7 (KG must have data to render meaningfully)
-**Requirements**: REQ-17 (per-course `.learnos/rules/` system prompts)
+**Requirements**: REQ-17 (per-course `.mneme/rules/` system prompts)
 **Success Criteria** (what must be TRUE):
   1. Top-bar mind-map renders the active course's KG via Cytoscape.js v3.33.3 + `cytoscape-dagre` layout; click a node opens the concept's `.md` file; mind-map updates live as new concepts emerge from streaming chat sessions (animated `cy.add()` for new nodes — not full re-layout per tick).
   2. Mind-map is **read-only renderer** (S5 anti-coupling rule): node creation goes through KG layer's API; node positions saved as `_system/kg/views/<name>.json` overlay (separate from canonical graph data).
-  3. Per-course rules stored at `courses/<COURSE>/.learnos/rules/<rule>.md` with YAML frontmatter (`enabled: true`, `priority: 10`, `applies_to: assignment|notes|review`); when starting chat in COURSE context, all enabled rules concatenated into Claude's `--append-system-prompt`.
+  3. Per-course rules stored at `courses/<COURSE>/.mneme/rules/<rule>.md` with YAML frontmatter (`enabled: true`, `priority: 10`, `applies_to: assignment|notes|review`); when starting chat in COURSE context, all enabled rules concatenated into Claude's `--append-system-prompt`.
   4. Debug overlay in chat header shows which rules fired for current session (helps debug "why is Claude answering this way?").
   5. Streaming-into-mind-map UX: latency from `chat.result` → KG extract → vault write → mind-map node animation ≤ 3s end-to-end (acceptable "the system is processing what we just discussed").
-**OSS adoption note (KP-02)**: `Cytoscape.js` v3.33.3 (MIT) + `cytoscape-dagre` extension; `.learnos/rules/` pattern ports `Cursor` `.cursor/rules` MDC concept (~3hr work, simple parser).
+**OSS adoption note (KP-02)**: `Cytoscape.js` v3.33.3 (MIT) + `cytoscape-dagre` extension; `.mneme/rules/` pattern ports `Cursor` `.cursor/rules` MDC concept (~3hr work, simple parser).
 **Plans**: TBD
 **UI hint**: yes
 
@@ -246,4 +246,4 @@ These items are deferred from REQUIREMENTS.md v2+ section. They get phase mappin
 
 ---
 
-*Generated 2026-05-06 by gsd-roadmapper after `/gsd-explore` (foundation-decisions.md, 9 decisions) + 2 validated spikes (`spike-findings-learn-os` skill auto-loaded). Granularity: fine. 11 phases (0 through 10, with 5.5 decimal) covering 18 v1+v1.x requirements with 100% coverage.*
+*Generated 2026-05-06 by gsd-roadmapper after `/gsd-explore` (foundation-decisions.md, 9 decisions) + 2 validated spikes (`spike-findings-mneme` skill auto-loaded). Granularity: fine. 11 phases (0 through 10, with 5.5 decimal) covering 18 v1+v1.x requirements with 100% coverage.*

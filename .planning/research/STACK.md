@@ -1,4 +1,4 @@
-# Stack Research — learn-os Layered Libraries
+# Stack Research — mneme Layered Libraries
 
 > **⚠ POST-RESEARCH USER DECISIONS (2026-05-07) — reading this file standalone? Read PROJECT.md first.**
 >
@@ -16,7 +16,7 @@
 **Overall Confidence:** HIGH (verified versions on npm/Context7/GitHub as of research date)
 **Scope:** This research covers the **additional OSS libraries to LAYER ON TOP of the locked Tauri 2 + SvelteKit + tauri-plugin-shell foundation**. It does NOT re-research the foundation (already validated by spikes 001 + 002). All recommendations honor KP-02 (50% rule), KP-04 (compliant subprocess wrapping), and KD-01..KD-09.
 
-**Critical license boundary:** The user's app is for **personal use only** (KP-01, OOS-01: no distribution, no commercialization). However, **AGPL-3.0** dependencies are still strongly cautioned: even self-use compiled binaries would taint future open-sourcing decisions, and any code copied from AGPL projects would force the entire `learn-os` to become AGPL on future open-sourcing. Treat AGPL as **read-only reference, never copy/fork**.
+**Critical license boundary:** The user's app is for **personal use only** (KP-01, OOS-01: no distribution, no commercialization). However, **AGPL-3.0** dependencies are still strongly cautioned: even self-use compiled binaries would taint future open-sourcing decisions, and any code copied from AGPL projects would force the entire `mneme` to become AGPL on future open-sourcing. Treat AGPL as **read-only reference, never copy/fork**.
 
 ---
 
@@ -215,7 +215,7 @@ tldraw is **NOT open-source anymore**. As of SDK 4.0:
 For a personal-use single-user app this **could technically work via hobby license**, but:
 1. The license is **discretionary** (they can revoke or refuse)
 2. The watermark conflicts with our polish goal (KP-05 design-conscious)
-3. **AGPL-equivalent risk** — if we ever open-source learn-os, the tldraw dependency forces us to carry a non-OSS dependency forever
+3. **AGPL-equivalent risk** — if we ever open-source mneme, the tldraw dependency forces us to carry a non-OSS dependency forever
 4. **REJECT REINVENTED WHEELS rule (KP-06) doesn't override license-poisoning** — tldraw's license is the bigger problem
 
 Excalidraw is the correct primary choice: pure MIT, larger community, equally polished feature-set for our use case (free-form whiteboard with shapes, arrows, text, embedded markdown — all we need).
@@ -359,7 +359,7 @@ fsrs:
 
 ### Findings overview
 
-| Project | License | Tech | Approach | Last activity | Stars | Use for learn-os? |
+| Project | License | Tech | Approach | Last activity | Stars | Use for mneme? |
 |---------|---------|------|----------|---------------|-------|--------------------|
 | **opcode** (formerly Claudia) — `getAsterisk/opcode` | **AGPL-3.0** ⛔ | Tauri 2 + React 19 + Rust | GUI command center for Claude Code | Active, 21.7k stars | High-quality reference | **STUDY ONLY — DO NOT FORK/COPY.** AGPL is poison for binary distribution. Read for inspiration; reimplement clean-room. |
 | **claude-code-gui** — `markes76/claude-code-gui` | **MIT** ✅ | **Electron 31** + React 18 + TS | **Tails `~/.claude/projects/*.jsonl` files** (no subprocess spawn!) | Active, recent v1.1.0 | small | **GREAT MIT REFERENCE** for stream-json parsing (the `entry.data?.message` pattern is gold). Pattern is portable to Tauri. |
@@ -584,7 +584,7 @@ npm install \
 | BSL-1.1 | CodePilot | ⚠ Personal use technically OK, but treat as reference, not as dependency |
 | Custom AI Pubs (Marker model weights) | Marker's Chandra | ✅ Free for personal/research |
 
-**Cardinal rule:** If we ever publish learn-os to GitHub publicly (even as personal-archive), AGPL/proprietary deps in the binary distribution chain become real problems. **Build like we'll publish.**
+**Cardinal rule:** If we ever publish mneme to GitHub publicly (even as personal-archive), AGPL/proprietary deps in the binary distribution chain become real problems. **Build like we'll publish.**
 
 ---
 
@@ -671,6 +671,6 @@ npm install \
 
 ---
 
-*Stack research for: learn-os personal desktop learning app — additional libraries layered on top of locked Tauri 2 + SvelteKit + tauri-plugin-shell foundation*
+*Stack research for: mneme personal desktop learning app — additional libraries layered on top of locked Tauri 2 + SvelteKit + tauri-plugin-shell foundation*
 *Researched: 2026-05-06*
 *Confidence: HIGH for all libraries with version verification; MEDIUM for Echo360 (no prior art, requires spike)*
