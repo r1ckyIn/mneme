@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-07T03:50:25.892Z"
+last_updated: "2026-05-07T05:27:16.668Z"
 progress:
   total_phases: 12
   completed_phases: 0
@@ -148,6 +148,12 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - Source: `.planning/spikes/sources/002-tauri-claude-shell/app/src/routes/+page.svelte`
 - Locked patterns documented in `spike-findings-mneme/references/{claude-subprocess.md, tauri-shell-ui.md}`
 - Phase 1 success criteria explicitly assume this seed; do NOT re-validate the basic subprocess+streaming pattern
+
+### Pending Todos
+
+1 pending — captured during sessions, surface at appropriate phase:
+
+- **Evaluate thea for question generation** (research, 2026-05-07) — third-party question/题目 generation tool the user discovered; needs license + integration shape + fit-vs-duplication review against ts-fsrs / REQ-09 review surface. File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before Phase 10 (FSRS-6 Reviews) planning.
 
 ---
 
