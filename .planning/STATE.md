@@ -153,7 +153,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 1 pending — captured during sessions, surface at appropriate phase:
 
-- **Evaluate thea for question generation** (research, 2026-05-07, **evaluated — REJECT as dependency, STUDY-ONLY for Phase 10 UX**) — thea.study is a closed-source cloud SaaS K-12 study app (mobile-first, no API, no local mode); fails KP-01/KP-02/KD-06/form-factor on every axis. Useful only as Phase 10 UI inspiration: question-type taxonomy (MC/TF/match/rank/short), adaptive-difficulty loop, multi-input ingestion UX. File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before `/gsd-discuss-phase 10`.
+- **Evaluate thea for question generation** (research, 2026-05-07, **product REJECTED · algorithm-layer worth a Phase 10 spike**) — thea.study (closed cloud SaaS, K-12) fails KP-01/KP-02/KD-06/form-factor as a dependency. Separately, the *algorithm* — AI takes source material → produces good concept-review items — is a real engineering problem mneme also has to solve in Phase 10 (REQ-09 concept review, not flashcard). Recommended path: when approaching Phase 10, promote to `/gsd-spike concept-review-item-generation` (½–1 day timebox; black-box probe of thea + Claude API prompt-pipeline experiment against a real USYD lecture). File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before `/gsd-discuss-phase 10`.
 
 ---
 

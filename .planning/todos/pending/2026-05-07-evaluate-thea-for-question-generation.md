@@ -56,9 +56,44 @@ User mentioned a question/题目-generating software called **thea** that may be
 
 **No code, no fork, no dependency.** The app is closed and the architecture is wrong for us; the only artifact from this evaluation is "remember this set of question-type names when designing Phase 10 review UI".
 
+## Algorithm-layer Value (added 2026-05-07 per user feedback)
+
+**The product is rejected. The *algorithm* — "AI takes source material → produces good review questions" — is a real engineering problem worth studying separately.** This is the same problem mneme will face in Phase 10 (REQ-09: concept-page review, not flashcard review), and is independent of which product we benchmark against.
+
+Black-box-observable algorithm signals from thea's UX:
+
+| Signal | What it implies the algorithm does |
+|--------|------------------------------------|
+| Five question types from one source | a type-router stage (probably prompt-routed) classifies which item types fit each piece of source — definitions → MC, lists → matching, sequences → ranking, etc. |
+| Adaptive difficulty (gets harder as you master) | item-difficulty estimation (per-item Elo / IRT-lite) + retrieval based on user mastery vector |
+| "Weak spot" focus | concept-level mastery model, not item-level — the unit of forgetting is a *concept*, items are sampled from that concept |
+| Handwritten OCR → quiz items | OCR + denoise + chunk + per-chunk question generation (likely page-level chunking) |
+| Video / YouTube → quiz items | ASR caption → segment-level summarization → segment-level question generation |
+| Spaced repetition (algorithm undisclosed) | almost certainly NOT FSRS-6 (no public claim); probably SM-2 / Leitner / proprietary heuristic |
+
+These are the **algorithmic moves** mneme also has to make — and unlike thea's product, we already have Claude API + ts-fsrs to build them ourselves.
+
+### Research routes (pick one when re-surfacing this todo)
+
+1. **Black-box probe** — register thea (free), upload one USYD lecture PDF (e.g. COMP3221 distributed systems), inspect the generated items, reverse-engineer the prompt style + difficulty distribution + concept-extraction strategy. ~1 hour. Cheapest. Keeps us product-aware without reading their code (which is closed anyway).
+2. **OSS comparison** — Questgen (`https://www.questgen.ai/`) is OSS-ish in this space; check repo + license + algorithm choice for an open contrast point. ~1 hour.
+3. **Academic baseline** — read Kurdi et al. 2020 "Systematic Review of Automatic Question Generation for Educational Purposes" + 1-2 recent (2024-2026) LLM-based AQG papers. The field has been studied since pre-LLM days; we should not reinvent. ~2 hours.
+4. **Claude API spike** — design mneme's own "concept-page → review-item" prompt pipeline, run it against the same lecture PDF, compare against thea's black-box output. ~1 day. **This is the one that produces an actual mneme artifact**, not just a research note.
+
+**Recommended sequence**: 1 → 4 (skip 2/3 unless 4 stalls). Total budget: ½ day for routes 1+4 if disciplined.
+
+### Recommended next step
+
+Promote this todo to a proper spike when Phase 10 is on the horizon: `/gsd-spike concept-review-item-generation` (1-2 day timebox, scope = routes 1 + 4 above). Output: a `RESEARCH.md`-grade prompt design + 5-10 sample items generated against a real USYD lecture, ready to feed into Phase 10 PLAN.md.
+
+Don't run the spike now — it's premature (we're at Phase 0, ten phases away). But don't lose the algorithmic angle either.
+
 ## Surface trigger
 
-Re-read this todo before `/gsd-discuss-phase 10` (FSRS-6 Reviews + Focus Mode). Then move file to `.planning/todos/completed/` with the resolution carried into the phase's UI/spec discussion.
+Re-read this todo before `/gsd-discuss-phase 10` (FSRS-6 Reviews + Focus Mode). At that point, decide whether to:
+- Promote to `/gsd-spike concept-review-item-generation` (recommended), OR
+- Inline the four research routes into Phase 10's plan-phase research stage, OR
+- Move to `.planning/todos/completed/` if Phase 10 design has already settled the algorithm question.
 
 ## Sources
 
