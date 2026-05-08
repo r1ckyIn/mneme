@@ -424,8 +424,8 @@ color: var(--ink-mute)
 font-family: var(--font-mono)
 font-size: var(--fs-meta)              /* 14px */
 border-left: 3px solid var(--border-strong)
-padding: 8px 16px
-margin: 8px 0
+padding: var(--s-sm) var(--s-md)       /* 8px / 16px */
+margin: var(--s-sm) 0                  /* 8px vertical rhythm */
 ```
 
 For **error variant** (subprocess returned error, claude not authenticated, etc.), border-left becomes `var(--error)` (`#c15f3c`) and color becomes `var(--error)`. Raw error text is HTML-escaped via `escapeHtml()` before insertion (per AI-SPEC §3 pitfall #6 + REQ-5 hardening).
@@ -438,12 +438,12 @@ color: var(--ink)
 font-family: var(--font-body)          /* serif */
 font-size: var(--fs-body)              /* 16px */
 line-height: var(--lh-body)            /* 1.5 */
-padding: 10px 14px
+padding: var(--s-sm) var(--s-md)       /* 8px / 16px — was 10px 14px (off-scale leak from awesome-design-md text-input recipe; user bubble is not an input) */
 border-radius: var(--r-lg)             /* 12px */
 border-bottom-right-radius: var(--r-xs) /* 4px — "tail" toward bottom-right per gallery Open-claude preview */
 align-self: flex-end
 max-width: 75%
-margin: 8px 0
+margin: var(--s-sm) 0                  /* 8px vertical rhythm */
 ```
 
 #### Assistant turn — flowing serif text (NO bubble)
@@ -458,7 +458,7 @@ font-size: var(--fs-meta)
 color: var(--ink-soft)
 white-space: pre-wrap
 padding: 0
-margin: 8px 0
+margin: var(--s-sm) 0                  /* 8px vertical rhythm */
 max-width: 75%
 align-self: flex-start
 /* No bubble bg, no border, no radius — just text on cream */
@@ -471,7 +471,7 @@ font-family: var(--font-body)          /* serif */
 font-size: var(--fs-body)              /* 16px */
 line-height: var(--lh-body)            /* 1.5 */
 color: var(--ink)
-margin: 8px 0
+margin: var(--s-sm) 0                  /* 8px vertical rhythm */
 max-width: 75%
 align-self: flex-start
 /* NO bubble */
@@ -489,7 +489,7 @@ background: var(--bg-soft)             /* #f1efe7 */
 border-left: 3px solid var(--orange)   /* #d97757 — accent site #6 */
 border-radius: 0 var(--r-sm) var(--r-sm) 0  /* 6px right side only */
 padding: var(--s-sm) var(--s-sm) var(--s-sm) var(--s-md)  /* 8px on top/right/bottom; 16px on left to clear the 3px orange bar + breathing room */
-margin: 8px 0
+margin: var(--s-sm) 0                  /* 8px vertical rhythm */
 align-self: flex-start
 max-width: 75%
 font-family: var(--font-mono)
@@ -524,7 +524,7 @@ font-size: var(--fs-meta)
 ```
 container: <div class="input-dock">
 position: sticky bottom
-padding: 16px var(--s-lg)              /* 16px vertical 24px horizontal */
+padding: var(--s-md) var(--s-lg)       /* 16px vertical 24px horizontal */
 background: linear-gradient(to top, var(--bg) 80%, transparent)  /* fades into scroll above */
 
   ↳ <div class="input-box">
