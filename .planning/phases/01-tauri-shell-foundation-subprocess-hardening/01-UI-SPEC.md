@@ -255,8 +255,8 @@ Declared values (multiples of 4 only):
 | Display | 28px | 600 | 1.2 | `var(--font-body)` serif | (declared for Phase 2 onboarding; NOT used in Phase 1 — declaring keeps token table 4-row stable) |
 
 **Code rendering inside chat (post-`result` finalization):**
-- `inline code` → 12px (slightly smaller than body) `var(--font-mono)`, bg `var(--bg-soft)`, padding `0 0.3em`, radius `var(--r-xs)` (4px)
-- `code block` (multi-line) → 13px `var(--font-mono)`, bg `var(--ink-soft)` (warm dark `#2b2a27`), color `#d8c4b3` (warm cream-on-dark per gallery VS Code preview), padding 16px, radius `var(--r-md)` (8px), `overflow-x: auto`
+- `inline code` → `var(--fs-meta)` (14px) `var(--font-mono)`, bg `var(--bg-soft)`, padding `0 0.3em`, radius `var(--r-xs)` (4px) — 14px vs 16px body provides visual differentiation without breaking 4-size token cap
+- `code block` (multi-line) → `var(--fs-meta)` (14px) `var(--font-mono)`, bg `var(--ink-soft)` (warm dark `#2b2a27`), color `#d8c4b3` (warm cream-on-dark per gallery VS Code preview), padding `var(--s-md)` (16px), radius `var(--r-md)` (8px), `overflow-x: auto`
 - KaTeX inline math (`$...$`) and display math (`$$...$$`) → KaTeX-rendered MathML/SVG; inherits surrounding font color but uses KaTeX-bundled fonts for math glyphs (CSS already in `katex.min.css`)
 
 **Banned: Arial, Inter** anywhere in the application (including third-party subviews — DOMPurify-sanitized HTML must NOT carry inline `style="font-family:Inter"`).
@@ -349,6 +349,25 @@ tauri.conf.json window block (Phase 1):
 | Bottom row height | 120px fixed (CONTEXT.md D-03) |
 | Bottom row chrome | bg `var(--bg-deep)`; top 1px solid `var(--border)`; placeholder text centered |
 | Layout persistence | localStorage key `mneme.layout.split` — restored within 1 px on next launch (SPEC acceptance) |
+
+### Geometry tokens (named local constants, declared in `tokens.css`)
+
+These are not on the spacing scale — they are physical-meaning constants reused across the chat surface to avoid magic numbers:
+
+| Token | Value | Meaning |
+|-------|-------|---------|
+| `--btn-send` | 44px | Send / Stop circular icon button diameter (touch-target floor) |
+| `--bottom-row-h` | 120px | Bottom-row mind-map placeholder height (CONTEXT.md D-03) |
+| `--pane-min-w` | 200px | Minimum width per pane (CSS Grid `minmax(200px, 1fr)`) |
+
+Append to `:root` block in `src/lib/styles/tokens.css`:
+
+```css
+  /* === GEOMETRY (named physical constants, NOT on spacing scale) === */
+  --btn-send: 44px;
+  --bottom-row-h: 120px;
+  --pane-min-w: 200px;
+```
 
 ### Empty-pane placeholder visual treatment
 
@@ -469,7 +488,7 @@ container: <div class="tool-use">
 background: var(--bg-soft)             /* #f1efe7 */
 border-left: 3px solid var(--orange)   /* #d97757 — accent site #6 */
 border-radius: 0 var(--r-sm) var(--r-sm) 0  /* 6px right side only */
-padding: 8px 12px
+padding: var(--s-sm) var(--s-sm) var(--s-sm) var(--s-md)  /* 8px on top/right/bottom; 16px on left to clear the 3px orange bar + breathing room */
 margin: 8px 0
 align-self: flex-start
 max-width: 75%
@@ -512,8 +531,9 @@ background: linear-gradient(to top, var(--bg) 80%, transparent)  /* fades into s
      position: relative
      background: var(--paper)            /* white */
      border: 1px solid var(--border)
-     border-radius: 24px                  /* pill-ish; per gallery input-bar sample */
-     padding: 10px 56px 10px 16px        /* right reserves 56px for send button (44px + 12px gap) */
+     border-radius: var(--r-pill)         /* 9999px — visually equivalent to 24px at 40px height; reuses radius ladder, avoids new token */
+     padding: var(--s-sm) calc(var(--btn-send) + var(--s-sm)) var(--s-sm) var(--s-md)
+     /* top/bottom 8px; right reserves (44px button + 8px gap) = 52px; left 16px */
      min-height: 40px
      box-shadow: var(--shadow-sm)
      transition: border-color var(--d-base) var(--ease), box-shadow var(--d-base) var(--ease)
@@ -573,7 +593,9 @@ transition: transform var(--d-fast) var(--ease), background var(--d-fast) var(--
 - **Streaming state (`isStreaming`):** ⏹ stop square (`<rect x="6" y="6" width="12" height="12" rx="1.5"/>`)
 - **Empty input idle (`!prompt.trim() && !isStreaming`):** disabled ↑ glyph
 
-**Tooltip:** native `title="Send"` / `title="Stop streaming"` — no Phase 1 tooltip component.
+**Accessibility:** every render must include `aria-label="Send message"` on the Send-state button and `aria-label="Stop streaming"` on the Stop-state button. macOS VoiceOver does NOT read `title` attributes, so `aria-label` is the canonical screen-reader source; `title` is retained alongside for mouse-hover tooltip only.
+
+**Tooltip (mouse-hover):** native `title="Send"` / `title="Stop streaming"` — no Phase 1 tooltip component.
 
 ### Streaming dot indicator
 
