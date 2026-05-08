@@ -104,12 +104,21 @@ Plans:
 **OSS adoption note (KP-02)**: Tauri 2 + SvelteKit + adapter-static + tauri-plugin-shell (KD-01, spike 002 validated); marked + KaTeX + DOMPurify (KD-02); `claude-code-parser` (MIT) **vendored** in `vendor/claude-code-parser/` per KD-12 (no npm dep).
 **Plans:** 7 plans
 Plans:
+**Wave 1**
 - [ ] 01-01-PLAN.md — Wave 1 bootstrap: Tauri 2 + SvelteKit + Phase 0 identity transition + vendored claude-code-parser + test harness scaffold
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-02-PLAN.md — Wave 2 (TDD): spawn-args SSOT + capability hardening + audit script (T-1-03/04/05/07)
 - [ ] 01-03-PLAN.md — Wave 2 (TDD): sanitize.ts (DOMPurify Option-A hook + KaTeX trust:false) + 6-arm stream-dispatch.ts (T-1-02 + T-1-06)
 - [ ] 01-04-PLAN.md — Wave 2 (TDD): Rust state machine (SessionRegistry + kill_pgid + hook union) (T-1-01)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01-05-PLAN.md — Wave 3: tokens.css + Splitter.svelte three-pane + bottom row + window chrome (KP-09 + KD-13)
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-06-PLAN.md — Wave 4: ChatPanel.svelte E2E wiring (Command spawn + dispatch + sanitize + IPC + Stop button + hotkey unbinding)
+
+**Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 01-07-PLAN.md — Wave 5: Husky pre-commit + 5-cycle lifecycle harness + 50-row dogfood checklist + VALIDATION.md sign-off (CHECKPOINT)
 **UI hint**: yes
 
