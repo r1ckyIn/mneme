@@ -326,6 +326,8 @@ In Phase 1, `var(--orange)` (`#d97757`) appears ONLY at these 6 sites:
 ## Geometry Contract — three-pane + bottom row
 
 > Per CONTEXT.md D-02 + D-03 + D-05 + D-06 + D-07 (all already locked).
+>
+> **Amendment 2026-05-09 (Round 5 prototype handoff — see `01-AMENDMENT-2026-05-09.md`):** Geometry now also includes **(A-05)** 6-dot Notion drag handle on each of 5 regions (top: 12px right: 18px, opacity 0.45 → 1 hover, no JS drag in Phase 1); **(A-07)** left pane upgrades from "static plain-text placeholder" to **Finder-style table shell** (breadcrumb + 6-dot handle + 3 toolbar icons + table headers `Name/Size/Type/Modified` + checkbox column header; empty body); **(A-10)** **titlebar meta** row right-aligned (`claude-code · connected` indicator with warm-green dot `#4ea36b`, `vault: ~/Mneme/usyd-2026s1` static text, settings cog opening Phase 2 placeholder modal); **(A-12)** middle column splits into **video (top) + preview (bottom) via 4px row splitter** (`grid-template-rows: 1fr 4px 1fr`; non-resizable in Phase 1; each half has its own breadcrumb + drag handle; placeholder copy: top=`"Lecture video player · EchoVideo wired in Phase 6"`, bottom=`"PDF preview · wired in Phase 4"`). The visual-fidelity SSOT is `.planning/handoff/2026-05-09-mneme-prototype/mneme/project/Mneme.html` (1840-line prototype). Where this UI-SPEC is silent on a treatment, defer to the prototype HTML.
 
 ### Window chrome (D-06 lock)
 
@@ -699,7 +701,8 @@ Per SPEC REQ-6 + CONTEXT.md D-19/D-20.
 | `Enter` (in input) | Send prompt (calls `sendPrompt()`) | Input textarea |
 | `Shift+Enter` (in input) | Insert newline (default browser textarea behavior — preserve) | Input textarea |
 | `Cmd+Q` | Quit application — triggers Rust subprocess cleanup path (PGID kill via D-10) | Window |
-| `Cmd+W` | Close window — same handler as Cmd+Q in single-window Phase 1 |
+| `Cmd+W` | **Unbound** — JS-layer `preventDefault`, no UI response (per CONTEXT.md L40 amendment 3 + AMENDMENT A-08; avoids subprocess-leak path that would fire if macOS default close-window ran without our PGID-kill path) |
+| `Cmd+.` | **Unbound** — JS-layer `preventDefault`, no UI response (per AMENDMENT A-08; Stop is invoked only via Send/Stop button click) |
 | `Tab` (in input → Send button → next focusable) | Standard browser focus order | Right pane |
 | `Esc` (in input) | (no binding in Phase 1 — Phase 10 review focus mode owns Esc) |
 | Stop button (mouse only — no hotkey) | Click → invokes Rust kill path; preserves already-streamed text per D-19 | Input dock |

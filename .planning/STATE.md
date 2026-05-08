@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-08T12:14:22.000Z"
+last_updated: "2026-05-08T10:25:34.469Z"
 progress:
   total_phases: 12
   completed_phases: 1
@@ -168,16 +168,6 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 - v1 ship target = Phases 0-4 complete (Tauri shell + vault + sync + multi-session + doc ingestion). After Phase 4, dogfood in real S1 2026 coursework before starting Phase 5.
 - Differentiator layer (Phases 7-10) starts only after v1 dogfooding proves the basic loop is used daily — anti-abandonment discipline per Pitfall 10.
-
----
-
-## Quick Tasks Completed
-
-> Ad-hoc tasks executed via `/gsd-quick` outside the phase pipeline. Not tracked in ROADMAP.md.
-
-| Date | Slug | Skill / Tool | Deliverables | Status |
-|------|------|--------------|--------------|--------|
-| 2026-05-08 | [`phase1-html-prototype`](quick/260508-phase1-html-prototype/SUMMARY.md) | `design-taste-frontend` | `phases/01-…/design/` — preview.html + tokens.css + 3 SVG icons + README.md (KP-05 visual instantiation; mocks 9 chat archetypes for human review before `/gsd-execute-phase 1`) | complete ✓ |
 
 ---
 

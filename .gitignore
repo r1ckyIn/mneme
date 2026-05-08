@@ -33,3 +33,7 @@ CLAUDE.md
 
 # Claude Code per-user local overrides
 .claude/settings.local.json
+
+# Handoff artifacts — bulky screenshot uploads from user prototype iteration sessions
+# (the prototype HTML itself IS committed; only the source screenshots are excluded)
+.planning/handoff/*/mneme/project/uploads/

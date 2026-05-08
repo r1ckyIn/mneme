@@ -4,6 +4,8 @@
 > Locks framework selection, implementation guidance, and evaluation strategy before planning begins.
 >
 > **Scope note (force-run):** Phase 1 is shell + subprocess infrastructure, not a new AI system design. Most "framework"-class decisions are pre-locked by PROJECT.md (KD-01 / KD-02 / KD-12) and CONTEXT.md (D-10–D-21). This AI-SPEC.md treats the **wrapped Claude Code CLI as the agent runtime** and the **Tauri shell as the execution boundary** — its job here is to lock the safety contract (capability hardening, lifecycle, XSS, telemetry framing) the planner will implement.
+>
+> **Amendment 2026-05-09 (Round 5 prototype handoff — see [`01-AMENDMENT-2026-05-09.md`](./01-AMENDMENT-2026-05-09.md)):** Critical failure mode #4 (cost / loop runaway) is **closure-only via `--max-turns 30`** — the cost meter / `$10 daily cap` / `~/.mneme/usage.jsonl` / `~/.mneme/config.json` are all out of scope (Round 4 deletion confirmed). Threat T-1-04 (planner-introduced) is reframed: mitigation = `--max-turns 30` only; UI shows **Ctx % + Total tokens + Session duration** (per A-09) but these are **observational**, not guard-rail enforcements (no spawn-block on Ctx ≥ 90% — `.cost.warning` red is a visual signal only). v1.x may revisit a Ctx-token-cap / session-duration-cap if real loops surface in dogfood; out of scope for Phase 1.
 
 ---
 

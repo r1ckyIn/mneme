@@ -99,7 +99,7 @@ Plans:
   1. Three-pane resizable shell renders (left: file tree placeholder, middle: PDF preview placeholder, right: Claude chat); split positions persist across restarts.
   2. Single Claude session streams correctly: chunky text during stream → finalized markdown + KaTeX + DOMPurify-sanitized HTML on `result` event (spike 002 pattern locked).
   3. Subprocess lifecycle is clean: Cmd+Q kills child processes within 2s (SIGTERM → 2s → SIGKILL); `ps aux | grep claude` shows zero orphans after 5 quit cycles.
-  4. Cost meter visible in chat header (current session $ + cumulative today $); hard daily cap (default $10) blocks new subprocesses when exceeded; `--max-turns 30` passed to every claude invocation.
+  4. **Loop guard via `--max-turns 30`** passed to every `claude` invocation (the only structural ceiling under OAuth subscription mode — no per-call billing exists; `result.total_cost_usd` is theoretical-API-equivalent, not a real charge). Chat input shows **Ctx % + Total tokens + Session duration** (no `$` figures, no daily cap, no `~/.mneme/usage.jsonl`) — per Round 5 amendment A-04 + A-09 in `phases/01-tauri-shell-foundation-subprocess-hardening/01-AMENDMENT-2026-05-09.md`. Propagates SPEC Round 4 (cost meter already out of scope L100/L123).
   5. Capability hardening: explicit window names (no `"*"`), shell `args` per-arg validators (no `args: true` reaching production), KaTeX ≥ 0.16.21 pinned, DOMPurify allowlist explicit.
 **OSS adoption note (KP-02)**: Tauri 2 + SvelteKit + adapter-static + tauri-plugin-shell (KD-01, spike 002 validated); marked + KaTeX + DOMPurify (KD-02); `claude-code-parser` (MIT) **vendored** in `vendor/claude-code-parser/` per KD-12 (no npm dep).
 **Plans:** 7 plans

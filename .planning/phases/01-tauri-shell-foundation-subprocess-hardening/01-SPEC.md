@@ -3,6 +3,7 @@
 **Created:** 2026-05-07
 **Ambiguity score:** 0.08 (gate: ≤ 0.20)
 **Requirements:** 6 locked
+**Amendment:** 2026-05-09 — Round 5 prototype handoff alignment (12 deltas A-04 through A-15) — see [`01-AMENDMENT-2026-05-09.md`](./01-AMENDMENT-2026-05-09.md). Where this SPEC.md conflicts with the amendment, **the amendment wins** until next milestone re-sync.
 
 ## Goal
 
