@@ -31,6 +31,16 @@ brand_guidelines_authority: https://github.com/anthropics/skills/tree/main/skill
 
 **Resolution rule:** SSOT 0 (brand-guidelines) > SSOT 1 (deep-dive) > SSOT 2 (gallery) > SSOT 3 (awesome-claude-design index) > SSOT 4 (awesome-design-md DESIGN.md). Inside the chat-surface domain (the heart of Phase 1), SSOTs 1+2 are decisive because SSOT 4 explicitly disclaims chat coverage.
 
+### SSOT 0' — Live Anthropic Product UI (ground-truth override)
+
+**When the user produces screenshot evidence** of the actual Anthropic-shipped product (Claude Desktop, claude.ai live UI) showing a value that diverges from SSOT 1's documented hex, the **live product wins**. Documented SSOTs are point-in-time snapshots; the live product reflects current intent. Override scope: chat-surface visual tokens (bubble color, message geometry, send-button shape, font weights for chat content). Tracking: each override is recorded inline with date + screenshot reference.
+
+**Recorded ground-truth overrides (Phase 1):**
+
+| Token | SSOT 1 documented | Live UI override | Date | Evidence |
+|-------|-------------------|------------------|------|----------|
+| `--bubble-user` | `#DDD9CE` (KP-09 deep-dive Section 2 prose) | `#EEEBE2` (visibly lighter warm gray; HSL L ≈ 93% vs documented L ≈ 85%) | 2026-05-08 | User screenshot of Claude Desktop user-message bubble; selected candidate C from `/tmp/mneme-color-preview/bubble-compare.html` ladder of 4 alternatives |
+
 ---
 
 ## Triage Result — `awesome-claude-design` vs `awesome-design-md` vs SSOT 1+2
@@ -60,7 +70,7 @@ brand_guidelines_authority: https://github.com/anthropics/skills/tree/main/skill
 | Borders | 8% black opacity (`rgba(20,20,19,0.08)`) | `rgba(20, 20, 19, 0.08)` | `#e6dfd8` (hairline) | `rgba(20, 20, 19, 0.08)` | SSOT 1 + 2 identical and superior for layered surfaces vs. SSOT 4's static hex |
 | Shadow | `0 0.25rem 1.25rem rgba(0,0,0,0.035)` (multi-layer soft) | Same + `0 0.5rem 2rem rgba(20,20,19,0.06)` | "shadows minimal; `0 1px 3px rgba(20,20,19,0.08)` rarely" | SSOT 1 + 2 multi-layer soft | SSOT 4 explicitly says "color-block first, shadow rare" — alignment, just lower elevation appetite |
 | Ease curve | `cubic-bezier(0.165, 0.85, 0.45, 1)` | `cubic-bezier(0.165, 0.85, 0.45, 1)` | (not specified) | `cubic-bezier(0.165, 0.85, 0.45, 1)` | SSOT 1 + 2 agree; SSOT 4 silent |
-| User bubble | `#DDD9CE` (chat product) | `#ddd9ce` (Open-claude preview) | (out of scope per disclaimer) | `#DDD9CE` | Chat-surface SSOTs decisive |
+| User bubble | `#DDD9CE` (chat product, 文档快照) | `#ddd9ce` (Open-claude preview) | (out of scope per disclaimer) | `#EEEBE2` | Chat-surface SSOTs initially specify `#DDD9CE`; **ground-truth override** to `#EEEBE2` per Claude Desktop live UI screenshot 2026-05-08 — see SSOT 0' note above |
 | Assistant bubble | None (flowing serif text) | None in Open-claude preview, `#ffffff` paper bubble in others | (out of scope) | **None — flowing serif** per SSOT 1 deep-dive Section 2 explicit instruction | KP-09 explicit: "Claude 的回复不使用气泡" |
 | Focus ring | (not specified) | (not specified) | "3px coral-at-15%-alpha outer ring + border shifts to coral" | 3px `rgba(217, 119, 87, 0.15)` outer ring + 1px `#d97757` border | SSOT 4 fills the gap that SSOT 1+2 leave open — adopt directly |
 
@@ -148,7 +158,7 @@ Rationale:
   --error: #c15f3c;                            /* subprocess error inline message; KaTeX render error */
 
   /* === MESSAGE BUBBLES === */
-  --bubble-user: #DDD9CE;                      /* user message bg (per KP-09 deep-dive Section 2) */
+  --bubble-user: #EEEBE2;                      /* user message bg — ground-truth override 2026-05-08 (was #DDD9CE per KP-09 deep-dive Section 2 doc; live Claude Desktop UI is lighter — see SSOT 0' override note above) */
   /* assistant has NO bubble — rendered as flowing serif text directly on --bg-soft right pane */
 
   /* === BORDERS === */
@@ -296,6 +306,21 @@ In Phase 1, `var(--orange)` (`#d97757`) appears ONLY at these 6 sites:
 
 - `var(--error)` (`#c15f3c`) renders inside a system-bubble (SPEC REQ-6 acceptance: "raw subprocess error message in chat") and inside KaTeX-error inline tag (`[KaTeX error: <escaped>]`). Background stays `var(--bg)`; text color is `var(--error)`. No red-fill bubble (would clash with KP-09 restraint philosophy).
 
+### `--error` Semantic Lock (Phase 2+ MUST read)
+
+**Issue:** `#c15f3c` in SSOT 1 deep-dive zh L31 is originally defined as **"UI 强调色"** (a terra-cotta variant in the same warm-orange family as `#d97757`), NOT as an error color. mneme repurposes it as `--error`.
+
+**Lock rule (binding for all phases):**
+
+| Role | Token | Form rule |
+|------|-------|-----------|
+| UI accent (强调) | `--orange #d97757` / `--orange-deep #ae5630` | **fill only** — button backgrounds, dot indicators, solid pill chips |
+| Error semantic | `--error #c15f3c` | **stroke or text color only** — left border bar, text color, inline error tags |
+
+**Form-isolation rationale:** even though both hex values are warm-orange family (visually adjacent), the form distinction (fill vs stroke/text) makes them non-confusable. A user never sees `#d97757` as a stroke nor `#c15f3c` as a fill. This is the disambiguation contract.
+
+**Phase 2+ enforcement:** if any new surface needs a "UI 强调" hex (e.g. settings panel highlight, status badge), executor MUST pick from `--orange / --orange-deep`, NEVER from `#c15f3c`. Conversely, error states MUST NOT use `--orange` even if visually convenient. Cross-phase reviewer (gsd-ui-checker) should grep for `#c15f3c` outside `--error` consumers and flag any drift.
+
 ---
 
 ## Geometry Contract — three-pane + bottom row
@@ -433,7 +458,7 @@ For **error variant** (subprocess returned error, claude not authenticated, etc.
 #### User bubble (per KP-09 deep-dive Section 2)
 
 ```
-background: var(--bubble-user)         /* #DDD9CE */
+background: var(--bubble-user)         /* #EEEBE2 — light warm gray, ground-truth override 2026-05-08 */
 color: var(--ink)
 font-family: var(--font-body)          /* serif */
 font-size: var(--fs-body)              /* 16px */
