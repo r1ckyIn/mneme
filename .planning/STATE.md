@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
-status: ready_to_plan
-last_updated: "2026-05-07T08:15:00Z"
+status: phase-1-context-gathered
+last_updated: "2026-05-08T08:00:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 1
   total_plans: 4
   completed_plans: 4
-  percent: 9
+  percent: 100
 ---
 
 # mneme Project State
@@ -32,9 +32,9 @@ progress:
 ## Current Position
 
 **Phase**: 1 — Tauri Shell Foundation + Subprocess Hardening (Phase 0 retired 2026-05-07)
-**Plan**: none yet — next is `/gsd-discuss-phase 1` or `/gsd-plan-phase 1`
-**Status**: phase-0-complete
-**Progress**: 1/11 phases complete · 4/4 plans complete (Phase 0)
+**Plan**: none yet — context gathered (`01-CONTEXT.md`), next is `/gsd-plan-phase 1 [--tdd]`
+**Status**: phase-1-context-gathered
+**Progress**: 1/11 phases complete · 4/4 plans complete (Phase 0) · Phase 1 SPEC + CONTEXT in place
 
 ```
 [██░░░░░░░░░░░░░░░░░░] 9% (1/11 phases)
@@ -160,9 +160,9 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Session Continuity
 
-**Last GSD command**: `/gsd-spec-phase 1` (interactive, 4 Socratic rounds — controller mode)
-**Last action**: Phase 1 SPEC.md written at `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-SPEC.md` — **6 requirements** locked (down from prior auto-mode draft of 9), ambiguity 0.08 (gate ≤ 0.20), 19 pass/fail acceptance criteria, 22+ explicit out-of-scope boundaries with phase pointers. Key Round 4 framing correction: cost meter + daily cap **deleted** from Phase 1 because PITFALLS Pitfall 3 was framed for API-key billing; OAuth subscription has no per-call charges, only `--max-turns 30` retained as agent-loop guard. Visual aesthetic (KP-09/KD-13) **fully deferred** to `/gsd-ui-phase 1` (Phase 1 does NOT touch `src/app.css`). Single-session semantics + Cmd+Q + Enter only hotkey set. From-scratch `npm create tauri-app` start + point-port locked spike-002 patterns (no bulk copy). Delivery threshold = `npm run tauri dev` runnable; `.app` packaging out of scope.
-**Next recommended action**: `/gsd-discuss-phase 1` — discuss-phase will detect SPEC.md and skip WHAT/WHY questions, focusing only on HOW (HTML structure, validator regex, claude-code-parser extraction, XSS test payloads, RQ-03 TOKENICODE absorption).
+**Last GSD command**: `/gsd-discuss-phase 1 --analyze` (advisor mode, calibration `minimal_decisive`, 4 advisor agents in parallel + 5 follow-up HOWs + 1 license posture clarification)
+**Last action**: Phase 1 CONTEXT.md + DISCUSSION-LOG.md written at `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/` (commit `c00101b`). **21 implementation decisions** captured (D-01 through D-21) covering: layout (vanilla CSS Grid + 30/40/30 columns + bottom-row mind-map placeholder + `decorations:true + titleBarStyle:Overlay + hiddenTitle:true` matching Claude Desktop screenshot + initial 1280×860), subprocess lifecycle (full Rust state machine + `CloseRequested + ExitRequested` double-hook union + `libc::killpg` PGID kill — required for REQ-3 acceptance), parser vendor depth (A2 src+LICENSE+VENDOR.md only, drop tests), capability validator SSOT (B2: TS `spawn-args.ts` + prebuild `gen-capabilities.ts` + diff audit; B3 Rust programmatic verified infeasible), RQ-03 community absorption (Targeted read of OpenCovibe Tauri 2 + Svelte 5 + Apache-2.0 same-stack match — was missing from STACK.md, advisor's discovery — plus TOKENICODE `useStreamProcessor.ts` for `finalizeOnce` + `control_request`, opcode UX screenshots only), telemetry (UI streaming dot only + dev console.log for TTFT/event count/duration), Stop button + Shift+Enter (Claude chat alignment), rAF flushing deferred to Phase 3. **Two new project-level criteria codified**: D-08 OSS adoption thresholds (≥1k★ + multi-maintainer + clean + active + permissive) refining KP-02; D-09 AGPL READ-ONLY posture re-confirmed (mneme retains MIT/Apache choice — 姿态 3 over 1/2). **SPEC.md amendments needed in plan-phase**: REQ-1 (top-bar→bottom-row layout, window chrome fields, initial size, mid-pane placeholder text), REQ-6 (Stop button + Shift+Enter beyond literal Cmd+Q+Enter). Phase 1 LOC estimate: ~1000-1200 fresh write (spike-002 reference-only, NOT bulk-copied).
+**Next recommended action**: `/gsd-plan-phase 1 [--tdd]` — plan-phase researcher reads CONTEXT.md + SPEC.md + spike-findings + dependencies.md, produces RESEARCH.md + PLAN.md(s); SPEC patches (REQ-1 + REQ-6 amendments listed in `<spec_lock>`) applied in same plan-phase.
 
 **Session boundaries**:
 
@@ -182,7 +182,8 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - `_source/` write-policy enforcement (Sync Controller is the only writer) is set up in Phase 2 and reused throughout Phase 4 (document ingestion outputs go to `_source/`). Don't relax this — PITFALLS Pitfall 20.
 - **Foundation-first re-framing (2026-05-07)**: PROJECT.md Core Value is now a 5-dimension composite (not a single sentence); ROADMAP.md adds a Layer Architecture overlay (Foundation / Application / Replacement) on top of existing phase numbers; KP-07 (proactive contextual recall) + KP-08 (OSS dependency tracking) are new non-negotiable principles; OOS-09 (voice input) lifted to REQ-19 v1.x candidate; RQ-05 (learning-method epistemic humility) opened as ongoing non-blocking research line; `.planning/dependencies.md` created as KP-08 registry. The deepest reason behind this re-framing: current 18 REQs derive from n=2 sample (user + partner) — foundation must be agnostic to which feature set wins so REQ collection can evolve as observation of higher-achieving students' learning methods accumulates.
 - **Visual aesthetic family lock (2026-05-07)**: KP-09 + KD-13 added to inherit the Anthropic/Claude visual identity (warmth/restraint/serif). Two reference files copied into `.planning/references/design/` as SSOT (deep-dive zh + OSS UI gallery HTML). PROJECT.md REQ-01 acceptance, ROADMAP.md driving constraints, and `.planning/dependencies.md` Groups 9 + 10 all updated to point to KP-09 / KD-13 / reference files. Mandatory locks: `#d97757` orange + `#faf9f5` cream + `#141413` text + `#2b2a27` warm dark; serif body, ban Arial/Inter; ease `cubic-bezier(0.165, 0.85, 0.45, 1)`; soft 8% borders; multi-layer soft shadows. Full token palette + OSS gallery deferred to reference files (not duplicated in PROJECT.md). Recommended starting OSS: shadcn.io/theme/claude (port CSS variables only — mneme is Svelte not React) + anthropics/skills/brand-guidelines (first-party SSOT) + tweakcn (shade extension).
+- **Phase 1 discuss-phase outcomes (2026-05-08)**: 21 implementation decisions (D-01..D-21) captured in `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-CONTEXT.md`. Two project-level criteria are new: **D-08** codifies KP-02 OSS adoption thresholds (≥1k★ + multi-maintainer + clean + active + permissive) — proposed to amend PROJECT.md KP-02 at next milestone; **D-09** re-confirms AGPL READ-ONLY posture (mneme retains MIT/Apache license choice). **SPEC patches needed in `/gsd-plan-phase 1`**: REQ-1 (drop top-bar `<header>`, add bottom-row mind-map reservation, window chrome fields, initial 1280×860, mid-pane placeholder text "Lecture video / file preview — wired in Phase 4 + 6"), REQ-6 (Stop button + Shift+Enter beyond literal Cmd+Q + Enter — aligns with Claude / Cursor / ChatGPT / Notion conventions). RQ-03 absorption finalized as **Targeted read** mode (OpenCovibe Tauri 2 + Svelte 5 + Apache-2.0 same-stack match — code-level adoption allowed; TOKENICODE `useStreamProcessor.ts` `finalizeOnce` + `control_request` patterns; opcode AGPL screenshots only). rAF flushing deferred to Phase 3.
 
 ---
 
-*Last updated: 2026-05-07 — `/gsd-explore` aesthetic family lock applied (KP-09 + KD-13 + 2 reference files + ROADMAP/REQ-01/dependencies updates). Prior: foundation-first re-framing same day (8 atomic edits) + `/gsd-plan-phase 0` complete (4 plans, 1 revision cycle, plan-checker APPROVED).*
+*Last updated: 2026-05-08 — `/gsd-discuss-phase 1 --analyze` complete (commit `c00101b`). Prior: 2026-05-07 — `/gsd-explore` aesthetic family lock + foundation-first re-framing + `/gsd-plan-phase 0` complete + `/gsd-spec-phase 1` complete.*
