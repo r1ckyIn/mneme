@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mneme — Phase 1 Visual Mockup</title>
+
+<!--
+  Phase 1 Tauri Shell Foundation — Visual Reference (NOT production code)
+
+  This file is a single-file HTML mockup for visual review only.
+  Source of truth: 01-UI-SPEC.md (Phase 1 design contract).
+  Skill applied: design-taste-frontend (universal quality lens).
+  Do not lift this file into src/ — Plan 01-05 / 01-06 produce the
+  Svelte 5 implementation against UI-SPEC at execute time.
+
+  Sample shows the streaming state (stop-button + dot visible) so the
+  full motion / interaction surface is visible in one screen. Comments
+  next to each region cite the UI-SPEC line ranges they realize.
+-->
+
+<style>
+/* ============================================================
+ * tokens.css inlined — see ./tokens.css for the standalone copy
+ * ============================================================ */
+:root {
+  --bg: #faf9f5;
+  --bg-soft: #f1efe7;
+  --bg-deep: #e8e6dc;
+  --paper: #ffffff;
+
+  --ink: #141413;
+  --ink-soft: #2b2a27;
+  --ink-mute: #6b6a64;
+  --muted: #b0aea5;
+
+  --orange: #d97757;
+  --orange-deep: #ae5630;
+  --orange-soft: #f4dccd;
+  --orange-tint: #fbeee4;
+  --orange-ring: rgba(217, 119, 87, 0.15);
+
+  --error: #c15f3c;
+
+  --bubble-user: #EEEBE2;
+
+  --border: rgba(20, 20, 19, 0.08);
+  --border-strong: rgba(20, 20, 19, 0.14);
+
+  --shadow-sm: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.035);
+  --shadow-md: 0 0.5rem 2rem rgba(20, 20, 19, 0.06);
+
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-pill: 9999px;
+
+  --s-xs: 4px;
+  --s-sm: 8px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 32px;
+  --s-2xl: 48px;
+  --s-3xl: 64px;
+
+  --font-body: 'Iowan Old Style', 'Apple Garamond', Georgia, 'Songti SC', 'Source Han Serif SC', serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --fs-meta: 14px;
+  --fs-body: 16px;
+  --fs-h: 20px;
+  --fs-display: 28px;
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --lh-body: 1.5;
+  --lh-heading: 1.2;
+
+  --ease: cubic-bezier(0.165, 0.85, 0.45, 1);
+  --d-fast: 120ms;
+  --d-base: 200ms;
+  --d-slow: 300ms;
+  --d-cap: 400ms;
+  --pulse-period: 1.2s;
+
+  --btn-send: 44px;
+  --bottom-row-h: 120px;
+  --pane-min-w: 200px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 0ms;
+    --d-base: 0ms;
+    --d-slow: 0ms;
+    --pulse-period: 99s;
+  }
+}
+
+/* ============================================================
+ * Page chrome — preview-only frame so the mockup looks like a
+ * real macOS Tauri window. Not part of tokens.css.
+ * ============================================================ */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #d6d3c7;
+  font-family: var(--font-body);
+  color: var(--ink);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--s-xl) var(--s-md);
+  gap: var(--s-md);
+}
+.preview-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.02em;
+  text-align: center;
+  max-width: 1280px;
+}
+.preview-meta strong { color: var(--ink-soft); font-weight: var(--fw-semibold); }
+
+/* Window mock — 1280×860 default per UI-SPEC L337. */
+.window {
+  width: 1280px;
+  height: 860px;
+  background: var(--bg);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 64px -16px rgba(20, 20, 19, 0.20),
+    0 8px 16px -4px rgba(20, 20, 19, 0.08);
+  position: relative;
+  display: grid;
+  /*
+    Grid: top traffic-light overlay reserves 28px (UI-SPEC L342); below it
+    sits a single row of three columns, then a 120px bottom row.
+    Per D-06 the traffic light overlay floats above the right pane;
+    the overlay is positioned absolute, the pane row starts at 0
+    and pads its content from the top to clear the buttons.
+  */
+  grid-template-rows: 1fr var(--bottom-row-h);
+  grid-template-columns: 1fr;
+}
+
+/* macOS native traffic lights (visual mock — Tauri renders the real ones) */
+.titlebar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  z-index: 5;
+  pointer-events: none;
+}
+.titlebar .light {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.titlebar .light.close   { background: #ff5f56; }
+.titlebar .light.min     { background: #ffbd2e; }
+.titlebar .light.max     { background: #27c93f; }
+.titlebar .title-hint {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+  opacity: 0.55;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+ * Three-pane row — UI-SPEC L344-376
+ * 30 / 40 / 30 with 4px drag handles between panes.
+ * ============================================================ */
+.pane-row {
+  grid-row: 1;
+  display: grid;
+  grid-template-columns:
+    minmax(var(--pane-min-w), 30fr) 4px
+    minmax(var(--pane-min-w), 40fr) 4px
+    minmax(var(--pane-min-w), 30fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.pane {
+  position: relative;
+  overflow: hidden;
+}
+
+.pane-left   { background: var(--bg-soft); }
+.pane-middle { background: var(--bg-soft); }
+.pane-right  { background: var(--bg); }
+
+.divider {
+  position: relative;
+  background: transparent;
+  cursor: col-resize;
+}
+.divider::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  width: 1px;
+  background: var(--border);
+  transform: translateX(-50%);
+  transition: background var(--d-base) var(--ease);
+}
+.divider:hover::before { background: var(--border-strong); }
+.divider:active::before { background: var(--orange); }
+
+/* Empty-pane placeholder — UI-SPEC L397-419 */
+.placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: var(--fs-h);
+  font-style: italic;
+  font-weight: var(--fw-regular);
+  color: var(--ink-mute);
+  text-align: center;
+  padding: var(--s-lg);
+  user-select: none;
+  line-height: var(--lh-heading);
+}
+
+/* ============================================================
+ * Bottom row — UI-SPEC L361, D-03
+ * 120px fixed, bg-deep, top 1px border.
+ * ============================================================ */
+.bottom-row {
+  grid-row: 2;
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bottom-row .placeholder {
+  height: 100%;
+  padding: var(--s-md);
+}
+
+/* ============================================================
+ * Right pane — chat surface — UI-SPEC L422-674
+ * ============================================================ */
+.chat {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.chat-header {
+  height: 36px;       /* clears traffic lights, no visible chrome (UI-SPEC L428) */
+  flex-shrink: 0;
+}
+.chat-scroller {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--s-lg);     /* 24px (UI-SPEC L430) */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  scroll-behavior: smooth;
+}
+
+/* === message: system bubble (init/error) — UI-SPEC L442-456 === */
+.msg-system {
+  background: transparent;
+  color: var(--ink-mute);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  border-left: 3px solid var(--border-strong);
+  padding: var(--s-sm) var(--s-md);
+  margin: var(--s-sm) 0;
+  line-height: var(--lh-body);
+}
+.msg-system.error {
+  border-left-color: var(--error);
+  color: var(--error);
+}
+
+/* === user bubble — UI-SPEC L458-472 === */
+.msg-user {
+  background: var(--bubble-user);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  padding: var(--s-sm) var(--s-md);
+  border-radius: var(--r-lg);
+  border-bottom-right-radius: var(--r-xs);  /* tail */
+  align-self: flex-end;
+  max-width: 75%;
+  margin: var(--s-sm) 0;
+}
+
+/* === assistant streaming chunky text — UI-SPEC L478-490 === */
+.msg-assistant-streaming {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+  padding: 0;
+  margin: var(--s-sm) 0;
+  max-width: 75%;
+  align-self: flex-start;
+  line-height: var(--lh-body);
+}
+
+/* === assistant finalized — UI-SPEC L492-503 === */
+.msg-assistant-final {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--ink);
+  margin: var(--s-sm) 0;
+  max-width: 75%;
+  align-self: flex-start;
+}
+.msg-assistant-final p { margin: 0 0 var(--s-md) 0; }
+.msg-assistant-final p:last-child { margin-bottom: 0; }
+
+/* inline code — UI-SPEC L268 */
+.msg-assistant-final code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  background: var(--bg-soft);
+  padding: 0 0.3em;
+  border-radius: var(--r-xs);
+}
+/* code block — UI-SPEC L269 */
+.msg-assistant-final pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  background: var(--ink-soft);
+  color: #d8c4b3;
+  padding: var(--s-md);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+  margin: var(--s-sm) 0;
+  line-height: 1.5;
+}
+.msg-assistant-final pre code { background: transparent; padding: 0; font-size: inherit; }
+
+/* KaTeX preview placeholder — true KaTeX renders MathML/SVG; here we
+   show structurally-faithful inline italic for visual-review parity. */
+.katex-mock {
+  font-family: 'KaTeX_Main', var(--font-body);
+  font-style: italic;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.katex-mock sup, .katex-mock sub {
+  font-size: 0.75em;
+  vertical-align: super;
+  letter-spacing: 0;
+}
+.katex-mock sub { vertical-align: sub; }
+.katex-mock .op { margin: 0 0.18em; font-style: normal; }
+
+/* KaTeX render error — UI-SPEC L651-664 */
+.katex-error {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--error);
+  background: transparent;
+  padding: 0 0.3em;
+}
+
+/* === tool-use card — UI-SPEC L507-533 === */
+.tool-use {
+  background: var(--bg-soft);
+  border-left: 3px solid var(--orange);   /* AI called X */
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: var(--s-sm) var(--s-sm) var(--s-sm) var(--s-md);
+  margin: var(--s-sm) 0;
+  align-self: flex-start;
+  max-width: 75%;
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--ink-soft);
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-sm);
+  line-height: var(--lh-body);
+}
+.tool-use .tool-name {
+  font-weight: var(--fw-semibold);
+  color: var(--ink);
+}
+.tool-use .tool-input {
+  color: var(--ink-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.tool-result {
+  border-left-color: var(--border-strong);  /* X returned Y — no orange */
+}
+
+/* === thinking indicator — UI-SPEC L535-545 (no emoji per skill rule) === */
+.thinking {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-mute);
+  font-size: var(--fs-meta);
+  margin: var(--s-sm) 0;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.thinking::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--ink-mute);
+  opacity: 0.5;
+  animation: pulse var(--pulse-period) var(--ease) infinite;
+}
+
+/* ============================================================
+ * Input dock — UI-SPEC L547-624
+ * ============================================================ */
+.input-dock {
+  position: relative;
+  padding: var(--s-md) var(--s-lg);
+  background: linear-gradient(to top, var(--bg) 80%, transparent);
+  flex-shrink: 0;
+}
+.input-box {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: var(--s-sm) calc(var(--btn-send) + var(--s-sm)) var(--s-sm) var(--s-md);
+  min-height: 40px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--d-base) var(--ease),
+    box-shadow var(--d-base) var(--ease);
+  display: flex;
+  align-items: center;
+}
+.input-box:focus-within {
+  border-color: var(--orange);
+  box-shadow: var(--shadow-sm), 0 0 0 3px var(--orange-ring);
+}
+
+textarea.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--ink);
+  min-height: 20px;
+  max-height: 200px;
+  padding: 0;
+  overflow-y: auto;
+}
+textarea.input::placeholder {
+  color: var(--ink-mute);
+  font-style: italic;
+}
+
+/* Send / Stop button — UI-SPEC L588-621 */
+.btn-action {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: var(--btn-send);
+  height: var(--btn-send);
+  border-radius: var(--r-pill);
+  background: var(--orange);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition:
+    transform var(--d-fast) var(--ease),
+    background var(--d-fast) var(--ease),
+    opacity var(--d-base);
+}
+.btn-action:active { transform: scale(0.96); }    /* KD-13 micro-shrink */
+.btn-action:disabled,
+.btn-action.is-disabled {
+  background: var(--orange-soft);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.btn-action svg { width: 18px; height: 18px; }
+
+/* Streaming dot — UI-SPEC L625-649 */
+.streaming-dot {
+  position: absolute;
+  right: 16px;
+  bottom: 22px;
+  width: 8px; height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--orange);
+  pointer-events: none;
+  animation: pulse var(--pulse-period) var(--ease) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1.0; }
+}
+
+/* ============================================================
+ * Caption tags — preview-only, mark each demo region for the reviewer.
+ * Not part of any production token.
+ * ============================================================ */
+.caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: var(--s-md) 0 var(--s-xs) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+}
+.caption::before, .caption::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Bottom-row preview ornament — light scatter dots hinting "graph"
+   without committing to any specific Phase 7+8 visual. */
+.graph-hint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.30;
+  background-image:
+    radial-gradient(circle at 18% 50%, var(--ink-mute) 1.5px, transparent 2px),
+    radial-gradient(circle at 28% 30%, var(--ink-mute) 1.5px, transparent 2px),
+    radial-gradient(circle at 36% 65%, var(--ink-mute) 1.5px, transparent 2px),
+    radial-gradient(circle at 50% 40%, var(--ink-mute) 2px,   transparent 2.5px),
+    radial-gradient(circle at 62% 60%, var(--ink-mute) 1.5px, transparent 2px),
+    radial-gradient(circle at 74% 35%, var(--ink-mute) 1.5px, transparent 2px),
+    radial-gradient(circle at 84% 55%, var(--ink-mute) 1.5px, transparent 2px);
+}
+
+/* Hotkey-contract micro footnote — not in production UI;
+   shown here so the reviewer can verify the 9 unbound combos. */
+.hotkey-footnote {
+  max-width: 1280px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-md) var(--s-lg);
+  line-height: 1.6;
+}
+.hotkey-footnote h3 {
+  font-family: var(--font-body);
+  font-size: var(--fs-meta);
+  font-weight: var(--fw-semibold);
+  color: var(--ink);
+  margin: 0 0 var(--s-sm) 0;
+}
+.hotkey-footnote ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-xs) var(--s-md);
+}
+.hotkey-footnote kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 1px 6px;
+  color: var(--ink-soft);
+}
+
+</style>
+</head>
+<body>
+
+<div class="preview-meta">
+  <strong>mneme — Phase 1 visual mockup</strong> · single-file preview · 1280 × 860 default · KD-13 Anthropic family · realised against UI-SPEC.md SSOT · skill applied: design-taste-frontend
+</div>
+
+<!-- ============================================================
+     Window — 1280 × 860, macOS Overlay titleBar, three panes + bottom row
+     ============================================================ -->
+<div class="window" role="application" aria-label="mneme — Phase 1 shell mockup">
+
+  <!-- Traffic-light overlay (Tauri renders real macOS buttons; this is a static visual stand-in) -->
+  <div class="titlebar" aria-hidden="true">
+    <span class="light close"></span>
+    <span class="light min"></span>
+    <span class="light max"></span>
+    <span class="title-hint">Mneme · single-session · MacBook Pro 13" · S1 2026</span>
+  </div>
+
+  <!-- ===========================================================
+       Pane row — 30/40/30 with two 4px drag handles
+       =========================================================== -->
+  <div class="pane-row">
+
+    <!-- Left pane — Vault placeholder (Phase 2) -->
+    <section class="pane pane-left" aria-label="Left pane — Vault placeholder">
+      <div class="placeholder">Vault wired in Phase 2</div>
+    </section>
+
+    <div class="divider" role="separator" aria-orientation="vertical" aria-label="Resize left pane"></div>
+
+    <!-- Middle pane — Lecture / file preview placeholder (Phase 4 + 6) -->
+    <section class="pane pane-middle" aria-label="Middle pane — Lecture preview placeholder">
+      <div class="placeholder">Lecture video / file preview — wired in Phase 4 + 6</div>
+    </section>
+
+    <div class="divider" role="separator" aria-orientation="vertical" aria-label="Resize middle pane"></div>
+
+    <!-- Right pane — Chat surface -->
+    <section class="pane pane-right" aria-label="Right pane — Claude chat">
+      <div class="chat">
+        <div class="chat-header" aria-hidden="true"></div>
+
+        <!-- Scrolling message list —
+             we deliberately surface every message archetype on screen
+             so the reviewer can verify their visual contracts in one pass. -->
+        <div class="chat-scroller">
+
+          <div class="caption">user turn</div>
+          <!-- User bubble — right aligned, 75% max-width, lighter bubble -->
+          <div class="msg-user">
+            帮我推导 RAFT 选举超时为什么要随机化。我看 §5.2 给的范围是 150–300 ms，但论文没解释为什么不用 deterministic backoff。
+          </div>
+
+          <div class="caption">tool-use call (left bar = orange)</div>
+          <div class="tool-use">
+            <span class="tool-name">Read</span>
+            <code class="tool-input">{"file":"_source/lectures/COMP3221-W04-Distributed-Algorithms.pdf","offset":312,"limit":48}</code>
+          </div>
+
+          <div class="caption">tool-result (left bar = neutral grey)</div>
+          <div class="tool-use tool-result">
+            <span class="tool-name">Read · 1.6 KB</span>
+            <code class="tool-input">"…leader election relies on randomized timeouts in [150ms, 300ms] to break symmetry…"</code>
+          </div>
+
+          <div class="caption">thinking indicator (no content reveal — encrypted block)</div>
+          <span class="thinking">thinking…</span>
+
+          <div class="caption">assistant — chunky stream phase (monospace, no bubble)</div>
+          <pre class="msg-assistant-streaming">RAFT 用随机化超时是为了避免 split vote。
+如果两个 follower 同时</pre>
+
+          <div class="caption">assistant — finalized (serif, NO bubble, with KaTeX + code)</div>
+          <div class="msg-assistant-final">
+            <p>RAFT 用随机化超时是为了避免 <em>split vote</em>。如果两个 follower 在<strong>完全相同</strong>的 timeout 后转 candidate、同时给自己投票、再向集群广播 RequestVote，就会出现两边都拿不到 majority 的情况——term 增加、超时再触发、又同时转 candidate，循环里每个 election 都失败。</p>
+
+            <p>论文 §5.2 给的窗口是 <code>[T, 2T]</code> 上的均匀分布（典型 <code>T = 150 ms</code>）。两个 follower 都赶上同一 election cycle 的概率近似：</p>
+
+            <p style="text-align:center; margin: var(--s-md) 0;">
+              <span class="katex-mock">P<sub>collision</sub> <span class="op">≈</span> Δt<span class="op">/</span>T <span class="op">=</span> RTT<span class="op">/</span>T</span>
+            </p>
+
+            <p>当 <code>RTT ≪ T</code>（典型 LAN 是 <code>1 ms / 150 ms ≈ 0.7 %</code>），split vote 就以高概率被随机化打散，重选 1–2 轮就会收敛。</p>
+
+            <p>对照 deterministic backoff（比如 node-id 排序）：</p>
+
+            <pre><code>// 反例 — deterministic：一台慢节点永远当不了 leader
+timeout(node_id) = 150 + 30 * node_id  // ms
+                 // node 0 → 150ms, node 1 → 180ms, ...</code></pre>
+
+            <p>这种方案在不对称网络下会让<strong>低 id 的节点垄断 leadership</strong>，violates the symmetry-of-replicas property RAFT 要求的——所以 §5.2 显式选了 randomized。</p>
+          </div>
+
+          <div class="caption">system bubble — error variant (KaTeX render fail)</div>
+          <div class="msg-system error">
+            [KaTeX error: ParseError: Expected 'EOF', got '<span class="katex-error">\href</span>' at position 18 — `\href` blocked by trust:false (REQ-5)]
+          </div>
+
+          <div class="caption">system bubble — subprocess error (claude not authenticated)</div>
+          <div class="msg-system error">
+            subprocess exited (code 1): claude CLI not authenticated. Run `claude /login` in Terminal, then retry.
+          </div>
+
+          <!-- Final user prompt (just typed, not yet streaming a reply) -->
+          <div class="caption">user turn (latest, awaiting send)</div>
+          <div class="msg-user">
+            那 §5.4 commit 规则里说的“previous term log entry”是不是同一个 symmetry-breaking 思想？
+          </div>
+
+        </div><!-- /chat-scroller -->
+
+        <!-- Input dock — streaming state shown (Stop button + dot visible) -->
+        <div class="input-dock" aria-label="Input dock — streaming state">
+          <div class="input-box">
+            <textarea class="input" rows="1"
+              placeholder="Ask anything…"
+              aria-label="Message Claude">那 §5.4 commit 规则里说的 “previous term log entry” 是不是同一个 symmetry-breaking 思想？</textarea>
+
+            <span class="streaming-dot" aria-label="Connecting to Claude…"></span>
+
+            <button class="btn-action" type="button" aria-label="Stop streaming" title="Stop streaming">
+              <svg viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
+                <rect x="4.5" y="4.5" width="9" height="9" rx="1.5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /chat -->
+    </section><!-- /pane-right -->
+
+  </div><!-- /pane-row -->
+
+  <!-- ===========================================================
+       Bottom row — Mind-map / KG live preview (Phase 7+8)
+       =========================================================== -->
+  <section class="bottom-row" aria-label="Mind-map placeholder">
+    <div class="graph-hint" aria-hidden="true"></div>
+    <div class="placeholder">Mind-map / KG live preview — wired in Phase 7+8</div>
+  </section>
+
+</div><!-- /window -->
+
+<!-- ============================================================
+     Hotkey footnote — visible-only-in-preview reviewer aid.
+     UI-SPEC L693-707 + CONTEXT.md L36-40 amendment 3 (Cmd+W
+     in unbound list per locked decision).
+     ============================================================ -->
+<div class="hotkey-footnote" aria-label="Phase 1 keyboard contract — preview reference">
+  <h3>Keyboard contract — Phase 1 (preview reference)</h3>
+  <ul>
+    <li><kbd>Enter</kbd> &nbsp;send prompt</li>
+    <li><kbd>Shift</kbd> + <kbd>Enter</kbd> &nbsp;newline (D-20)</li>
+    <li><kbd>Cmd</kbd> + <kbd>Q</kbd> &nbsp;OS-level kill (only)</li>
+    <li><kbd>Cmd</kbd> + <kbd>L</kbd> &nbsp;unbound</li>
+    <li><kbd>Cmd</kbd> + <kbd>K</kbd> &nbsp;unbound</li>
+    <li><kbd>Cmd</kbd> + <kbd>W</kbd> &nbsp;unbound (CONTEXT.md L40)</li>
+    <li><kbd>Cmd</kbd> + <kbd>,</kbd> &nbsp;unbound</li>
+    <li><kbd>Cmd</kbd> + <kbd>P</kbd> &nbsp;unbound</li>
+    <li><kbd>Cmd</kbd> + <kbd>O</kbd> &nbsp;unbound</li>
+    <li><kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> &nbsp;unbound</li>
+    <li><kbd>Cmd</kbd> + <kbd>N</kbd> &nbsp;unbound</li>
+    <li><kbd>Cmd</kbd> + <kbd>R</kbd> &nbsp;unbound</li>
+  </ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,113 @@
+/* ============================================================
+ * mneme — Phase 1 Token Module (DESIGN PREVIEW CANDIDATE)
+ *
+ * Source: 01-UI-SPEC.md L132-232 — KD-13 Anthropic/Claude family.
+ * This file is a 1:1 candidate for `src/lib/styles/tokens.css`.
+ * Plan 01-05 Task 1 will copy / re-validate against UI-SPEC at
+ * implementation time. Do not edit independently of UI-SPEC.
+ * ============================================================ */
+
+:root {
+  /* === SURFACE — 60 / 30 / 10 split === */
+  --bg: #faf9f5;                              /* 60% canvas (cream) */
+  --bg-soft: #f1efe7;                         /* 30% — left + middle pane bg */
+  --bg-deep: #e8e6dc;                         /* 30% — bottom-row placeholder bg */
+  --paper: #ffffff;                           /* 30% — input box bg */
+
+  /* === INK === */
+  --ink: #141413;                             /* primary text */
+  --ink-soft: #2b2a27;                        /* secondary text + warm dark mode bg */
+  --ink-mute: #6b6a64;                        /* placeholder + helper text */
+  --muted: #b0aea5;                           /* metadata mono */
+
+  /* === ACCENT (10%) === */
+  --orange: #d97757;                          /* primary accent */
+  --orange-deep: #ae5630;                     /* link hover / active state */
+  --orange-soft: #f4dccd;                     /* subtle orange tint backgrounds */
+  --orange-tint: #fbeee4;                     /* lightest orange wash */
+  --orange-ring: rgba(217, 119, 87, 0.15);    /* 3px focus ring outer */
+
+  /* === SEMANTIC (Phase 1 — destructive only) === */
+  --error: #c15f3c;                           /* subprocess error inline; KaTeX render error
+                                                 (form-locked: stroke or text color only,
+                                                 NEVER fill — see UI-SPEC L309-322) */
+
+  /* === MESSAGE BUBBLES === */
+  --bubble-user: #EEEBE2;                     /* user message bg — ground-truth override 2026-05-08
+                                                 (was #DDD9CE per KP-09 deep-dive Section 2 doc;
+                                                 live Claude Desktop UI is lighter — see SSOT 0' note in UI-SPEC) */
+  /* assistant has NO bubble — flowing serif text directly on --bg right pane */
+
+  /* === BORDERS === */
+  --border: rgba(20, 20, 19, 0.08);           /* 8% black opacity — soft separation */
+  --border-strong: rgba(20, 20, 19, 0.14);    /* drag-handle hover + drag-active */
+
+  /* === SHADOWS (multi-layer soft) === */
+  --shadow-sm: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.035);   /* input box default */
+  --shadow-md: 0 0.5rem 2rem rgba(20, 20, 19, 0.06);     /* reserved for Phase 2 modals */
+
+  /* === RADIUS LADDER === */
+  --r-xs: 4px;                                /* drag-handle inner highlight */
+  --r-sm: 6px;                                /* tool-use card */
+  --r-md: 8px;                                /* input box, code block */
+  --r-lg: 12px;                               /* user bubble */
+  --r-pill: 9999px;                           /* streaming dot, send button */
+
+  /* === SPACING (8-point scale) === */
+  --s-xs: 4px;
+  --s-sm: 8px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 32px;
+  --s-2xl: 48px;
+  --s-3xl: 64px;
+
+  /* === TYPOGRAPHY === */
+  --font-body: 'Iowan Old Style', 'Apple Garamond', Georgia, 'Songti SC', 'Source Han Serif SC', serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --fs-meta: 14px;                            /* tool-use, drag tooltip, error inline */
+  --fs-body: 16px;                            /* chat body, input */
+  --fs-h: 20px;                               /* placeholder copy in empty panes */
+  --fs-display: 28px;                         /* reserved Phase 2 */
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --lh-body: 1.5;
+  --lh-heading: 1.2;
+
+  /* === MOTION === */
+  --ease: cubic-bezier(0.165, 0.85, 0.45, 1); /* organic ease-out (KD-13 lock) */
+  --d-fast: 120ms;                            /* button press */
+  --d-base: 200ms;                            /* hover / focus */
+  --d-slow: 300ms;                            /* layout commit */
+  --d-cap: 400ms;                             /* hard upper bound for any Phase 1 anim */
+  --pulse-period: 1.2s;                       /* streaming dot pulse */
+
+  /* === GEOMETRY (named physical constants, NOT on spacing scale) === */
+  --btn-send: 44px;                           /* Send / Stop diameter (touch-target floor) */
+  --bottom-row-h: 120px;                      /* bottom-row mind-map placeholder height (D-03) */
+  --pane-min-w: 200px;                        /* CSS Grid minmax floor per pane */
+}
+
+/* Dark mode tokens defined; UI toggle deferred to Phase 2 REQ-14 */
+[data-theme="dark"] {
+  --bg: #2b2a27;
+  --bg-soft: #232220;
+  --bg-deep: #1f1e1b;
+  --paper: #2f2e2b;
+  --ink: #faf9f5;
+  --ink-soft: #d8c4b3;
+  --ink-mute: #8e8b82;
+  --bubble-user: #3d3a35;
+  --border: rgba(250, 249, 245, 0.08);
+  --border-strong: rgba(250, 249, 245, 0.14);
+}
+
+/* Reduced-motion fallback — KD-13 motion philosophy + WCAG 2.1 AA */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 0ms;
+    --d-base: 0ms;
+    --d-slow: 0ms;
+    --pulse-period: 99s;                      /* effectively static dot, no animation */
+  }
+}
