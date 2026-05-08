@@ -779,7 +779,7 @@ KaTeX npm package ships its own math-glyph font files in `katex/dist/fonts/`. Sv
 Phase 1 introduces **zero new npm/cargo deps for the UI surface** beyond what's already locked in CONTEXT.md / AI-SPEC. Specifically:
 
 - ✅ Already registered: `@tauri-apps/api`, `@tauri-apps/plugin-shell`, SvelteKit, Svelte 5, `marked`, `katex`, `dompurify`, `tauri-plugin-shell`
-- ✅ Cargo: `nix` (D-11) — already flagged in CONTEXT.md for capabilities; UI-SPEC needs no additional Rust deps
+- ✅ Cargo: `nix` — D-11 in CONTEXT.md flags the dep slot ("either nix or libc — plan-phase decides"); AI-SPEC §4 finalized the choice to `nix` (cargo add nix --features signal,process). UI-SPEC needs no additional Rust deps.
 - ✅ Vendored: `claude-code-parser` (KD-12) — already registered Group 6
 - 🆕 Group 10 patch: add `awesome-design-md` row (see Triage Result section's diff)
 - ❌ NOT introduced: `lucide-svelte`, `phosphor-svelte`, `bits-ui`, `melt-ui`, `tailwindcss`, `shadcn` — Phase 1 vanilla CSS only
@@ -870,14 +870,14 @@ These items have UI implications but are out of scope here. Surface trigger phas
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending (awaiting `gsd-ui-checker`)
+**Approval:** APPROVED — `gsd-ui-checker` final pass returned `## UI-SPEC VERIFIED` after revision 2 (commits `62a21c9` initial → `65cb83f` rev 1 → `d764b6f` rev 2 → `987261a` final-tokenize → `95302fe` post-approval token tweaks). Body sign-off synced with frontmatter `status: approved` 2026-05-08.
 
 ---
 
