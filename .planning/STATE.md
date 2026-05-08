@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-08T09:00:00.000Z"
+last_updated: "2026-05-08T19:50:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 1
-  total_plans: 4
+  total_plans: 11
   completed_plans: 4
-  percent: 100
+  percent: 36
 ---
 
 # mneme Project State
@@ -32,9 +32,9 @@ progress:
 ## Current Position
 
 **Phase**: 1 — Tauri Shell Foundation + Subprocess Hardening (Phase 0 retired 2026-05-07)
-**Plan**: none yet — SPEC + CONTEXT + AI-SPEC + UI-SPEC in place; next is `/gsd-plan-phase 1 --tdd`
-**Status**: phase-1-ui-locked
-**Progress**: 1/11 phases complete · 4/4 plans complete (Phase 0) · Phase 1 SPEC + CONTEXT + AI-SPEC + UI-SPEC approved (4-piece contract)
+**Plan**: 7 plans created (01-01 through 01-07); next is `/gsd-execute-phase 1` Wave 1
+**Status**: phase-1-planned
+**Progress**: 1/11 phases complete · 4 plans Phase 0 + 7 plans Phase 1 created (0/7 executed) · Phase 1 SPEC + CONTEXT + AI-SPEC + UI-SPEC + RESEARCH + PATTERNS + VALIDATION + 7 PLANs all in place
 
 ```
 [██░░░░░░░░░░░░░░░░░░] 9% (1/11 phases)
@@ -160,9 +160,9 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Session Continuity
 
-**Last GSD command**: `/gsd-discuss-phase 1 --analyze` (advisor mode, calibration `minimal_decisive`, 4 advisor agents in parallel + 5 follow-up HOWs + 1 license posture clarification)
+**Last GSD command**: `/gsd-plan-phase 1 --tdd` (TDD mode active, granularity fine, 7 plans across 5 waves; 4-piece contract honored — SPEC + CONTEXT + AI-SPEC + UI-SPEC + RESEARCH + PATTERNS + VALIDATION all consumed)
 **Last action**: Phase 1 CONTEXT.md + DISCUSSION-LOG.md written at `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/` (commit `c00101b`). **21 implementation decisions** captured (D-01 through D-21) covering: layout (vanilla CSS Grid + 30/40/30 columns + bottom-row mind-map placeholder + `decorations:true + titleBarStyle:Overlay + hiddenTitle:true` matching Claude Desktop screenshot + initial 1280×860), subprocess lifecycle (full Rust state machine + `CloseRequested + ExitRequested` double-hook union + `libc::killpg` PGID kill — required for REQ-3 acceptance), parser vendor depth (A2 src+LICENSE+VENDOR.md only, drop tests), capability validator SSOT (B2: TS `spawn-args.ts` + prebuild `gen-capabilities.ts` + diff audit; B3 Rust programmatic verified infeasible), RQ-03 community absorption (Targeted read of OpenCovibe Tauri 2 + Svelte 5 + Apache-2.0 same-stack match — was missing from STACK.md, advisor's discovery — plus TOKENICODE `useStreamProcessor.ts` for `finalizeOnce` + `control_request`, opcode UX screenshots only), telemetry (UI streaming dot only + dev console.log for TTFT/event count/duration), Stop button + Shift+Enter (Claude chat alignment), rAF flushing deferred to Phase 3. **Two new project-level criteria codified**: D-08 OSS adoption thresholds (≥1k★ + multi-maintainer + clean + active + permissive) refining KP-02; D-09 AGPL READ-ONLY posture re-confirmed (mneme retains MIT/Apache choice — 姿态 3 over 1/2). **SPEC.md amendments needed in plan-phase**: REQ-1 (top-bar→bottom-row layout, window chrome fields, initial size, mid-pane placeholder text), REQ-6 (Stop button + Shift+Enter beyond literal Cmd+Q+Enter). Phase 1 LOC estimate: ~1000-1200 fresh write (spike-002 reference-only, NOT bulk-copied).
-**Next recommended action**: `/gsd-plan-phase 1 [--tdd]` — plan-phase researcher reads CONTEXT.md + SPEC.md + spike-findings + dependencies.md, produces RESEARCH.md + PLAN.md(s); SPEC patches (REQ-1 + REQ-6 amendments listed in `<spec_lock>`) applied in same plan-phase.
+**Next recommended action**: `/gsd-execute-phase 1` — Wave 1 (01-01 bootstrap) starts; Wave 2 (01-02 SSOT, 01-03 sanitize+dispatch, 01-04 lifecycle) parallel after Wave 1; Wave 3 (01-05 layout) parallel with Wave 2; Wave 4 (01-06 chat E2E) after Wave 2+3; Wave 5 (01-07 Husky+harness+dogfood CHECKPOINT) seals Phase 1. Plan checker can run via `/gsd-plan-check 1` first if desired.
 
 **Session boundaries**:
 

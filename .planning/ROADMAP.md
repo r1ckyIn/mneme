@@ -102,7 +102,15 @@ Plans:
   4. Cost meter visible in chat header (current session $ + cumulative today $); hard daily cap (default $10) blocks new subprocesses when exceeded; `--max-turns 30` passed to every claude invocation.
   5. Capability hardening: explicit window names (no `"*"`), shell `args` per-arg validators (no `args: true` reaching production), KaTeX ≥ 0.16.21 pinned, DOMPurify allowlist explicit.
 **OSS adoption note (KP-02)**: Tauri 2 + SvelteKit + adapter-static + tauri-plugin-shell (KD-01, spike 002 validated); marked + KaTeX + DOMPurify (KD-02); `claude-code-parser` (MIT) **vendored** in `vendor/claude-code-parser/` per KD-12 (no npm dep).
-**Plans**: TBD
+**Plans:** 7 plans
+Plans:
+- [ ] 01-01-PLAN.md — Wave 1 bootstrap: Tauri 2 + SvelteKit + Phase 0 identity transition + vendored claude-code-parser + test harness scaffold
+- [ ] 01-02-PLAN.md — Wave 2 (TDD): spawn-args SSOT + capability hardening + audit script (T-1-03/04/05/07)
+- [ ] 01-03-PLAN.md — Wave 2 (TDD): sanitize.ts (DOMPurify Option-A hook + KaTeX trust:false) + 6-arm stream-dispatch.ts (T-1-02 + T-1-06)
+- [ ] 01-04-PLAN.md — Wave 2 (TDD): Rust state machine (SessionRegistry + kill_pgid + hook union) (T-1-01)
+- [ ] 01-05-PLAN.md — Wave 3: tokens.css + Splitter.svelte three-pane + bottom row + window chrome (KP-09 + KD-13)
+- [ ] 01-06-PLAN.md — Wave 4: ChatPanel.svelte E2E wiring (Command spawn + dispatch + sanitize + IPC + Stop button + hotkey unbinding)
+- [ ] 01-07-PLAN.md — Wave 5: Husky pre-commit + 5-cycle lifecycle harness + 50-row dogfood checklist + VALIDATION.md sign-off (CHECKPOINT)
 **UI hint**: yes
 
 ### Phase 2: Vault + Canvas/Ed Sync + Onboarding
@@ -265,7 +273,7 @@ These items are deferred from REQUIREMENTS.md v2+ section. They get phase mappin
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Identity & Branding Lock | 4/4 | Complete    | 2026-05-07 |
-| 1. Tauri Shell Foundation + Subprocess Hardening | 0/0 | Not started | - |
+| 1. Tauri Shell Foundation + Subprocess Hardening | 0/7 | Not started | - |
 | 2. Vault + Canvas/Ed Sync + Onboarding | 0/0 | Not started | - |
 | 3. Multi-Session + Command Palette + Editor | 0/0 | Not started | - |
 | 4. Document Ingestion (PDF + Office → markdown) | 0/0 | Not started | - |
