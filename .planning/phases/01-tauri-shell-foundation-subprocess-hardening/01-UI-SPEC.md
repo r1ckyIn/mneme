@@ -1,7 +1,7 @@
 ---
 phase: 1
 slug: tauri-shell-foundation-subprocess-hardening
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none (vanilla SvelteKit + CSS Grid; mneme is Svelte-only — shadcn React components not applicable)
 created: 2026-05-08
@@ -497,7 +497,7 @@ font-size: var(--fs-meta)              /* 14px */
 color: var(--ink-soft)
 display: flex
 align-items: baseline
-gap: 8px
+gap: var(--s-sm)                       /* 8px — token discipline */
 
   ↳ <span class="tool-name">  font-weight: 600  color: var(--ink)
   ↳ <code class="tool-input"> color: var(--ink-mute)  truncate at 200 chars + "…"
