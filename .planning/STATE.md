@@ -148,13 +148,21 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ### Pending Todos
 
-3 pending — captured during sessions, surface at appropriate phase:
+2 pending — captured during sessions, surface at appropriate phase:
 
 - **Evaluate thea for question generation** (research, 2026-05-07, **product REJECTED · algorithm-layer worth a Phase 10 spike**) — thea.study (closed cloud SaaS, K-12) fails KP-01/KP-02/KD-06/form-factor as a dependency. Separately, the *algorithm* — AI takes source material → produces good concept-review items — is a real engineering problem mneme also has to solve in Phase 10 (REQ-09 concept review, not flashcard). Recommended path: when approaching Phase 10, promote to `/gsd-spike concept-review-item-generation` (½–1 day timebox; black-box probe of thea + Claude API prompt-pipeline experiment against a real USYD lecture). File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before `/gsd-discuss-phase 10`.
 
-- **Triage awesome-design-md vs awesome-claude-design for KD-13** (planning, 2026-05-07, **deferred to UI-phase entry**) — User surfaced `VoltAgent/awesome-design-md` (generic parent, has small `design-md/claude/` folder); the specialized sibling `VoltAgent/awesome-claude-design` (68 templates, MIT) is **already** in `dependencies.md` Group 10 last-checked today. VoltAgent's DESIGN.md format is **executable scaffold prompts** (a third axis vs the existing theory deep-dive + visual gallery). Decision deferred — at first `/gsd-ui-phase N` run, diff both VoltAgent sources, cross-check tokens against the deep-dive SSOT (Anthropic `brand-guidelines` wins ties), then either drop parent / add as Group 10 row / copy chosen DESIGN.md into Group 9 as Tertiary executable prompt. File: `.planning/todos/pending/2026-05-07-triage-awesome-design-md-vs-awesome-claude-design-for-kd-13.md`. Surface trigger: before first `/gsd-ui-phase`.
-
 - **Spec Claude (free) mode source display + conflict resolution behavior (REQ-08 / Phase 9)** (planning, 2026-05-07, **defer to Phase 9 plan stage**) — REQ-08 lock 了 free ↔ anchored 切换机制，但 free 一侧的具体行为未规范。User 提出三条 free 模式细化：(1) 底部带 `Sources:` 列表（介于 NotebookLM 只讲书本 vs DeepSeek 放飞之间的中间路线，参考 Claude Code 搜资料时的形态）；(2) 3-tier 综合顺序——内置知识 → 网搜最新 → 用户左栏勾选的参考文献；(3) 冲突场景化——三源分歧时显式呈现并按场景给出建议（"考试按课件来 / 现实按最新来"，以税法为例）。不修改 REQ-08 锁定文本，进入 `/gsd-plan-phase 9` 时把这三条加进 Success Criteria + system prompt 注入策略。可能涉及 REQ-17（per-course rules）协同。File: `.planning/todos/pending/2026-05-07-spec-claude-free-mode-source-display-and-conflict-resolution-req-08.md`. Surface trigger: before `/gsd-discuss-phase 9` 或 `/gsd-plan-phase 9`.
+
+### Resolved Todos
+
+- ~~**Triage awesome-design-md vs awesome-claude-design for KD-13**~~ (planning, 2026-05-07 → resolved 2026-05-08 via `.planning/quick/20260508-claude-design-research/`) — Resolved by `/gsd-quick` Claude Design tooling research. Findings: (a) `VoltAgent/awesome-claude-design` 9-段 DESIGN.md 是社区事实标准（68 个开源示例），Anthropic 官方未发布替代格式 → 采纳为 mneme DESIGN.md 模板源；(b) Anthropic 官方推荐提示词 4 段结构（Goal / Layout / Content / Audience）；(c) Export 主路径 = Claude Code handoff bundle（不是 PDF）；(d) Design system 一次性配置 — 后续 prototype 自动继承。Surface gap: 这条 todo 原应在 `/gsd-ui-phase 1` 之前 surface 但被漏掉，导致 ui-phase 只产出 UI-SPEC.md 文字契约、未产出 HTML mockup + 视觉资产；本调研是补救。流程纠偏建议：在 `r1ckyIn_GitHub/mneme/CLAUDE.md` 加 KP-05 强制执行点（ui-phase 之后、plan-phase 之前必须用 claude.ai/design 实例化 — 见 RESEARCH.md §11）。
+
+### Quick Tasks Completed
+
+| Date | Slug | Type | Outcome |
+|------|------|------|---------|
+| 2026-05-08 | claude-design-research | research-only | Claude Design 工具用法 + DESIGN.md 9 段格式 + 4 段提示词 + Claude Code handoff bundle export 路径 — 调研落档 `.planning/quick/20260508-claude-design-research/RESEARCH.md`。已 resolve 「Triage awesome-design-md vs awesome-claude-design for KD-13」pending todo。 |
 
 ---
 
