@@ -56,7 +56,7 @@ Claude.ai 采用三栏式布局：**左侧折叠式侧边栏**（对话历史、
 
 ### 微交互与动效
 
-过渡动画使用自定义缓动曲线 `cubic-bezier(0.165, 0.85, 0.45, 1)`，一种修改后的 ease-out 曲线，赋予界面自然有机的运动感。按钮点击反馈为 `active:scale-[0.98]` 的微缩效果。边框极其克制，使用约 **8% 透明度黑色** `border-[#00000015]` 实现"soft separation"。整体动效哲学是**"subtle and purposeful rather than flashy"（微妙而有目的，而非炫技）**。
+过渡动画使用自定义缓动曲线 `cubic-bezier(0.165, 0.85, 0.45, 1)`，一种修改后的 ease-out 曲线，赋予界面自然有机的运动感。按钮点击反馈为 `active:scale-[0.96]` 的微缩效果（mneme 项目调整：原 Anthropic 视觉为 0.98，Phase 1 UI-SPEC 2026-05-08 决议下调至 0.96 以提供更明显的 chat 输入按钮反馈，全项目统一）。边框极其克制，使用约 **8% 透明度黑色** `border-[#00000015]` 实现"soft separation"。整体动效哲学是**"subtle and purposeful rather than flashy"（微妙而有目的，而非炫技）**。
 
 ### 与竞品的视觉对比
 

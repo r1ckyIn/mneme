@@ -36,7 +36,8 @@ Downstream agents MUST read `01-SPEC.md` before planning or implementing. Requir
 **SPEC.md amendments required by this discussion** — plan-phase to apply as a SPEC patch:
 
 1. **REQ-1 layout**: top-bar `<header>` reservation → bottom-row reservation (`Mind-map / KG live preview` placeholder, ~120px height); add window chrome fields `decorations: true` + `titleBarStyle: "Overlay"` + `hiddenTitle: true`; add initial window size `1280 × 860` (minimum `1024 × 600` already locked); change middle-pane placeholder text from `"Select a file to preview"` → `"Lecture video / file preview — wired in Phase 4 + 6"`.
-2. **REQ-6 hotkeys**: extend the strict `Cmd+Q + Enter` only set to also include `Shift+Enter` (newline in input) and a Stop button (UI element, not hotkey, shown only during active stream). Aligns with Claude Desktop / Cursor / ChatGPT / Notion conventions.
+2. **REQ-6 hotkeys (extension)**: extend the strict `Cmd+Q + Enter` only set to also include `Shift+Enter` (newline in input) and a Stop button (UI element, not hotkey, shown only during active stream). Aligns with Claude Desktop / Cursor / ChatGPT / Notion conventions.
+3. **REQ-6 hotkeys (unbound list addition — added 2026-05-08 post-UI-SPEC alignment)**: append `Cmd+W` to the explicit unbound hotkey list (alongside the existing `Cmd+L / Cmd+K / Cmd+, / Cmd+P / Cmd+O / Cmd+Shift+P / Cmd+N / Cmd+R`). Phase 1 single-window single-session semantics make Cmd+W functionally redundant with Cmd+Q; explicitly unbinding it (rather than letting macOS default close-window behavior fire without our PGID-kill path) avoids a subprocess-leak path. UI-SPEC originally inferred `Cmd+W` should mirror Cmd+Q; the alignment audit chose stricter "unbound" treatment to keep the SPEC REQ-6 surface narrow + explicit. UI-SPEC L677 keyboard contract row to be updated by plan-phase along with the SPEC patch.
 
 </spec_lock>
 
@@ -96,6 +97,21 @@ Downstream agents MUST read `01-SPEC.md` before planning or implementing. Requir
 - **D-19 Stop button (extends SPEC REQ-6)**: UI button rendered only during active stream. Click → invokes Rust kill path (same as Cmd+Q lifecycle but without app exit). Already-streamed text is preserved (no rollback). ~30 LOC.
 - **D-20 Enter / Shift+Enter (extends SPEC REQ-6)**: `Enter` sends prompt; `Shift+Enter` inserts newline (multi-line input). Aligns with Claude Desktop / Cursor / ChatGPT / Notion conventions. Plan-phase to coordinate with SPEC REQ-6's "only Cmd+Q + Enter" hotkey list.
 - **D-21 stream_event rAF flushing — DEFERRED to Phase 3**: TOKENICODE's lesson (50-100 re-renders/sec on long streams) is acknowledged but not implemented in Phase 1. Phase 1 prompts in scope are short; revisit when Phase 3 multi-session + long sessions surface real perceived jank.
+
+### Visual Contract Pointer (D-22 — UI-SPEC integration, added 2026-05-08)
+
+- **D-22 Phase 1 颜色派生锁**: Phase 1 颜色契约由 `01-UI-SPEC.md` 锁定，**CONTEXT.md 不复制 token 值**（避免 SSOT 漂移）。
+  - **范围**: 60/30/10 + 4 个 user/assistant 表面色 + accent 6-site allow-list + `--error` Semantic Lock + SSOT 0' override 规则。
+  - **追溯**: commits `62a21c9 → 65cb83f → d764b6f → 987261a → 42aadc8 → 95302fe → 2fd7f6e`（initial → revisions → approved → bubble override + error lock → self-consistency fix）。
+  - **跨 phase 适用**: Phase 2+ 所有视觉决策必须读 `tokens.css`（实现）+ `01-UI-SPEC.md`（语义说明）。新增 token 走 ui-phase N 流程。`gsd-ui-checker` 跨 phase 验证 `#c15f3c` form-isolation 不被破坏。
+- **D-22 also ratifies two cross-phase rules introduced in UI-SPEC**:
+  - **(a) SSOT 0' — Live Anthropic Product UI > documentation snapshots**: user-screenshot evidence may override SSOT 1/2 hex values when Anthropic's live product diverges from the documented baseline. First override applied in UI-SPEC: `--bubble-user: #DDD9CE` (deep-dive zh) → `#EEEBE2` (Claude Desktop screenshot, 2026-05-08).
+  - **(b) `--error` Semantic Lock**: `#c15f3c` originated as a "UI accent color" in deep-dive zh (same terra-cotta family as `#d97757`). mneme reassigns it as exclusively destructive-semantic. **form-isolation contract**:
+    - `--orange` only as fill (button background, dot indicator)
+    - `--error` only as stroke / text color (left rule, error message text)
+    - Phase 2+ any UI-accent use case is forbidden from `#c15f3c`; must pick from `--orange / --orange-deep`
+    - `gsd-ui-checker` cross-phase greps `#c15f3c` and verifies it has not drifted into non-`--error` consumers.
+- **KD-13 active-scale ratification (2026-05-08)**: `active:scale-[0.98]` (KD-13 baseline) → `active:scale-[0.96]` (Phase 1 UI-SPEC ratification, applied project-wide). PROJECT.md L762 + `references/design/anthropic-claude-aesthetic-deep-dive_zh.md` L59 both updated; deep-dive zh notes the deviation from Anthropic's 0.98 baseline. Affects all future ui-phase N decisions — the canonical mneme value is 0.96.
 
 ### Phase 1 LOC Estimate (fresh write)
 
