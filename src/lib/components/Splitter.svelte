@@ -186,7 +186,9 @@
     padding-top: 36px;
   }
 
-  /* A-12 — middle column 2-row split */
+  /* A-12 — middle column 2-row split.
+     Plan 01-09: row splitter uses Mneme.html L511-516 `.splitter-h` —
+     visible 1px hairline (--border-soft) baseline + orange-0.4 tint on hover. */
   .middle-stack {
     display: grid;
     grid-template-rows: 1fr 4px 1fr;
@@ -197,24 +199,46 @@
     position: relative;     /* anchor for .drag-handle.abs */
   }
   .middle-row-splitter {
-    background: var(--border);
-    cursor: default;        /* Phase 3 wires col-resize + drag JS */
+    background: var(--border-soft);
+    cursor: row-resize;     /* visual cursor only; Phase 3 wires JS drag */
     user-select: none;
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .middle-row-splitter:hover {
+    background: rgba(217, 119, 87, 0.4);  /* Mneme.html L516 — orange tint */
   }
 
+  /* Plan 01-09: column splitters use Mneme.html L186-200 `.splitter` —
+     transparent track + 1px ::before hairlines on left + right. Hover
+     darkens border-softer to border-soft. Drag still tints orange. */
   .handle {
     cursor: col-resize;
-    background: var(--border);
-    transition: background var(--d-base) var(--ease);
+    background: transparent;
+    position: relative;
     user-select: none;
     touch-action: none;             /* required for setPointerCapture on touch surfaces */
+    transition: background var(--duration-base) var(--ease-out);
   }
-  .handle:hover {
-    background: var(--border-strong);
+  .handle::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-left: 1px solid var(--border-softer);
+    border-right: 1px solid var(--border-softer);
+    transition: border-color var(--duration-fast) var(--ease-out);
+    pointer-events: none;
+  }
+  .handle:hover::before {
+    border-left-color: var(--border-soft);
+    border-right-color: var(--border-soft);
   }
   .grid.dragging .handle {
     /* Drag-active state — UI-SPEC accent allow-list site #4 */
-    background: var(--orange);
+    background: rgba(217, 119, 87, 0.18);
+  }
+  .grid.dragging .handle::before {
+    border-left-color: var(--color-orange);
+    border-right-color: var(--color-orange);
   }
 
   .bottom-row {
