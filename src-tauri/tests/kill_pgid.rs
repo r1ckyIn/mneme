@@ -94,7 +94,7 @@ with open("/tmp/mneme_test_child2.pid", "w") as f:
 time.sleep(60)
 "#;
 
-    let parent = Command::new("python3")
+    let mut parent = Command::new("python3")
         .args(["-c", script])
         .spawn()
         .expect("failed to spawn python3 test wrapper (is python3 on PATH?)");
@@ -151,6 +151,26 @@ time.sleep(60)
     // SPEC REQ-3 acceptance is "within 2s of Cmd+Q"; we wait 2.5s to give the
     // kernel its routine slack.
     thread::sleep(Duration::from_millis(2_500));
+
+    // Reap the parent zombie. The kill_pgid call delivered SIGKILL to the WHOLE
+    // process group, which kills the python parent in addition to the children.
+    // BUT: because the test runner is the python process's parent, the dead
+    // python process becomes a ZOMBIE (kernel keeps a process-table entry)
+    // until we wait() on it. `kill(pid, None)` returns OK for zombies — they
+    // still "exist" in the process table. To make `pid_alive(parent_pid)`
+    // report DEAD honestly, we must reap the zombie via try_wait()/wait().
+    //
+    // The two grandchildren do NOT become zombies of THIS process — their
+    // parent was the python process, which is now dead, so they are orphaned
+    // and auto-reaped by init/launchd. So child{1,2}_pid liveness probes are
+    // honest without our intervention.
+    //
+    // Production parallel: in Tauri, frontend's `cmd.spawn()` returns a Child
+    // handle that the cmd.on('close') relay reaps via Rust's drop semantics.
+    // Cmd+Q kill_pgid path lets the OS deliver SIGKILL; the WindowEvent close
+    // sequence drains state which drops the handle. The reap happens
+    // implicitly. The test simulates this with explicit try_wait().
+    let _ = parent.try_wait();
 
     // WHOLE-PROCESS-GROUP drain assertion (closes Cycle-1 MEDIUM #1).
     // All three PIDs (parent + both children) must be gone.
