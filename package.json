@@ -11,14 +11,14 @@
     "tauri": "tauri",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prebuild": "node scripts/gen-capabilities.ts && bash scripts/audit-capabilities.sh"
+    "prebuild": "node --experimental-strip-types scripts/gen-capabilities.ts && bash scripts/audit-capabilities.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-shell": "^2.3.5",
-    "marked": "^18.0.3",
+    "dompurify": "^3.4.2",
     "katex": "^0.16.45",
-    "dompurify": "^3.4.2"
+    "marked": "^18.0.3"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",
@@ -28,6 +28,7 @@
     "@types/dompurify": "^3.0.5",
     "@types/katex": "^0.16.7",
     "@types/marked": "^6.0.0",
+    "@types/node": "^25.6.2",
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "svelte": "^5.55.5",
