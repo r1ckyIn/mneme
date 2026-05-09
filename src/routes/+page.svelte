@@ -30,13 +30,16 @@
 <div class="stage">
   <div class="window">
 
-    <!-- Titlebar — macOS overlay style with traffic lights at left + meta at right -->
-    <div class="titlebar">
-      <div class="traffic-lights" aria-label="Window controls" aria-hidden="true">
-        <span class="tl close"></span>
-        <span class="tl min"></span>
-        <span class="tl max"></span>
-      </div>
+    <!-- Titlebar — macOS overlay style. We rely on the OS-rendered traffic
+         lights from `decorations:true + titleBarStyle:Overlay + hiddenTitle:true`
+         in tauri.conf.json. The 36px `var(--titlebar-height)` row reserves
+         space for them on the left. The prototype's fake `.traffic-lights`
+         DOM was removed — keeping it caused a double-render (real OS dots +
+         fake DOM dots = ghosting). data-tauri-drag-region makes the bar
+         draggable; TitlebarMeta children opt out via `data-tauri-drag-region="false"`
+         on their interactive elements. -->
+    <div class="titlebar" data-tauri-drag-region>
+      <div class="titlebar-spacer" aria-hidden="true"></div>
       <TitlebarMeta />
     </div>
 
@@ -107,7 +110,15 @@
     transform-origin: center center;
   }
 
-  /* Titlebar — Mneme.html L120-160. */
+  /* Titlebar — Mneme.html L120-160 visual contract, but with two Tauri-specific
+     adaptations: (1) `data-tauri-drag-region` on the wrapper element is what
+     Tauri 2 actually honors for native window dragging — the prototype's
+     `-webkit-app-region: drag` is Electron/Chrome PWA syntax that Tauri 2
+     does NOT recognize. (2) `.titlebar-spacer` reserves the 70-78px traffic-light
+     gutter on the left so TitlebarMeta doesn't slide under the OS buttons.
+     The prototype rendered fake `.traffic-lights` DOM dots; we removed them
+     — Tauri's `decorations:true + titleBarStyle:Overlay + hiddenTitle:true`
+     already paints the real ones, and rendering both produced a ghost-halo. */
   .titlebar {
     grid-row: 1;
     position: relative;
@@ -116,24 +127,13 @@
     padding: 0 var(--space-4);
     background: transparent;
     z-index: 5;
-    -webkit-app-region: drag;       /* Tauri honors this; web ignores */
   }
-  .traffic-lights {
-    display: flex;
-    gap: 8px;
-    padding: 4px 4px 4px 0;
-    -webkit-app-region: no-drag;
+  .titlebar-spacer {
+    /* Reserves space for OS-rendered traffic lights (≈ 70px on macOS overlay
+       titleBarStyle). Without this, TitlebarMeta would render under the dots. */
+    width: 70px;
+    flex: 0 0 auto;
   }
-  .tl {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 0.5px solid rgba(0, 0, 0, 0.18);
-    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
-  }
-  .tl.close { background: #ff5f57; }
-  .tl.min   { background: #febc2e; }
-  .tl.max   { background: #28c840; }
 
   .right-pane-slot {
     height: 100%;
