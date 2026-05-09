@@ -1,12 +1,11 @@
 <!--
   +page.svelte — Phase 1 main view.
-  Three-pane resizable shell + 120px bottom row per UI-SPEC §"Geometry Contract"
-  + Round 5 amendments A-05 (drag handles on 5 regions) + A-07 (Finder-style
-  file area) + A-10 (titlebar meta) + A-11 (settings modal) + A-12 (middle
-  column 2-row split).
+  Three-pane resizable shell + 120px bottom row + Round 5 amendments
+  (A-05 drag handles + A-07 Finder file area + A-10 titlebar meta + A-11
+  settings modal + A-12 middle 2-row split).
 
-  Plan 01-06 (Wave 4) replaces the right-pane placeholder body with ChatPanel,
-  preserving the right-pane DragHandle.
+  Wave 4 (plan 01-06) replaces the right-pane inner placeholder TEXT with
+  <ChatPanel />. The wrapping div + DragHandle (A-05 placement #4) PERSIST.
 
   Bottom-row placeholder copy is LOCKED per UI-SPEC §"Three placeholder copy
   (locked)" — do NOT alter without UI-SPEC re-approval.
@@ -18,6 +17,7 @@
   import FilePreview from "$lib/components/FilePreview.svelte";
   import DragHandle from "$lib/components/DragHandle.svelte";
   import TitlebarMeta from "$lib/components/TitlebarMeta.svelte";
+  import ChatPanel from "$lib/components/ChatPanel.svelte";
 </script>
 
 <TitlebarMeta />
@@ -36,11 +36,12 @@
   {/snippet}
 
   {#snippet right()}
-    <!-- Plan 01-06 fills this slot with ChatPanel; the DragHandle persists
-         (placement #4 of A-05's 5-region drag-handle contract). -->
-    <div class="placeholder right-pane-slot" data-pane="right">
+    <!-- Wrapper + DragHandle persist (A-05 placement #4 of 5).
+         ChatPanel fills the inner content; the placeholder italic text
+         is replaced by ChatPanel's own surface. -->
+    <div class="right-pane-slot" data-pane="right">
       <DragHandle />
-      Chat wired in Phase 1 plan 06
+      <ChatPanel />
     </div>
   {/snippet}
 
@@ -54,8 +55,8 @@
 
 <style>
   /* Empty-pane placeholder visual treatment — UI-SPEC §"Empty-pane placeholder
-     visual treatment" lines 398-419 verbatim. Right pane uses this until
-     plan 01-06 fills with ChatPanel; bottom row is permanent for Phase 1. */
+     visual treatment". Right pane no longer needs this (ChatPanel owns its
+     own background); bottom row keeps it for Phase 1. */
   .placeholder {
     display: flex;
     align-items: center;
@@ -72,8 +73,10 @@
     position: relative;     /* anchor for nested .drag-handle.abs */
   }
 
-  /* .bottom-row-placeholder and .right-pane-slot inherit .placeholder above.
-     Empty rulesets removed to satisfy svelte-check's no-empty-rulesets rule;
-     classnames remain in markup so plan 01-06 can wire selectors when
-     ChatPanel mounts inside .right-pane-slot. */
+  .right-pane-slot {
+    height: 100%;
+    position: relative;     /* anchor for the right-pane DragHandle (A-05 #4) */
+  }
+
+  /* .bottom-row-placeholder inherits .placeholder above. */
 </style>
