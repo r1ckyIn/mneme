@@ -113,6 +113,7 @@
   class="grid"
   class:dragging={dragging !== null}
   style:grid-template-columns="{leftRatio * 100}fr {HANDLE_WIDTH_PX}px {middleRatio * 100}fr {HANDLE_WIDTH_PX}px {rightRatio * 100}fr"
+  role="presentation"
   onpointermove={onPointerMove}
 >
   <div class="pane left">
