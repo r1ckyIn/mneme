@@ -1,6 +1,11 @@
 # Rust build artifacts
 target/
 **/target/
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# Tauri auto-generated schemas (regenerated on each build)
+src-tauri/gen/
 
 # Node
 node_modules/
@@ -12,6 +17,7 @@ build/
 
 # Environment / secrets
 .env
+.env.*
 .env.local
 .env.*.local
 
@@ -26,6 +32,9 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Husky
+.husky/_
 
 # Claude Code
 CLAUDE.md
