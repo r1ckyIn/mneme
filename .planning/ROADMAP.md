@@ -113,7 +113,7 @@ Plans:
 - [x] 01-04-PLAN.md — Wave 2 (TDD): Rust state machine (SessionRegistry + kill_pgid + hook union) (T-1-01)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-05-PLAN.md — Wave 3: tokens.css + Splitter.svelte three-pane + bottom row + window chrome (KP-09 + KD-13)
+- [x] 01-05-PLAN.md — Wave 3: tokens.css + Splitter.svelte three-pane + bottom row + window chrome (KP-09 + KD-13)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-06-PLAN.md — Wave 4: ChatPanel.svelte E2E wiring (Command spawn + dispatch + sanitize + IPC + Stop button + hotkey unbinding)
