@@ -105,7 +105,7 @@ Plans:
 **Plans:** 7 plans
 Plans:
 **Wave 1**
-- [ ] 01-01-PLAN.md — Wave 1 bootstrap: Tauri 2 + SvelteKit + Phase 0 identity transition + vendored claude-code-parser + test harness scaffold
+- [x] 01-01-PLAN.md — Wave 1 bootstrap: Tauri 2 + SvelteKit + Phase 0 identity transition + vendored claude-code-parser + test harness scaffold
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-02-PLAN.md — Wave 2 (TDD): spawn-args SSOT + capability hardening + audit script (T-1-03/04/05/07)
