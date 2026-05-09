@@ -116,7 +116,7 @@ Plans:
 - [x] 01-05-PLAN.md — Wave 3: tokens.css + Splitter.svelte three-pane + bottom row + window chrome (KP-09 + KD-13)
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 01-06-PLAN.md — Wave 4: ChatPanel.svelte E2E wiring (Command spawn + dispatch + sanitize + IPC + Stop button + hotkey unbinding)
+- [x] 01-06-PLAN.md — Wave 4: ChatPanel.svelte E2E wiring (Command spawn + dispatch + sanitize + IPC + Stop button + hotkey unbinding)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 01-07-PLAN.md — Wave 5: Husky pre-commit + 5-cycle lifecycle harness + 50-row dogfood checklist + VALIDATION.md sign-off (CHECKPOINT)
