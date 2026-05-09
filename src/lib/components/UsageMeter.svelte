@@ -26,17 +26,20 @@
   import type { DispatchState } from "$lib/stream-dispatch";
 
   interface Props {
-    state: DispatchState;
+    dispatchState: DispatchState;
     sessionStartedAt: Date | null;
   }
-  let { state, sessionStartedAt }: Props = $props();
+  // Note: prop is named `dispatchState` (not `state`) to avoid the Svelte 5
+  // auto-store-subscribe collision that svelte-check flags when a prop named
+  // `state` coexists with the `$state` rune in the same module.
+  let { dispatchState, sessionStartedAt }: Props = $props();
 
   // model_context_window — default 1_000_000 to match A-13 Opus 4.7 1M pill.
   // Phase 2 (REQ-14 settings) lets the user override per model selection.
   const MODEL_CTX_WINDOW = 1_000_000;
 
   let ctxPct = $derived(
-    Math.min(100, (state.totalInputTokens / MODEL_CTX_WINDOW) * 100)
+    Math.min(100, (dispatchState.totalInputTokens / MODEL_CTX_WINDOW) * 100)
   );
 
   function fmtTokens(n: number): string {
@@ -70,7 +73,7 @@
   <span class="leaf">{ctxPct.toFixed(1)}%</span>
   <span class="bar" aria-hidden="true" style:--cost-pct="{ctxPct}%"><span></span></span>
   <span class="right">
-    <span>Total · {fmtTokens(state.totalInputTokens)}</span>
+    <span>Total · {fmtTokens(dispatchState.totalInputTokens)}</span>
     <span class="sep">·</span>
     <span>Session · {sessionDuration}</span>
   </span>
