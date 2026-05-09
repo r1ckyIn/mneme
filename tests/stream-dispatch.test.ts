@@ -170,7 +170,7 @@ describe("dispatchEvent — 6-arm router", () => {
     dispatchEvent({ type: "definitely_not_a_known_type", payload: "x" } as any, state);
     expect(state.messages).toHaveLength(0);
     expect(warnSpy).toHaveBeenCalled();
-    const warnText = warnSpy.mock.calls.map((c) => c.join(" ")).join(" ");
+    const warnText = warnSpy.mock.calls.map((c: unknown[]) => c.join(" ")).join(" ");
     expect(warnText).toContain("claude:unknown-event");
   });
 

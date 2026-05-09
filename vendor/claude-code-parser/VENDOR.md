@@ -17,11 +17,18 @@ changes (e.g., a new top-level `type` field appears in `--output-format stream-j
 
 **Path 2 — types-only consumption** (per RESEARCH.md §4.8 lines 396-405).
 
-mneme imports the `ClaudeEvent` discriminated union from `./src/types.ts`
-(if present) or whichever module the upstream defines its top-level event
-type in. mneme writes its OWN 6-arm dispatch (matching spike-002 + AI-SPEC §3
-verbatim); the upstream `Translator` class and `createMessage` helpers are
-NOT consumed in Phase 1.
+mneme imports the raw NDJSON envelope `ClaudeEvent` from
+`./src/types/protocol.ts` (NOT `./src/types/events.ts` — the latter exports
+the post-translate `RelayEvent` union, which is the Translator's normalized
+output, while we need the raw wire format for our 6-arm dispatch). mneme
+writes its OWN 6-arm dispatch (matching spike-002 + AI-SPEC §3 verbatim);
+the upstream `Translator` class, `createMessage` helpers, and `RelayEvent`
+shape are NOT consumed in Phase 1.
+
+**Resolved consumption path (plan 01-03 GREEN, 2026-05-09):**
+`src/lib/stream-dispatch.ts` consumes `ClaudeEvent` from `./src/types/protocol`
+and re-exports it as `$lib/stream-dispatch#ClaudeEvent` so plan 01-06's
+ChatPanel does not need to know the vendor path.
 
 ## Local modifications
 
