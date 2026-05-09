@@ -121,19 +121,21 @@
 </div>
 
 <style>
+  /* Plan 01-09 polish — Mneme.html L938-980 SSOT. */
   .input-foot {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: var(--s-xs) var(--s-sm);
+    padding: 2px 6px 2px 6px;
   }
   .right {
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
   }
 
+  /* foot-btn — Mneme.html L944-959. */
   .foot-btn {
     appearance: none;
     background: transparent;
@@ -141,51 +143,60 @@
     width: 28px;
     height: 28px;
     padding: 0;
-    border-radius: var(--r-sm);
-    color: var(--ink-mute);
+    border-radius: var(--radius-md);
+    color: var(--color-warm-dark-soft);
     cursor: pointer;
     display: inline-grid;
     place-items: center;
-    transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+    transition:
+      background var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
   }
   .foot-btn:hover:not(:disabled) {
     background: rgba(20, 20, 19, 0.05);
-    color: var(--ink-soft);
+    color: var(--color-warm-dark);
   }
+  .foot-btn:active:not(:disabled) { transform: scale(0.96); }
   .foot-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
-  /* A-06 — vault-ctx active state uses orange-tint background + ink color */
+  /* A-06 — vault-ctx active state — Mneme.html L959. */
   .foot-btn.vault-ctx.active {
-    color: var(--ink);
-    background: var(--orange-tint);
+    color: var(--color-orange);
+    background: var(--color-orange-soft);
   }
 
+  /* model-select / auto-mode pill — Mneme.html L962-980.
+     Prototype renders Auto mode and the model pill at serif 13px (the
+     model pill explicitly so per L969). Both share the same hover/transition
+     surface. */
   .model-select {
     appearance: none;
     background: transparent;
     border: 0;
-    padding: 4px 8px;
-    border-radius: var(--r-sm);
-    color: var(--ink-mute);
     cursor: pointer;
-    display: flex;
+    color: var(--color-warm-dark-soft);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    padding: 5px 8px 5px 10px;
+    border-radius: var(--radius-md);
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+    gap: 6px;
+    transition: background var(--duration-fast) var(--ease-out);
   }
   .model-select:hover {
-    background: rgba(20, 20, 19, 0.05);
-    color: var(--ink-soft);
+    background: rgba(20, 20, 19, 0.04);
+    color: var(--color-warm-dark);
   }
-  /* A-13: Auto mode pill renders in gold/orange text per prototype + AMENDMENT */
-  .model-select.auto-mode {
-    color: var(--orange);
-  }
-  .model-select.auto-mode:hover {
-    color: var(--orange-deep);
+  /* Auto mode rendered in orange per A-13. */
+  .model-select.auto-mode { color: var(--color-orange); }
+  .model-select.auto-mode:hover { color: var(--orange-deep); }
+  .model-select .label {
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
   }
 </style>
