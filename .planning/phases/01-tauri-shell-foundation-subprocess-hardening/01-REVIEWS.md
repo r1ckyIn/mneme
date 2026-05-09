@@ -1,7 +1,8 @@
 ---
 phase: 1
 reviewers: [codex]
-reviewed_at: 2026-05-09T10:52+10:00
+reviewed_at_cycle1: 2026-05-09T10:52+10:00
+reviewed_at_cycle2: 2026-05-09T11:24+10:00
 plans_reviewed:
   - 01-01-PLAN.md
   - 01-02-PLAN.md
@@ -19,23 +20,34 @@ contract_artifacts_supplied:
   - 01-RESEARCH.md (sections 1-200 — TDD heuristic + threat enumeration)
   - ROADMAP.md (Phase 1 section)
   - REQUIREMENTS.md (Phase 1 requirements)
-review_focus:
+review_focus_cycle1:
   - cross-spec drift across SPEC + CONTEXT + AI-SPEC + UI-SPEC + AMENDMENT
   - threat-model completeness (T-1-01..T-1-07)
   - TDD heuristic correctness (RESEARCH §6)
   - wave parallelism integrity (5 waves; W2 has 3 parallel plans)
   - Round 5 amendment delta encoding (A-04..A-15)
-internal_iterations_passed: 3 (Claude plan-checker — 0 BLOCKER, 0 WARNING)
-cycle: 1
+review_focus_cycle2:
+  - HIGH-1 verdict (spawn-args.ts Node↔Browser bundling conflict)
+  - HIGH-2 verdict (lifecycle harness skips actual Cmd+Q path)
+  - regression check on changed plans (01-02, 01-06, 01-07)
+  - new HIGH concerns from the cycle-2 replan
+internal_iterations_passed_cycle1: 3 (Claude plan-checker — 0 BLOCKER, 0 WARNING)
+internal_iterations_passed_cycle2: 1 (Claude plan-checker — 0 BLOCKER, 0 WARNING; cycle-2 replan commit f74c6e0)
+cycle: 2
+cycle1_high_count: 2
+cycle2_high_count: 0
+convergence_verdict: PASS (HIGH=0; convergence loop exits with 0 HIGH after cycle 2)
 ---
 
 # Cross-AI Plan Review — Phase 1 (Tauri Shell Foundation + Subprocess Hardening)
 
-> Cycle 1 of `/gsd-plan-review-convergence` — independent Codex CLI review after the Claude internal plan-checker passed iteration 3 (0 BLOCKER, 0 WARNING). Goal: surface concerns the internal checker may have missed.
+> **Cycle 1** of `/gsd-plan-review-convergence` — independent Codex CLI review after the Claude internal plan-checker passed iteration 3 (0 BLOCKER, 0 WARNING). Goal: surface concerns the internal checker may have missed.
+>
+> **Cycle 2** — re-review after the planner absorbed cycle-1's 2 HIGH concerns into a targeted replan (commit `f74c6e0`, +549/-144 lines across 3 plans: 01-02, 01-06, 01-07). Goal: confirm both HIGHs are FULLY RESOLVED, regression-check for new HIGHs.
 
 ---
 
-## Codex Review
+## Codex Review — Cycle 1 (2026-05-09T10:52+10:00)
 
 ### Summary
 
@@ -78,11 +90,11 @@ The Phase 1 plan set is strong and much closer to execution-ready than a typical
 - Reset `toolUseGroup` per prompt or per assistant turn; add a two-turn tool-use Vitest case.
 - Add dogfood row: prompt "read /etc/hosts" and verify no outside-scratch content appears in tool cards or final answer.
 
-### Risk Assessment
+### Risk Assessment (cycle 1)
 
 Overall risk: **MEDIUM-HIGH until the two HIGH items are fixed; MEDIUM after that**. The architecture and coverage strategy are sound, but the current plan has one likely build/runtime incompatibility and one validation harness that could falsely pass the most important lifecycle requirement. The remaining issues are fixable integration gaps rather than design failures.
 
-### Specific Focus Answers
+### Specific Focus Answers (cycle 1)
 
 1. **Cross-spec drift**: No major unresolved A-04..A-15 contradiction, but there is implementation drift: A-10 says reactive connection meta, while 01-05's planned implementation is not reactive. Also the old top-header wording is superseded cleanly by the amendment/context in the plans.
 
@@ -96,52 +108,89 @@ Overall risk: **MEDIUM-HIGH until the two HIGH items are fixed; MEDIUM after tha
 
 ---
 
-## Consensus Summary
+## Codex Review — Cycle 2 (2026-05-09T11:24+10:00)
 
-> Cycle 1 has only one external reviewer (Codex) — there is no cross-reviewer consensus to triangulate yet. Findings below are Codex's verdict, organized by severity for `/gsd-plan-phase 1 --reviews` consumption.
+### Summary
 
-### Highest-priority items to address before re-review (HIGH-severity)
+Cycle 2 resolves both prior HIGH findings. The spawn-args split is now backed by explicit browser-safety tests and audit checks, and the lifecycle harness now drives a real macOS application quit path instead of terminating the dev wrapper. I found no new HIGH regressions in the replan. The remaining risk is from the previously identified MEDIUM/LOW items that were intentionally left out of this cycle.
 
-1. **`spawn-args.ts` Node ↔ Browser split** — The shared module imports `homedir` from `"os"` but is also imported by `ChatPanel.svelte`. Vite/SvelteKit will fail to bundle (or runtime-fail in WebView). **Affected plans:** 01-02 (line 329 — Node import), 01-06 (line 946 — browser import). **Suggested fix:** Split into `spawn-args.shared.ts` (regex constants only — browser-safe) and `spawn-args.node.ts` (homedir + path computation — `gen-capabilities.ts` only). ChatPanel reads scratch dir from a Tauri command (Rust resolves at runtime) or a build-time `import.meta.env` injected value.
+### Per-HIGH Verdict
 
-2. **Lifecycle harness skips actual Cmd+Q** — 01-07 line 273-287 sends SIGTERM to the `npm run tauri dev` wrapper PID, which is NOT the macOS Cmd+Q path. Tauri `RunEvent::ExitRequested` may not fire. The CRITICAL T-1-01 / REQ-3 / SPEC acceptance gate ("0 zombies after 5 quit cycles") is therefore not actually exercised. **Affected plan:** 01-07. **Suggested fix:** Replace SIGTERM with `osascript -e 'tell application "Mneme" to quit'` (or AppleScript Cmd+Q via System Events). Pre-assert `claude --print` is running with the dogfood prompt before quitting.
+- **HIGH-1: RESOLVED** — `spawn-args.shared.ts` is now the browser-safe SSOT, while `spawn-args.node.ts` is limited to the Node-only homedir resolver for `gen-capabilities.ts` ([01-02-PLAN.md L38](./01-02-PLAN.md)). The plan adds tests for zero Node imports in `.shared`, legacy `spawn-args.ts` absence, and audit checks (7a, 7b, 8) blocking browser imports of `.node` ([01-02-PLAN.md L999](./01-02-PLAN.md)). `ChatPanel.svelte` now imports `buildClaudeArgs` from `$lib/spawn-args.shared` and resolves `scratchDir` at mount via Tauri's browser-safe `homeDir()` API from `@tauri-apps/api/path` ([01-06-PLAN.md L970](./01-06-PLAN.md)). New threat-model row T-1-44 codifies the regression. Verification path is concrete: Vitest tests 14-15 readFileSync the .shared file and grep against `from "(node:)?(os|fs|path)"`, and the audit script enforces the same at every CI invocation.
 
-### Medium-priority items (5 MEDIUM concerns)
+- **HIGH-2: RESOLVED** — the 5-cycle harness now uses AppleScript application quit (`osascript -e 'tell application "Mneme" to quit'`) with a `System Events keystroke "q" using command down` fallback ([01-07-PLAN.md L303-313](./01-07-PLAN.md)), not SIGTERM-to-wrapper. It pre-asserts a live `claude --print` process in `--with-prompt` mode (BLOCKING — refuses to send Cmd+Q if the test would be a no-op), post-asserts drain to zero PIDs within 2.5s (matching REQ-3's SIGTERM(0s)→2s grace→SIGKILL→settle window), and only passes if cumulative orphans AND cumulative quit-deadline misses are both zero ([01-07-PLAN.md L357-393, L441-453](./01-07-PLAN.md)). The harness aborts when run on a host without `osascript` — SIGTERM-to-wrapper is no longer an acceptable substitute. New threat-model row T-1-45 codifies the regression.
 
-- **PGID kill test (01-04 line 308)** — test setup may not match production PID lineage; risks passing unit test while production still leaks zombies.
-- **A-10 connection state non-reactive (01-05 line 1326)** — Svelte 5 mutation pattern won't trigger UI rerender; titlebar dot will appear stuck on "disconnected". Needs `$state`/store conversion.
-- **ChatPanel spawn try/catch (01-06 line 1082)** — missing CLI / auth failure / early process close can permanently leave `isStreaming` true.
-- **ToolUseGroup state leak across prompts (01-03 line 879 + 01-06 line 981)** — second prompt's tool-use card can show stale prior tool calls.
-- **T-1-05 vault scope leak missing dogfood E2E (01-07 line 453)** — only command-line args are checked, not actual "read /etc/hosts" attempt.
+### NEW HIGH Concerns (regression check)
 
-### Low-priority items (1 LOW concern)
+**None.**
 
-- **A-09 "Total" semantics ambiguous (01-06 line 615)** — currently displays only `totalInputTokens`; either rename label to "Input" or aggregate input + output + cache fields.
+The cycle-2 replan does not introduce any new HIGH concerns. Specifically:
 
-### Convergence-loop verdict
+- The `.shared` / `.node` split preserves the SSOT promise — the spawn-arg list is still edited in exactly one place (`spawn-args.shared.ts`), with the Node resolver isolated to a 5-line file (`spawn-args.node.ts`) that is grep-guarded against browser import.
+- The AppleScript path fires Tauri 2's `RunEvent::ExitRequested` hook (the same NSApplicationTerminate notification chain that user-initiated Cmd+Q triggers); the keystroke fallback covers boot-race conditions where the app menu hasn't registered yet; the Accessibility-permission first-run note is documented.
+- The threat-model additions (T-1-44, T-1-45) introduce no new unowned attack surface — both are clearly owned by the plans that introduced the regression (01-02 + 01-06 own T-1-44; 01-07 owns T-1-45).
+- Plans 01-01, 01-03, 01-04, 01-05 are unchanged and remain consistent with the cycle-2 changes; the cross-plan import contract has been tightened (01-06 references `$lib/spawn-args.shared`, never `.node`), not loosened.
 
-**Cycle 1 outcome: 2 HIGH concerns. Convergence loop must continue.**
+### Remaining MEDIUM/LOW Concerns (carried from cycle 1 — NOT counted toward HIGH)
 
-Per `/gsd-plan-review-convergence` semantics: with HIGH > 0, the loop dispatches `/gsd-plan-phase 1 --reviews` (cycle 2) to apply targeted plan replans for the 2 HIGH issues + the 5 MEDIUM issues, then re-runs cross-AI review.
+1. **[MEDIUM]** PGID kill test production mismatch remains; 01-04 was not changed in cycle 2, so the earlier concern about modeling the actual process-group leader still applies.
+2. **[MEDIUM]** A-10 connection state reactivity remains; 01-05 was not changed, so the mutable plain-object Svelte rerender risk persists for the titlebar meta dogfood row.
+3. **[MEDIUM]** ChatPanel spawn/register failure handling remains; spawn/register still needs a guarded failure path to avoid stuck `isStreaming` state on missing CLI / auth failure / early process close.
+4. **[MEDIUM]** Tool-use group reset across prompts remains; 01-03/01-06 were not changed for this concern, so a second tool-using prompt may still show stale prior tool calls.
+5. **[MEDIUM]** T-1-05 outside-scratch dogfood probe remains missing; command-line arg checks are not the same as an actual `/etc/hosts` read attempt.
+6. **[LOW]** A-09 "Total" token semantics remain ambiguous (display label says "Total" but value is `totalInputTokens` only).
 
-If cycle 2 still has HIGH > 0 → cycle 3 final replan or HALT/escalate per the `--max-cycles 3` ceiling.
+### Risk Assessment (cycle 2)
 
-### Divergent views
+**MEDIUM.** The two execution blockers are resolved, but several integration-quality and dogfood-coverage issues remain before implementation should be considered low risk. None of the remaining items are HIGH, so the convergence-loop ceiling is not breached.
 
-N/A in cycle 1 (single reviewer). If cycle 2 adds Gemini or another reviewer for a second perspective on the proposed fixes, this section will populate.
+### Convergence Verdict (cycle 2)
+
+**Cycle-2 HIGH count: 0.**
+
+Per `/gsd-plan-review-convergence` semantics: with HIGH = 0, the convergence loop exits successfully. No cycle 3 required.
+
+The remaining 5 MEDIUM + 1 LOW concerns are eligible for opportunistic absorption during execution (`/gsd-execute-phase 1`), or can be folded into a post-Phase-1 retro. They do not block phase entry.
 
 ---
 
-## Operational next steps
+## Consensus Summary
 
-1. **Apply Codex's HIGH-severity fixes via `/gsd-plan-phase 1 --reviews`** — specifically:
-   - Split `src/lib/spawn-args.ts` into `spawn-args.shared.ts` (browser-safe) + `spawn-args.node.ts` (Node-only); update 01-02 and 01-06 imports accordingly.
-   - Replace 01-07 lifecycle harness SIGTERM with AppleScript Cmd+Q (`osascript -e 'tell application "Mneme" to quit'`) and add pre-quit assertion that `claude --print` is running.
-2. **Apply MEDIUM-severity fixes in same replan** — PGID test rewrite (01-04), reactive connection state (01-05), ChatPanel try/catch (01-06), ToolUseGroup reset per prompt (01-03 + 01-06), `read /etc/hosts` dogfood row (01-07).
-3. **Apply LOW-severity fix opportunistically** — clarify A-09 "Total" semantics (01-06 line 615).
-4. **Cycle 2 re-review** — re-run `/gsd-review --phase 1 --codex` against the replanned 7 plans. Goal: 0 HIGH concerns.
-5. **STATE.md** — record cycle 1 outcome (2 HIGH, 5 MEDIUM, 1 LOW) before dispatching cycle 2.
+> Cycle 1 + Cycle 2 share a single external reviewer (Codex) — no cross-reviewer triangulation. Findings below are Codex's verdict at the end of cycle 2, organized for `/gsd-plan-review-convergence` exit and downstream consumption.
+
+### Cycle-1 → Cycle-2 transition
+
+| Cycle-1 finding | Severity | Cycle-2 status | Evidence |
+|-----------------|----------|----------------|----------|
+| spawn-args.ts Node↔Browser bundling conflict | HIGH | **FULLY RESOLVED** | 01-02 split into .shared + .node; T-1-44 added; audit checks 7a/7b/8 wired; Vitest tests 14-15 grep-guard browser-safety; 01-06 imports `$lib/spawn-args.shared` + resolves scratchDir via `homeDir()` from `@tauri-apps/api/path` |
+| Lifecycle harness skips actual Cmd+Q | HIGH | **FULLY RESOLVED** | 01-07 harness uses `osascript -e 'tell application "Mneme" to quit'` with System Events keystroke fallback; pre-assert claude --print PID > 0 BLOCKING in --with-prompt; post-assert drain to 0 within 2.5s; aborts on hosts without osascript; T-1-45 added |
+| PGID kill test production mismatch | MEDIUM | UNCHANGED | 01-04 not touched in cycle 2 (acceptable per scope) |
+| A-10 connection state non-reactive | MEDIUM | UNCHANGED | 01-05 not touched in cycle 2 |
+| ChatPanel spawn try/catch | MEDIUM | UNCHANGED | 01-06 cycle-2 changes scoped to scratchDir resolution, not failure handling |
+| ToolUseGroup state leak | MEDIUM | UNCHANGED | 01-03/01-06 not touched for this concern |
+| T-1-05 dogfood probe | MEDIUM | UNCHANGED | 01-07 cycle-2 changes scoped to lifecycle harness, not the vault-scope dogfood row |
+| A-09 "Total" semantics | LOW | UNCHANGED | 01-06 cycle-2 changes scoped to scratchDir resolution, not usage-meter wording |
+
+### Cycle-2 outcome
+
+**0 HIGH concerns. Convergence loop exits successfully (cycle 2 of `--max-cycles 3`).**
+
+The 2 HIGH items raised in cycle 1 are FULLY RESOLVED in cycle 2 with verifiable enforcement (Vitest grep-guards + audit script checks for HIGH-1; AppleScript quit + pre/post claude --print PID asserts for HIGH-2). The cycle-2 replan introduced no new HIGH concerns; the regression check passed for the unchanged plans (01-01, 01-03, 01-04, 01-05).
+
+### Divergent views
+
+N/A in cycles 1-2 (single reviewer). Cross-reviewer triangulation is deferred — convergence achieved with one reviewer's PASS verdict.
+
+---
+
+## Operational next steps (cycle 2 — convergence achieved)
+
+1. **Convergence loop exits** — `/gsd-plan-review-convergence --phase 1 --max-cycles 3` terminates with HIGH=0 after cycle 2. No cycle 3 required.
+2. **Update STATE.md** — record cycle 2 outcome (0 HIGH, 5 MEDIUM, 1 LOW carried forward; convergence verdict PASS).
+3. **MEDIUM/LOW backlog (opportunistic)** — the 5 MEDIUM + 1 LOW items can be absorbed during `/gsd-execute-phase 1` if the implementer touches the relevant files (01-04 PGID test, 01-05 connection state, 01-06 try/catch + ToolUseGroup reset, 01-07 outside-scratch dogfood row, 01-06 A-09 Total label). They do not block Phase 1 execution entry.
+4. **Phase 1 execution** — Phase 1 is now plan-locked and ready for `/gsd-execute-phase 1` per the v1.40 Tier 1 sequence.
 
 ---
 
 *Cycle 1 generated by /gsd-review (Codex CLI gpt-5-codex non-interactive exec). Prompt size: 9918 lines / 618 KB. Codex transcript: `/tmp/gsd-review/codex-review-full.log`. Final review payload: `/tmp/gsd-review/codex-review-last.md`.*
+*Cycle 2 generated by /gsd-review (Codex CLI gpt-5-codex non-interactive exec). Prompt size: 11286 lines / 728 KB. Codex transcript: `/tmp/gsd-review/codex-review-cycle2-err.log`. Final review payload: `/tmp/gsd-review/codex-review-cycle2-out.md`. Tokens used: 254,796.*
