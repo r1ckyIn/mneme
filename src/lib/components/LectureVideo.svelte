@@ -1,63 +1,115 @@
 <!--
-  LectureVideo.svelte — A-12 middle-top placeholder.
-  Phase 6 (Echo360 webview) replaces the body of `.placeholder` with the real
-  video element + WKWebView wrapping. Phase 1 ships only the chrome
-  (breadcrumb + drag handle + italic placeholder copy).
+  LectureVideo.svelte — A-12 middle-top placeholder card.
+  Phase 1: chrome only — slot-path breadcrumb (top-left, font-mono 11.5px) +
+  drag handle (top-right) + 16:9 stripey placeholder card with frame icon.
+  Phase 4 (Echo360 webview) replaces the placeholder with real video element.
 
-  Visual SSOT: Mneme.html L1244-1265.
+  Visual SSOT: Mneme.html L486-559 (CSS) + L1244-1263 (markup).
 -->
 <script lang="ts">
   import DragHandle from "$lib/components/DragHandle.svelte";
 </script>
 
-<section class="middle-top">
-  <div class="region-header">
-    <span class="breadcrumb">~/Mneme/usyd-2026s1 / COMP3027 / L06 — Dynamic Programming.mp4</span>
-    <DragHandle />
-  </div>
-  <div class="placeholder">
-    <em>Lecture video player · EchoVideo wired in Phase 6</em>
+<section class="preview-slot" data-slot="video">
+  <span class="slot-path">
+    <span>~/Mneme/usyd-2026s1</span>
+    <span class="sep">/</span>
+    <span>COMP3027</span>
+    <span class="sep">/</span>
+    <span class="leaf">L06 — Dynamic Programming.mp4</span>
+  </span>
+  <DragHandle />
+  <div class="preview-placeholder">
+    <div class="pp-frame">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+      </svg>
+    </div>
+    <div class="pp-title">Lecture video player</div>
+    <div class="pp-sub">EchoVideo wired in Phase 4</div>
   </div>
 </section>
 
 <style>
-  .middle-top {
+  /* SSOT: Mneme.html L486-559. */
+
+  .preview-slot {
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    padding-top: 42px;       /* Mneme.html L510 — clear absolute slot-path */
+    min-height: 0;
     height: 100%;
+    overflow: hidden;
+    position: relative;
+    background: var(--color-cream);
+  }
+
+  .slot-path {
+    position: absolute;
+    top: 12px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.01em;
+    color: var(--color-warm-dark-soft);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    user-select: text;
+  }
+  .slot-path .sep { color: var(--color-warm-dark-mute); opacity: 0.55; }
+  .slot-path .leaf { color: var(--color-warm-dark); }
+
+  .preview-placeholder {
+    width: min(560px, 92%);
+    max-height: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(20, 20, 19, 0.025) 0 8px,
+        transparent 8px 16px
+      ),
+      var(--color-cream-deep);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    position: relative;     /* anchor for .drag-handle.abs */
-  }
-
-  .region-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px 8px;
-    border-bottom: 1px solid var(--border);
-  }
-  .breadcrumb {
-    color: var(--ink-mute);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.02em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-right: 60px;     /* leave room for drag handle */
-  }
-
-  .placeholder {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    color: var(--ink-mute);
-    font-style: italic;
-    font-family: var(--font-body);
-    font-size: var(--fs-h);
+    align-items: center;
+    gap: 14px;
+    color: var(--color-warm-dark-soft);
     text-align: center;
-    padding: var(--s-lg);
-    user-select: none;
+    padding: 24px;
+  }
+  .preview-placeholder .pp-frame {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    background: var(--color-cream);
+    border: 1px solid var(--border-soft);
+    display: grid;
+    place-items: center;
+    color: var(--color-warm-dark-mute);
+    box-shadow: var(--shadow-1);
+  }
+  .preview-placeholder .pp-title {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+  }
+  .preview-placeholder .pp-sub {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--color-warm-dark-mute);
+    letter-spacing: 0.02em;
   }
 </style>
