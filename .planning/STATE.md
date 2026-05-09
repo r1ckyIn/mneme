@@ -32,9 +32,9 @@ progress:
 ## Current Position
 
 **Phase**: 1 — Tauri Shell Foundation + Subprocess Hardening (Phase 0 retired 2026-05-07)
-**Plan**: 7 plans created (01-01 through 01-07); next is `/gsd-execute-phase 1` Wave 1
-**Status**: phase-1-planned
-**Progress**: 1/11 phases complete · 4 plans Phase 0 + 7 plans Phase 1 created (0/7 executed) · Phase 1 SPEC + CONTEXT + AI-SPEC + UI-SPEC + RESEARCH + PATTERNS + VALIDATION + 7 PLANs all in place
+**Plan**: 7 plans created (01-01 through 01-07; 36 tasks across 5 waves); next is `/gsd-execute-phase 1` Wave 1
+**Status**: phase-1-planned-r5 (Round 5 prototype-handoff alignment absorbed; iteration 3 plan-checker PASSED 0/0)
+**Progress**: 1/11 phases complete · 4 plans Phase 0 + 7 plans Phase 1 created (0/7 executed) · Phase 1 5-piece contract (SPEC + CONTEXT + AI-SPEC + UI-SPEC + AMENDMENT-2026-05-09) + RESEARCH + PATTERNS + VALIDATION + 7 PLANs in place; visual SSOT pinned to `.planning/handoff/2026-05-09-mneme-prototype/mneme/project/Mneme.html`
 
 ```
 [██░░░░░░░░░░░░░░░░░░] 9% (1/11 phases)
