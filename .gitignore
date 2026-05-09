@@ -4,6 +4,9 @@ target/
 src-tauri/target/
 src-tauri/Cargo.lock
 
+# Tauri auto-generated schemas (regenerated on each build)
+src-tauri/gen/
+
 # Node
 node_modules/
 **/node_modules/
