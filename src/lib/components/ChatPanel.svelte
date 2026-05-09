@@ -334,6 +334,60 @@
     window.addEventListener("keydown", onWindowKeydown);
     if (inputBox) inputBox.focus();
     void resolveScratchDir();
+    // Plan 01-09 Task 10 dev hook: visiting `?stream=demo` triggers the
+    // dev probe with a synthetic stream-event sequence so the visual
+    // verification step can capture an in-progress (mid-stream) snapshot
+    // without a live Claude subprocess. Gated by import.meta.env.DEV so
+    // production builds never auto-inject.
+    if (import.meta.env.DEV && typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("stream") === "demo") {
+        // Push a user prompt + simulate a partial assistant response with
+        // markdown + KaTeX + a tool-use group. Snapshot is taken BEFORE
+        // the synthetic `result` event so streaming flag stays true.
+        dispatch.messages = [
+          ...dispatch.messages,
+          {
+            id: uid(),
+            role: "user",
+            text: "In the lecture around 24:00, the prof writes the Bellman equation for the rod-cutting problem. Can you transcribe the recurrence and explain why the inner max ranges over i = 1..n?",
+            streaming: false,
+          },
+        ];
+        // Simulate the consolidated assistant event WITH a tool_use block so
+        // ToolUseGroup renders. Then stream text deltas.
+        dispatchEvent({
+          type: "assistant",
+          message: {
+            content: [
+              { type: "tool_use", id: "tu_1", name: "Read",   input: { path: "transcript.vtt" } },
+              { type: "tool_use", id: "tu_2", name: "Grep",   input: { pattern: "rod-cutting" } },
+            ],
+          },
+        } as any, dispatch);
+        const chunks = [
+          "From the transcript at `24:08` the recurrence is:\n\n",
+          "$$r(n) = \\max_{1 \\le i \\le n} \\{ p_i + r(n-i) \\}$$\n\n",
+          "The inner `max` ranges over every possible *first cut*: ",
+          "you commit to selling a piece of length `i` for price `p_i`, ",
+          "then recursively solve the remaining rod of length `n − i`. ",
+          "Since `i` can be anything from `1` (cut off a unit piece) to `n` ",
+          "(don't cut at all — sell the whole rod), the loop is `i = 1..n`.\n\n",
+          "The base case $r(0) = 0$ closes the recursion.",
+        ];
+        for (const text of chunks) {
+          dispatchEvent({
+            type: "stream_event",
+            event: { delta: { type: "text_delta", text } },
+          } as any, dispatch);
+        }
+        // Force reactivity + recompute HTML; do NOT inject `result` event so
+        // the streaming flag stays true (.stream-dot visible at end).
+        dispatch.messages = dispatch.messages;
+        dispatch.isStreaming = true;
+        scheduleHtmlRecompute();
+      }
+    }
   });
   onDestroy(() => {
     window.removeEventListener("keydown", onWindowKeydown);
@@ -341,9 +395,13 @@
   });
 
   // ---------- helpers ----------
+  // Plan 01-09 fix: ChatPanel and stream-dispatch each maintain their own
+  // counter; without distinct prefixes the two prefixes collided in the same
+  // millisecond and triggered `each_key_duplicate` (Svelte 5 keyed each).
+  // Use `cp_` so the two id namespaces never overlap.
   let _uidCounter = 0;
   function uid(): string {
-    return `m_${Date.now()}_${_uidCounter++}`;
+    return `cp_${Date.now()}_${_uidCounter++}`;
   }
 
   function isErrorMsg(m: Msg): boolean {

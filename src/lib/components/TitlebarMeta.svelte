@@ -52,23 +52,19 @@
 <SettingsModal bind:dialog={modal} />
 
 <style>
-  /* SSOT: Mneme.html L145-174. */
+  /* SSOT: Mneme.html L145-160. Mounted inside a parent .titlebar by
+     +page.svelte; uses margin-left:auto to right-align within the flex row.
+     (No longer position:fixed — that pinned to viewport corner instead of
+     window-frame corner once Plan 01-09 added the .stage / .window wrapper.) */
   .titlebar-meta {
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: var(--titlebar-height);          /* 36px */
-    padding: 0 var(--space-4);               /* 16px */
+    margin-left: auto;
     display: flex;
     align-items: center;
     gap: var(--space-3);                     /* 12px */
-    z-index: 10;
-    pointer-events: auto;
     color: var(--color-warm-dark-mute);
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.02em;
-    box-sizing: border-box;
     -webkit-app-region: no-drag;
   }
 

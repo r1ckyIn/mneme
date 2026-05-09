@@ -75,6 +75,7 @@
     padding: 4px 2px 8px;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
   }
   .cost .leaf { color: var(--color-warm-dark); }

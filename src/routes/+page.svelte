@@ -21,45 +21,134 @@
   import MindMapBar from "$lib/components/MindMapBar.svelte";
 </script>
 
-<TitlebarMeta />
+<!-- Plan 01-09 Task 10: window chrome wrapper added so headless 1280×860
+     screenshots match the prototype's stage + window frame visual. The .stage
+     centers the .window in a dark matte frame; .window applies the cream
+     surface + 10px radius + drop shadow. Tauri WebView in production renders
+     this same chrome inside the OS window, but the dev preview fills the
+     viewport — the .stage padding-0 media query handles small viewports. -->
+<div class="stage">
+  <div class="window">
 
-<Splitter>
-  {#snippet left()}
-    <FileArea />
-  {/snippet}
-
-  {#snippet middleTop()}
-    <LectureVideo />
-  {/snippet}
-
-  {#snippet middleBottom()}
-    <FilePreview />
-  {/snippet}
-
-  {#snippet right()}
-    <!-- Wrapper + DragHandle persist (A-05 placement #4 of 5).
-         ChatPanel fills the inner content; the placeholder italic text
-         is replaced by ChatPanel's own surface. -->
-    <div class="right-pane-slot" data-pane="right">
-      <DragHandle />
-      <ChatPanel />
+    <!-- Titlebar — macOS overlay style with traffic lights at left + meta at right -->
+    <div class="titlebar">
+      <div class="traffic-lights" aria-label="Window controls" aria-hidden="true">
+        <span class="tl close"></span>
+        <span class="tl min"></span>
+        <span class="tl max"></span>
+      </div>
+      <TitlebarMeta />
     </div>
-  {/snippet}
 
-  {#snippet bottom()}
-    <!-- Plan 01-09 Task 6: MindMapBar replaces the text placeholder.
-         The component owns its own layout + drag handle; the legacy .placeholder
-         wrapper is dropped now that the row is no longer empty. -->
-    <MindMapBar />
-  {/snippet}
-</Splitter>
+    <!-- Main 3-column row + 1px softrule + 120px bottom row (Splitter owns the grid) -->
+    <Splitter>
+      {#snippet left()}
+        <FileArea />
+      {/snippet}
+
+      {#snippet middleTop()}
+        <LectureVideo />
+      {/snippet}
+
+      {#snippet middleBottom()}
+        <FilePreview />
+      {/snippet}
+
+      {#snippet right()}
+        <!-- Wrapper + DragHandle persist (A-05 placement #4 of 5). ChatPanel
+             fills the inner content. -->
+        <div class="right-pane-slot" data-pane="right">
+          <DragHandle />
+          <ChatPanel />
+        </div>
+      {/snippet}
+
+      {#snippet bottom()}
+        <!-- Plan 01-09 Task 6: MindMapBar replaces the text placeholder. -->
+        <MindMapBar />
+      {/snippet}
+    </Splitter>
+
+  </div>
+</div>
 
 <style>
-  /* Plan 01-09: legacy `.placeholder` style removed — bottom row now owns
-     its visual via MindMapBar (Task 6). Right pane keeps a wrapper so the
-     A-05 5-region drag-handle contract still has its anchor. */
+  /* SSOT: Mneme.html L94-117 (.stage + .window) + L119-160 (.titlebar +
+     traffic lights). Plan 01-09 Task 10 — chrome wrapper added so the
+     dev preview matches the prototype 1280x860 visual. */
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: #1f1e1c;     /* Mneme.html L84 — matte dark stage */
+  }
+
+  .window {
+    width: 1280px;
+    height: 860px;
+    min-width: 1024px;
+    min-height: 600px;
+    background: var(--color-cream);
+    border-radius: 10px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.35),
+      0 24px 60px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    /* Window grid: 36px titlebar | main row | 1px soft rule | 120px bottom.
+       Splitter owns the inner main + bottom rows directly (its .grid
+       sets height:100% and uses its own grid-template-rows). The titlebar
+       sits above. */
+    display: grid;
+    grid-template-rows: var(--titlebar-height) 1fr;
+    transform-origin: center center;
+  }
+
+  /* Titlebar — Mneme.html L120-160. */
+  .titlebar {
+    grid-row: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-4);
+    background: transparent;
+    z-index: 5;
+    -webkit-app-region: drag;       /* Tauri honors this; web ignores */
+  }
+  .traffic-lights {
+    display: flex;
+    gap: 8px;
+    padding: 4px 4px 4px 0;
+    -webkit-app-region: no-drag;
+  }
+  .tl {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 0.5px solid rgba(0, 0, 0, 0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+
   .right-pane-slot {
     height: 100%;
     position: relative;     /* anchor for the right-pane DragHandle (A-05 #4) */
+  }
+
+  /* Scale-to-viewport guard — Mneme.html L1162-1164. When the viewport is
+     smaller than the 1280x860 window + 24px stage padding (e.g. 13"
+     MacBook), drop the padding so the window fills the viewport. */
+  @media (max-height: 920px), (max-width: 1340px) {
+    .stage { padding: 0; }
+    .window {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+    }
   }
 </style>

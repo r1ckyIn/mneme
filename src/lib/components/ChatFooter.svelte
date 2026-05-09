@@ -121,10 +121,16 @@
 </div>
 
 <style>
-  /* Plan 01-09 polish — Mneme.html L938-980 SSOT. */
+  /* Plan 01-09 polish — Mneme.html L938-980 SSOT.
+     `flex-wrap: wrap` is plan-01-09 addition: at narrow right-pane widths the
+     model pill + send button drop to a new line instead of overflowing the
+     input-shell. Prototype assumes a wider window (~1280px); our default
+     30/40/30 split keeps the right pane compact, so the wrap is necessary
+     for visual completeness. */
   .input-foot {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 4px;
     padding: 2px 6px 2px 6px;
   }
@@ -133,6 +139,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    flex: 0 0 auto;
   }
 
   /* foot-btn — Mneme.html L944-959. */
@@ -185,6 +192,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
     transition: background var(--duration-fast) var(--ease-out);
   }
   .model-select:hover {

@@ -160,11 +160,17 @@
 <style>
   .grid {
     display: grid;
-    grid-template-rows: 1fr var(--bottom-row-h);
-    height: 100vh;
-    width: 100vw;
+    /* Plan 01-09 Task 10: 1px soft rule between main and bottom row to
+       match the prototype's `.softrule` element (Mneme.html L1048-1051,
+       L1452-1453). */
+    grid-template-rows: 1fr 1px var(--bottom-row-h);
+    /* Plan 01-09 Task 10: parent `.window` element supplies fixed dimensions
+       (1280×860 desktop / 100vw×100vh on smaller viewports), so the splitter
+       grid now stretches to its parent rather than the global viewport. */
+    height: 100%;
+    width: 100%;
     overflow: hidden;
-    background: var(--bg);
+    background: var(--color-cream);
   }
 
   .pane {
@@ -179,11 +185,12 @@
     background: var(--bg-soft);
   }
   .pane.right {
-    background: var(--bg);
-    /* Native traffic-light avoidance zone — D-06 + UI-SPEC §"Window Chrome Contract".
-       The first 36px from top of the right pane is reserved padding so the
-       overlay-style title bar's red/yellow/green buttons sit over empty space. */
-    padding-top: 36px;
+    background: var(--color-cream);
+    /* Plan 01-09 Task 10: the .window grid now reserves a real 36px titlebar
+       row above the splitter (was: this padding-top:36px reserved fake space
+       within the pane). Removing the padding so the chat header sits flush
+       to the top of the right pane. The 5-region drag-handle contract still
+       holds — DragHandle.abs anchors to .right-pane-slot. */
   }
 
   /* A-12 — middle column 2-row split.
@@ -243,9 +250,16 @@
 
   .bottom-row {
     grid-column: 1 / -1;
-    background: var(--bg-deep);
-    border-top: 1px solid var(--border);
+    grid-row: 3;            /* Plan 01-09 Task 10: skip the 1px softrule on row 2 */
+    background: var(--color-cream);
     overflow: hidden;
     position: relative;     /* anchor for bottom-row .drag-handle.abs */
+  }
+  /* Visible 1px softrule between main row and bottom row — Mneme.html L1048-1051. */
+  .grid::before {
+    content: "";
+    grid-column: 1 / -1;
+    grid-row: 2;
+    background: var(--border-softer);
   }
 </style>
