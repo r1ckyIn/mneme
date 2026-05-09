@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Phase 1 pre-commit gate (REQ-4 audit + scoped vitest).
+# Capability drift / wildcard / --bare / SSOT misalignment will fail FAST here.
+# Full suite runs on `npm test` or in CI; pre-commit stays under ~5s warm cache.
+
+bash scripts/audit-capabilities.sh || exit 1
+
+# Run only changed-file tests so the pre-commit stays fast on warm cache.
+npx vitest run --changed || exit 1
+
+exit 0

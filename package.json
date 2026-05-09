@@ -11,7 +11,8 @@
     "tauri": "tauri",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prebuild": "node --experimental-strip-types scripts/gen-capabilities.ts && bash scripts/audit-capabilities.sh"
+    "prebuild": "node --experimental-strip-types scripts/gen-capabilities.ts && bash scripts/audit-capabilities.sh",
+    "prepare": "husky"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.0",
