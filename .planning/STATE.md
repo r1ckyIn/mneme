@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-09T01:34:40.091Z"
+last_updated: "2026-05-09T02:16:30.105Z"
 progress:
   total_phases: 12
   completed_phases: 1
   total_plans: 11
-  completed_plans: 4
-  percent: 36
+  completed_plans: 8
+  percent: 73
 ---
 
 # mneme Project State
