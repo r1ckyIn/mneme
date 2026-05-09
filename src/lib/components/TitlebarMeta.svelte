@@ -1,10 +1,15 @@
 <!--
   TitlebarMeta.svelte — A-10 right-aligned titlebar meta.
-  Three elements: connection-state dot + "claude-code · {status}" + "vault: <path>" + settings cog.
+  Plan 01-09 polish: tokens swapped to Mneme.html-native (font-mono 11px,
+  gap --space-3 = 12px, --color-warm-dark-mute, dot 6×6 with green glow when
+  connected) per L145-160.
 
-  Visual SSOT: Mneme.html L1180-1190.
+  Three elements: connection-state dot + "claude-code · {status}" + dot-sep +
+  "vault: {path}" + settings cog (26×26 .icon-btn).
 
-  z-index: above splitter so it overlays the right pane's 36px reserved zone
+  Visual SSOT: Mneme.html L145-174 (CSS) + L1179-1190 (markup).
+
+  z-index above splitter so it overlays the right pane's 36px reserved zone
   (traffic lights live at top-LEFT; this meta lives at top-RIGHT — no overlap).
 -->
 <script lang="ts">
@@ -33,7 +38,7 @@
 <div class="titlebar-meta">
   <span class="dot" data-status={connectionState.status} aria-hidden="true"></span>
   <span class="meta-text">claude-code · {connectionState.status}</span>
-  <span class="sep">·</span>
+  <span class="dot-sep">·</span>
   <span class="meta-text">vault: {vaultPath}</span>
   <button class="icon-btn" type="button" aria-label="Settings" title="Settings" onclick={openSettings}>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -47,53 +52,68 @@
 <SettingsModal bind:dialog={modal} />
 
 <style>
+  /* SSOT: Mneme.html L145-174. */
   .titlebar-meta {
     position: fixed;
     top: 0;
     right: 0;
-    padding: 6px 16px;
+    height: var(--titlebar-height);          /* 36px */
+    padding: 0 var(--space-4);               /* 16px */
     display: flex;
     align-items: center;
-    gap: 8px;
-    z-index: 10;     /* above Splitter; same overlay zone as macOS title bar */
+    gap: var(--space-3);                     /* 12px */
+    z-index: 10;
     pointer-events: auto;
+    color: var(--color-warm-dark-mute);
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--ink-mute);
     letter-spacing: 0.02em;
-    height: 36px;
     box-sizing: border-box;
+    -webkit-app-region: no-drag;
   }
 
+  /* Dot: 6×6 with subtle green glow when connected (Mneme.html L156-160). */
   .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: var(--r-pill);
-    background: var(--ink-mute);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-warm-dark-mute);
     flex-shrink: 0;
-    transition: background var(--d-base) var(--ease);
+    transition: background var(--duration-base) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out);
   }
-  .dot[data-status="connected"]    { background: #4ea36b; }
-  .dot[data-status="connecting"]   { background: var(--ink-mute); }
-  .dot[data-status="disconnected"] { background: var(--error); }
+  .dot[data-status="connected"] {
+    background: #4ea36b;
+    box-shadow: 0 0 0 2px rgba(78, 163, 107, 0.18);
+  }
+  .dot[data-status="connecting"] {
+    background: var(--color-warm-dark-mute);
+    box-shadow: none;
+  }
+  .dot[data-status="disconnected"] {
+    background: var(--color-error);
+    box-shadow: none;
+  }
 
   .meta-text { white-space: nowrap; }
-  .sep { opacity: 0.4; }
+  .dot-sep { opacity: 0.4; }
 
+  /* Settings cog — 26×26 .icon-btn (Mneme.html L161-174). */
   .icon-btn {
     appearance: none;
     background: transparent;
     border: 0;
-    padding: 4px;
-    border-radius: var(--r-sm);
-    color: var(--ink-mute);
-    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    color: var(--color-warm-dark-soft);
     display: inline-grid;
     place-items: center;
-    transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+    cursor: pointer;
+    transition:
+      background var(--duration-base) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
   }
-  .icon-btn:hover {
-    background: rgba(20, 20, 19, 0.05);
-    color: var(--ink-soft);
-  }
+  .icon-btn:hover { background: rgba(20, 20, 19, 0.05); }
+  .icon-btn:active { transform: scale(0.96); }
 </style>
