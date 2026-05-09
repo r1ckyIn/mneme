@@ -18,6 +18,7 @@
   import DragHandle from "$lib/components/DragHandle.svelte";
   import TitlebarMeta from "$lib/components/TitlebarMeta.svelte";
   import ChatPanel from "$lib/components/ChatPanel.svelte";
+  import MindMapBar from "$lib/components/MindMapBar.svelte";
 </script>
 
 <TitlebarMeta />
@@ -46,10 +47,10 @@
   {/snippet}
 
   {#snippet bottom()}
-    <div class="placeholder bottom-row-placeholder">
-      <DragHandle />
-      Mind-map / KG live preview — wired in Phase 7+8
-    </div>
+    <!-- Plan 01-09 Task 6: MindMapBar replaces the text placeholder.
+         The component owns its own layout + drag handle; the legacy .placeholder
+         wrapper is dropped now that the row is no longer empty. -->
+    <MindMapBar />
   {/snippet}
 </Splitter>
 
