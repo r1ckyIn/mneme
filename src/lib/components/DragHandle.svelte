@@ -7,7 +7,9 @@
   mounts ONE <DragHandle /> in upper-right via `.abs` positioning. The five regions
   total 5 instances per A-05 acceptance.
 
-  Visual SSOT: Mneme.html L1024-1041 (`.drag-handle.abs`).
+  Plan 01-09 polish: token swap from legacy `--ink-mute` to Mneme.html-native
+  `--color-warm-dark-mute`; opacity 0.45 idle / 1.0 hover; scale 0.96 active;
+  background hover rgba(20,20,19,0.05). Visual SSOT: Mneme.html L1024-1045.
 -->
 <button class="drag-handle abs" type="button"
         aria-label="Drag region"
@@ -24,32 +26,34 @@
 </button>
 
 <style>
+  /* Mneme.html L1025-1041 — drag handle base + hover + active. */
   .drag-handle {
     appearance: none;
     background: transparent;
     border: 0;
     padding: 4px;
-    border-radius: var(--r-sm);
-    color: var(--ink-mute);
+    border-radius: var(--radius-sm);
+    color: var(--color-warm-dark-mute);
     cursor: grab;
     display: inline-grid;
     place-items: center;
     opacity: 0.45;
     transition:
-      opacity var(--d-fast) var(--ease),
-      background var(--d-fast) var(--ease),
-      color var(--d-fast) var(--ease),
-      transform var(--d-fast) var(--ease);
+      opacity var(--duration-fast) var(--ease-out),
+      background var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
   }
   .drag-handle:hover {
     opacity: 1;
     background: rgba(20, 20, 19, 0.05);
-    color: var(--ink-soft);
+    color: var(--color-warm-dark);
   }
   .drag-handle:active {
     cursor: grabbing;
     transform: scale(0.96);
   }
+  /* Mneme.html L1041-1045 — abs positioning (top:12px / right:18px / z-index:2). */
   .drag-handle.abs {
     position: absolute;
     top: 12px;

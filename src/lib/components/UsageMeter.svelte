@@ -1,26 +1,18 @@
 <!--
   UsageMeter.svelte — Round 5 A-09 (replaces deleted cost meter per A-04).
+  Plan 01-09 polish: tokens swapped to Mneme.html-native (mono 11px,
+  --color-warm-dark-mute palette) per L876-902. Visual:
 
-  Reads state.totalInputTokens (accumulated by stream-dispatch dispatchEvent
-  on each `result` event) and a session-start Date injected by ChatPanel.
-  Renders three pieces of info:
-    1. Ctx N.N% — current ctx utilization vs MODEL_CTX_WINDOW (default 1M for
-       Opus 4.7 1M per A-13).
-    2. Horizontal progress bar — width tracks Ctx %; turns red at >= 90%.
-    3. Total · Nk + Session · Hh Mm — cumulative tokens + rolling timer.
+    Ctx 9.1% [bar] · Total · 18.2k · Session · 1h 24m
 
-  CSS class `.cost` retained for visual continuity with prototype (Mneme.html
-  L876-902); semantic meaning shifted from "$-cost" to "ctx + session"
-  per A-09 + A-04. `.cost.warning` red triggers at ctx >= 90% (was: $-cap
-  exceeded).
+  Reads dispatchState.totalInputTokens (accumulated by stream-dispatch
+  on each `result` event) + sessionStartedAt injected by ChatPanel.
 
-  Cycle-1 LOW carry-forward (REVIEWS.md): "Total" semantics clarified —
-  the rendered label uses `Total · {tokens}` with the explicit qualifier
-  (not bare "Total"), matching Mneme.html L1399-1402 prototype framing
-  ("cumulative tokens this session, NOT a budget cap"). The `.cost.warning`
-  threshold key is ctx % vs MODEL_CTX_WINDOW (Used/Total framing) so the
-  meter is unambiguous: Ctx % is the budget-pressure signal; Total is the
-  cumulative volume signal.
+  CSS class `.cost` retained for visual continuity with prototype. The
+  semantic shift from "$-cost" to "ctx + session" is unchanged from prior
+  amendments; A-04 explicitly removed the daily-usage write file path.
+
+  `.cost.warning` red triggers at ctx ≥ 90% (was: $-cap exceeded).
 -->
 <script lang="ts">
   import type { DispatchState } from "$lib/stream-dispatch";
@@ -29,13 +21,10 @@
     dispatchState: DispatchState;
     sessionStartedAt: Date | null;
   }
-  // Note: prop is named `dispatchState` (not `state`) to avoid the Svelte 5
-  // auto-store-subscribe collision that svelte-check flags when a prop named
-  // `state` coexists with the `$state` rune in the same module.
   let { dispatchState, sessionStartedAt }: Props = $props();
 
-  // model_context_window — default 1_000_000 to match A-13 Opus 4.7 1M pill.
-  // Phase 2 (REQ-14 settings) lets the user override per model selection.
+  // Default 1_000_000 to match A-13 Opus 4.7 1M pill. Phase 2 (REQ-14)
+  // lets the user override per model selection.
   const MODEL_CTX_WINDOW = 1_000_000;
 
   let ctxPct = $derived(
@@ -50,8 +39,6 @@
 
   let sessionDuration = $state("0m");
 
-  // Update timer every 30s — keep DOM mutation cheap. $effect re-runs when
-  // sessionStartedAt becomes non-null on the first prompt.
   $effect(() => {
     if (!sessionStartedAt) return;
     const start = sessionStartedAt;
@@ -74,27 +61,29 @@
   <span class="bar" aria-hidden="true" style:--cost-pct="{ctxPct}%"><span></span></span>
   <span class="right">
     <span>Total · {fmtTokens(dispatchState.totalInputTokens)}</span>
-    <span class="sep">·</span>
+    <span style:opacity="0.4">·</span>
     <span>Session · {sessionDuration}</span>
   </span>
 </div>
 
 <style>
+  /* SSOT: Mneme.html L876-902. */
   .cost {
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--ink-mute);
+    color: var(--color-warm-dark-mute);
     padding: 4px 2px 8px;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
   }
-  .cost .leaf { color: var(--ink-soft); }
+  .cost .leaf { color: var(--color-warm-dark); }
   .cost .bar {
     flex: 1 1 auto;
     height: 2px;
     background: rgba(20, 20, 19, 0.06);
-    border-radius: var(--r-pill);
+    border-radius: 999px;
     overflow: hidden;
     max-width: 140px;
   }
@@ -102,12 +91,18 @@
     display: block;
     height: 100%;
     width: var(--cost-pct, 4%);
-    background: var(--orange);
-    border-radius: var(--r-pill);
-    transition: width var(--d-slow) var(--ease), background var(--d-slow) var(--ease);
+    background: var(--color-orange);
+    border-radius: 999px;
+    transition:
+      width var(--duration-slow) var(--ease-out),
+      background var(--duration-slow) var(--ease-out);
   }
-  .cost.warning              { color: var(--error); }
-  .cost.warning .bar > span  { background: var(--error); }
-  .cost .right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
-  .cost .sep { opacity: 0.4; }
+  .cost.warning              { color: var(--color-error); }
+  .cost.warning .bar > span  { background: var(--color-error); }
+  .cost .right {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
 </style>

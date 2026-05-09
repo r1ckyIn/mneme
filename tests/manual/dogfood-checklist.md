@@ -16,7 +16,7 @@
 
 <hr>
 
-## Section A — SPEC L128-148 acceptance (33 rows including cost-meter-absent)
+## Section A — SPEC L128-148 acceptance (34 rows including cost-meter-absent + Plan 01-09 T-1-47 row)
 
 ### REQ-1 (three-pane shell)
 
@@ -30,8 +30,8 @@
 
 ### REQ-2 (subprocess streaming)
 
-- [ ] **A-08** Submit prompt "what is 2+2" → chunky monospace text streams into the right pane during `text_delta` events.
-- [ ] **A-09** On `result` event, the chunky text transforms into rendered markdown (serif body, paragraph spacing).
+- [ ] **A-08** Submit prompt "what is 2+2" → text streams into the right pane during `text_delta` events.
+- [ ] **A-09 [OBSOLETE — T-1-47 closed in Plan 01-09]** ~~On `result` event, the chunky text transforms into rendered markdown (serif body, paragraph spacing).~~ Plan 01-09 fixed the streaming render path: assistant text now renders in **serif markdown style from the FIRST `text_delta`**, not only on `result`. Verify by submitting prompt B-01 and observing: as soon as the first chunk arrives, you see serif body + paragraph spacing + KaTeX-rendered math + inline `<code>` formatting (NOT a monospace `<pre>` block of raw markdown source). The `result` event is no longer a render trigger — it's now only used to flip `dispatch.isStreaming=false` and collapse the tool-use group. See A-34 below for the visual proof row.
 - [ ] **A-10** Open dev tools (Cmd+Opt+I); confirm console.log shows `[claude:init] model=... session=...` AND `[claude:result] cost=$... duration=...ms usage={...}` lines.
 - [ ] **A-11** The dev-console line for `[claude:result]` shows `cache_creation_input_tokens` < 20,000 (trim the spike's ~107k waste — REQ-2 acceptance).
 - [ ] **A-12** Inspect the spawned subprocess command line via `ps aux | grep '[c]laude --print' | head -1` while a prompt is streaming. Confirm it contains: `--max-turns 30`, `--add-dir /Users/<your-user>/.mneme/scratch`, `--exclude-dynamic-system-prompt-sections`. Confirm it does NOT contain `--bare`. Confirm it does NOT contain `--model` (per Round 5 A-13 — CLI uses account default).
@@ -74,6 +74,10 @@
 - [ ] **A-31** `test ! -f ~/.mneme/usage.jsonl` — file does NOT exist (cost meter deleted from Phase 1 per A-04).
 - [ ] **A-32** `test ! -f ~/.mneme/config.json` — file does NOT exist (settings UI is Phase 2).
 - [ ] **A-33** `test ! -f src/lib/cost.ts` — file does NOT exist (Round 5 A-04 — cost meter scaffolding fully removed; replaced by Ctx + Session usage meter per A-09).
+
+### Streaming render verification (Plan 01-09 T-1-47 closure)
+
+- [ ] **A-34** Submit prompt B-01 (math). During the FIRST visible chunk of assistant output, open dev tools → Elements → search the chat-scroller subtree. Verify: NO `<pre class="assistant streaming">` element exists; instead, the streaming assistant message uses `<div class="msg-assistant">` with marked-up children (`<p>`, inline `<code>`, `.katex` spans, `.eq` block). Closes T-1-47 (the original A-09 design produced a `<pre>` placeholder of raw text that swapped to markdown only on `result`; the new design renders sanitized markdown on every `text_delta` chunk).
 
 <hr>
 
@@ -166,7 +170,7 @@ After running prompt B-05 (long-stream) and observing the chat input area:
 
 ## Sign-off
 
-- [ ] All Section A checks ticked (33 rows).
+- [ ] All Section A checks ticked (34 rows incl. A-34 from Plan 01-09).
 - [ ] All Section B prompts ran without dev-console errors (5 rows).
 - [ ] All Section C hotkey combos confirmed unbound (10 rows).
 - [ ] All Section D usage meter rows verified (3 rows).
@@ -176,7 +180,7 @@ After running prompt B-05 (long-stream) and observing the chat input area:
 - [ ] All Section H tool-use collapsible rows verified (3 rows).
 - [ ] All Section I chat footer rows verified (3 rows).
 
-**Total: 67 checkboxes.** Phase 1 ships when ALL are ticked.
+**Total: 68 checkboxes** (was 67 pre-Plan 01-09; A-34 added). Phase 1 ships when ALL are ticked.
 
 Date verified: ____________
 Verified by: ____________ (developer)
