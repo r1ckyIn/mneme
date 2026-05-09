@@ -38,7 +38,10 @@
   ];
 
   // Phase 1: sort indicator on Modified column (default mtime desc per prototype L1714).
-  const activeSortKey = "mtime";
+  // Cast widens the literal so the head-row template's
+  // `class:active-sort={activeSortKey === "name"}` checks compile cleanly.
+  type SortKey = "name" | "size" | "type" | "mtime";
+  const activeSortKey = "mtime" as SortKey;
 </script>
 
 <section class="file-area">

@@ -55,29 +55,11 @@
 </Splitter>
 
 <style>
-  /* Empty-pane placeholder visual treatment — UI-SPEC §"Empty-pane placeholder
-     visual treatment". Right pane no longer needs this (ChatPanel owns its
-     own background); bottom row keeps it for Phase 1. */
-  .placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    font-family: var(--font-body);
-    font-size: var(--fs-h);
-    font-style: italic;
-    font-weight: var(--fw-regular);
-    color: var(--ink-mute);
-    text-align: center;
-    padding: var(--s-lg);
-    user-select: none;
-    position: relative;     /* anchor for nested .drag-handle.abs */
-  }
-
+  /* Plan 01-09: legacy `.placeholder` style removed — bottom row now owns
+     its visual via MindMapBar (Task 6). Right pane keeps a wrapper so the
+     A-05 5-region drag-handle contract still has its anchor. */
   .right-pane-slot {
     height: 100%;
     position: relative;     /* anchor for the right-pane DragHandle (A-05 #4) */
   }
-
-  /* .bottom-row-placeholder inherits .placeholder above. */
 </style>

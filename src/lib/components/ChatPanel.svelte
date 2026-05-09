@@ -1,59 +1,58 @@
 <!--
   ChatPanel.svelte — Phase 1 single-session Claude chat (REQ-2 + parts of REQ-6).
-  Mounts inside Splitter's right snippet (plan 01-05).
+  Plan 01-09 rewrite (T-1-47 / A-09 closure): streaming render fix +
+  prototype-matched layout via UserBubble / AssistantMessage / ToolUseGroup.
 
-  Round 5 amendments absorbed:
-    A-04 cost meter removal (no src/lib/cost.ts, no daily-usage write file, no $-cap state)
+  T-1-47 STREAMING RENDER FIX:
+    Before: text_delta appended raw chars to a <pre> in monospace; markdown
+    only re-rendered on `result`. Mismatch with Claude Desktop UX.
+    After: every text_delta updates assistantHtml = sanitizeMarkdown(buffer);
+    AssistantMessage re-renders the {@html} fragment + runs renderKatexInDom.
+    rAF batching coalesces multiple chunks within one frame.
+
+    Key: the text-buffer per assistant message is owned by stream-dispatch
+    (`Msg.text` accumulates in the existing `case "stream_event"` arm).
+    ChatPanel just reads .text and re-derives sanitized HTML reactively.
+
+  A-09 closure: usage meter is between scroll and footer; counts read from
+  state.totalInputTokens accumulator (already present in stream-dispatch).
+
+  Round 5 amendments preserved:
+    A-04 cost meter removal (no $-cap state)
     A-08 Cmd+. added to UNBOUND_CODES (10 combos total)
-    A-09 UsageMeter mount above input (replaces deleted cost surface)
+    A-09 UsageMeter mount above input
     A-13 ChatFooter 1:1 Claude Code layout
-    A-14 Tool-use rendering uses <details> with state-driven open attr
-    A-10 setStatus updates TitlebarMeta connection-state dot at lifecycle transitions
+    A-14 Tool-use rendering uses ToolUseGroup (state-driven open attr)
+    A-10 setStatus updates TitlebarMeta connection-state dot
 
-  Lifts spike-002 +page.svelte patterns with hardening upgrades:
-    1. Inline arg list -> buildClaudeArgs(userText, scratchDir) browser-safe SSOT (plan 01-02; .shared module — Cycle-2 HIGH-1 split)
-    2. Inline renderMarkdown/renderMath -> sanitizeMarkdown/renderKatexInDom (plan 01-03)
-    3. No teardown -> register_session_pid + clear_session_pid + stop_session IPC (plan 01-04)
-    4. Status TTFT/event-count chrome -> dev console only (D-18)
-    5. Empty-state hero -> blank scroller (UI-SPEC §"Empty state")
-    6. Cost-meter scaffolding -> DELETED entirely (A-04)
-    7. Footer = textarea + Send/Stop only -> expanded to full A-13 layout
-    8. Node-resolved scratch dir -> homeDir() from @tauri-apps/api/path resolved
-       at mount; passed as second arg to buildClaudeArgs (Cycle-2 HIGH-1 fix;
-       replaces the original Node-builtin `os.homedir` import that broke
-       Vite/SvelteKit bundling)
+  Cycle-2 HIGH-1 (preserved): browser-safe homeDir() + buildClaudeArgs
+  contract; SCRATCH_DIR_REGEX defense-in-depth.
 
-  TOKENICODE patterns absorbed (D-16):
-    - finalizeOnce — idempotent teardown
-    - control_request interception — bypass-mode hang prevention
+  Cycle-1 MEDIUM closure (preserved): spawn + invoke wrapped in try/catch;
+  finalizeOnce idempotent teardown; control_request interception.
 
-  Cycle-1 MEDIUM closure (REVIEWS.md): spawn + invoke wrapped in try/catch with
-  proper error UI surface (system bubble error variant); stop_session invoke also
-  wrapped. The single legal `{@html}` site (system bubble error variant) consumes
-  text already escapeHtml-cleaned at dispatch time.
+  Visual SSOT: Mneme.html L587-1022 (chat surface: header, scroll, messages,
+  composer, input-shell, send-btn, disclaimer).
 -->
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { Command } from "@tauri-apps/plugin-shell";
   import { invoke } from "@tauri-apps/api/core";
-  import { homeDir } from "@tauri-apps/api/path";   // Cycle-2 HIGH-1 — browser-safe; Tauri 2 IPC bridge
-  import { buildClaudeArgs, SCRATCH_DIR_REGEX } from "$lib/spawn-args.shared";  // Cycle-2 HIGH-1 — browser-safe SSOT (NEVER import from $lib/spawn-args.node)
+  import { homeDir } from "@tauri-apps/api/path";
+  import { buildClaudeArgs, SCRATCH_DIR_REGEX } from "$lib/spawn-args.shared";
   import {
     dispatchEvent,
     freshState,
-    gerundHeader,
-    pastTenseHeader,
     type DispatchState,
     type Msg,
   } from "$lib/stream-dispatch";
-  import {
-    sanitizeMarkdown,
-    renderKatexInDom,
-    escapeHtml,
-  } from "$lib/sanitize";
+  import { sanitizeMarkdown, escapeHtml } from "$lib/sanitize";
   import { setStatus } from "$lib/connection-state.svelte";
   import UsageMeter from "$lib/components/UsageMeter.svelte";
   import ChatFooter from "$lib/components/ChatFooter.svelte";
+  import UserBubble from "$lib/components/UserBubble.svelte";
+  import AssistantMessage from "$lib/components/AssistantMessage.svelte";
+  import ToolUseGroup from "$lib/components/ToolUseGroup.svelte";
 
   // ---------- state ----------
   let prompt = $state("");
@@ -62,6 +61,18 @@
   let scroller: HTMLDivElement | undefined = $state();
   let inputBox: HTMLTextAreaElement | undefined = $state();
   let finalizeOnce: (() => void) | null = null;
+
+  // T-1-47 / A-09 streaming-render cache: msg.id -> sanitized HTML.
+  // Reactive map driven by `messages` mutation in dispatchEvent. The cache is
+  // recomputed inside an rAF tick in onChunk to coalesce multiple text_delta
+  // events arriving within one frame (the marked + DOMPurify pipeline is fast
+  // but called once per delta would still saturate the main thread on dense
+  // streams).
+  //
+  // We keep this in a $state Map so AssistantMessage's `html` prop is a plain
+  // string read from the map keyed by message id; Svelte 5 fine-grained
+  // reactivity tracks the lookup.
+  let assistantHtmlCache = $state<Map<string, string>>(new Map());
 
   // A-06 visual toggle (no spawn-args effect Phase 1)
   let vaultContextActive = $state(false);
@@ -73,28 +84,48 @@
   let sessionStartedAt = $state<Date | null>(null);
 
   // Cycle-2 HIGH-1 — scratchDir resolved on mount via @tauri-apps/api/path's
-  // homeDir() (Tauri 2 IPC bridge — browser-safe; Vite-bundlable). The original
-  // Node-builtin `os.homedir` import path failed Vite/SvelteKit bundling for
-  // the WebView. The SSOT `buildClaudeArgs(prompt, scratchDir)` enforces a
-  // SCRATCH_DIR_REGEX check on the value, so this resolution is the only
-  // Phase-1 site where the path is computed for the spawn surface.
+  // homeDir() (Tauri 2 IPC bridge — browser-safe; Vite-bundlable).
   let scratchDir = $state<string | null>(null);
   let scratchDirError = $state<string | null>(null);
 
   function autoGrow() {
     if (!inputBox) return;
     inputBox.style.height = "auto";
-    inputBox.style.height = `${Math.min(inputBox.scrollHeight, 200)}px`;
+    inputBox.style.height = `${Math.min(inputBox.scrollHeight, 160)}px`;
+  }
+
+  // T-1-47 streaming-render core: rAF-batched recompute of the streaming
+  // assistant message's sanitized HTML. Called from the stdout `data` handler
+  // after dispatchEvent has appended the chunk to .text. Only walks the
+  // CURRENTLY-streaming assistant Msg (the last assistant in messages where
+  // streaming=true).
+  let pendingRecompute = false;
+  function scheduleHtmlRecompute() {
+    if (pendingRecompute) return;
+    pendingRecompute = true;
+    requestAnimationFrame(() => {
+      pendingRecompute = false;
+      const next = new Map(assistantHtmlCache);
+      for (const m of dispatch.messages) {
+        if (m.role !== "assistant") continue;
+        // Re-sanitize streaming OR finalized assistant messages whose text
+        // hasn't been hashed yet, OR whose text changed since last hash.
+        // Simple fingerprint: cache key = message id; recompute every tick
+        // for streaming messages (text grows monotonically), recompute once
+        // for finalized messages (text is stable).
+        const cached = next.get(m.id);
+        if (m.streaming || !cached || cached.length < m.text.length) {
+          next.set(m.id, sanitizeMarkdown(m.text));
+        }
+      }
+      assistantHtmlCache = next;
+    });
   }
 
   // ---------- send-prompt orchestration ----------
   async function sendPrompt() {
     if (!prompt.trim() || dispatch.isStreaming) return;
 
-    // Cycle-2 HIGH-1 — refuse to spawn until scratchDir resolves cleanly.
-    // Surfacing the error in a system bubble (with escapeHtml on the regex
-    // value to avoid HTML injection from a malformed path) lets the user
-    // notice the early-mount race without console-only debugging.
     if (!scratchDir) {
       dispatch.messages = [
         ...dispatch.messages,
@@ -120,16 +151,10 @@
     dispatch.isStreaming = true;
     dispatch.resultReceived = false;
     pulseDotVisible = true;
-    setStatus("connecting");   // A-10 — TitlebarMeta dot flips to gray
+    setStatus("connecting");
 
-    // Cycle-1 MEDIUM closure: wrap spawn + invoke in try/catch so any
-    // synchronous failure (capability rejection, IPC unavailable, builder
-    // throwing on regex mismatch) surfaces as a system-bubble error rather
-    // than leaving the UI in a permanently-streaming state.
     let cmd: Command<string>;
     try {
-      // SSOT — capability layer (plan 01-02) enforces ~13 validators.
-      // buildClaudeArgs(prompt, scratchDir) — Cycle-2 HIGH-1 split contract.
       cmd = Command.create("claude-bin", buildClaudeArgs(userText, scratchDir));
     } catch (e) {
       console.error("[claude:build-args]", e);
@@ -148,6 +173,7 @@
       buffer += chunk;
       const parts = buffer.split("\n");
       buffer = parts.pop() ?? "";
+      let mutated = false;
       for (const raw of parts) {
         if (!raw.trim()) continue;
         try {
@@ -159,18 +185,24 @@
           ) {
             firstTextDeltaSeen = true;
             pulseDotVisible = false;
-            setStatus("connected");   // A-10 — dot flips to green
+            setStatus("connected");
           }
           if (evt?.type === "control_request") {
             console.log("[claude:control_request] skipped (Phase 1 baseline)", evt);
             continue;
           }
           dispatchEvent(evt, dispatch);
-          dispatch.messages = dispatch.messages;   // force Svelte 5 reactivity
-          scrollToBottomMaybe();
+          mutated = true;
         } catch {
           // Malformed line — drop silently per spike landmine #2
         }
+      }
+      if (mutated) {
+        // T-1-47 — recompute sanitized HTML for streaming assistants AND
+        // force Svelte 5 reactivity by reassigning the messages array.
+        dispatch.messages = dispatch.messages;
+        scheduleHtmlRecompute();
+        scrollToBottomMaybe();
       }
     });
 
@@ -201,30 +233,12 @@
         ];
         return;
       }
-      // Finalize-render walker — replace finalized assistant bubble text with
-      // sanitized markdown HTML, then walk for KaTeX math. The HTML injected
-      // here is DOMPurify-cleaned at the source via sanitizeMarkdown.
-      requestAnimationFrame(() => {
-        const els = document.querySelectorAll<HTMLElement>(
-          '[data-msg-role="assistant"][data-msg-streaming="false"]:not([data-msg-finalized="true"])'
-        );
-        for (const el of Array.from(els)) {
-          const raw = el.textContent ?? "";
-          const sanitized = sanitizeMarkdown(raw);
-          const range = document.createRange();
-          range.selectNodeContents(el);
-          range.deleteContents();
-          const frag = range.createContextualFragment(sanitized);
-          el.appendChild(frag);
-          renderKatexInDom(el);
-          el.dataset.msgFinalized = "true";
-        }
-      });
+      // Final HTML recompute — flushes any in-flight text into the cache.
+      // (T-1-47 already recomputes during streaming so this is mostly a
+      // safety net for the last partial chunk between rAF tick + close.)
+      scheduleHtmlRecompute();
     });
 
-    // Spawn — hand PID to Rust state machine (plan 01-04). Wrapped in try/catch
-    // (Cycle-1 MEDIUM closure) so capability/IPC failures surface as a system
-    // bubble rather than a silent permanently-streaming UI.
     try {
       const child = await cmd.spawn();
       await invoke("register_session_pid", { pid: child.pid });
@@ -247,12 +261,8 @@
 
   function teardown() {
     if (finalizeOnce) finalizeOnce();
-    // Best-effort IPC cleanup; plan 01-04's kill_pgid is safe against missing PIDs.
     invoke("clear_session_pid").catch(() => {});
-    setStatus("disconnected");   // A-10 — dot back to gray on close
-    // Belt-and-suspenders: if an early failure path skipped the finalizeOnce
-    // assignment, force the streaming flag down so the input dock returns to
-    // the send state.
+    setStatus("disconnected");
     dispatch.isStreaming = false;
     pulseDotVisible = false;
   }
@@ -264,7 +274,6 @@
     } catch (e) {
       console.warn("[stop_session] invoke failed", e);
     }
-    // cmd.on("close") fires from the SIGKILL → teardown runs there.
   }
 
   // ---------- keyboard ----------
@@ -276,17 +285,7 @@
     // Shift+Enter falls through to default textarea newline (D-20).
   }
 
-  // Hotkey unbinding — REQ-6 + Round 5 A-08.
-  // 10 combos: Cmd+L / Cmd+K / Cmd+W / Cmd+, / Cmd+P / Cmd+O / Cmd+Shift+P /
-  // Cmd+N / Cmd+R / Cmd+. (Period — A-08 addition).
-  // Cmd+Q is NOT in this list — it goes to plan 01-04's RunEvent::ExitRequested
-  // hook (the only OS-level kill path).
-  // Cmd+W is preventDefault-ed at JS layer per CONTEXT.md L36-40 amendment 3
-  // (closes the subprocess-leak path that would otherwise fire on macOS
-  // default close-window).
-  // Cmd+. (Period) is the Round 5 A-08 addition — sacrifices macOS convention
-  // "Cancel current op" to keep Phase 1 keyboard surface narrow + explicit.
-  // Stop is triggered ONLY via Send/Stop button click (D-19).
+  // Hotkey unbinding — REQ-6 + Round 5 A-08. 10 combos.
   const UNBOUND_CODES = new Set([
     "KeyL", "KeyK", "KeyW", "Comma", "KeyP", "KeyO", "KeyN", "KeyR", "Period",
   ]);
@@ -294,7 +293,6 @@
     if (!(e.metaKey || e.ctrlKey)) return;
     if (UNBOUND_CODES.has(e.code)) {
       e.preventDefault();
-      // Silent — NO UI response, NO error log per REQ-6 acceptance.
     }
   }
 
@@ -310,12 +308,9 @@
   }
 
   // ---------- lifecycle ----------
-  // Cycle-2 HIGH-1 — resolve scratchDir at mount via Tauri's IPC-bridged path API.
-  // Validation against SCRATCH_DIR_REGEX is defense-in-depth; the SSOT itself
-  // also rejects non-conformant values when buildClaudeArgs is called.
   async function resolveScratchDir() {
     try {
-      const home = await homeDir();   // e.g. "/Users/qinyuan/" or "/Users/qinyuan"
+      const home = await homeDir();
       const normalized = home.endsWith("/") ? home.slice(0, -1) : home;
       const candidate = `${normalized}/.mneme/scratch`;
       if (!new RegExp(SCRATCH_DIR_REGEX).test(candidate)) {
@@ -338,7 +333,7 @@
   onMount(() => {
     window.addEventListener("keydown", onWindowKeydown);
     if (inputBox) inputBox.focus();
-    void resolveScratchDir();   // fire-and-forget; sendPrompt early-returns until resolved
+    void resolveScratchDir();
   });
   onDestroy(() => {
     window.removeEventListener("keydown", onWindowKeydown);
@@ -359,59 +354,78 @@
       m.text.includes("&lt;")
     );
   }
+
+  // === T-1-47 dev probe (mounted on window for visual_fidelity verification) ===
+  // Lets the visual-verification step inject a synthetic stream-event sequence
+  // and assert the rendered DOM contains marked-up content — NOT a single <pre>
+  // block of raw text. Activated only in dev mode (import.meta.env.DEV).
+  if (typeof window !== "undefined" && import.meta.env.DEV) {
+    (window as any).__mneme_inject_stream__ = (chunks: string[]) => {
+      // Synthesize a fresh assistant message via the dispatch system using
+      // stream_event envelopes; runs the same code path as a live spawn.
+      for (const text of chunks) {
+        dispatchEvent({
+          type: "stream_event",
+          event: { delta: { type: "text_delta", text } },
+        } as any, dispatch);
+      }
+      dispatch.messages = dispatch.messages;
+      scheduleHtmlRecompute();
+    };
+    (window as any).__mneme_finalize_stream__ = () => {
+      dispatchEvent({
+        type: "result",
+        usage: { input_tokens: 0 },
+        total_cost_usd: 0,
+      } as any, dispatch);
+      dispatch.messages = dispatch.messages;
+      scheduleHtmlRecompute();
+    };
+  }
 </script>
 
-<div class="chat-panel">
-  <div class="message-scroller" bind:this={scroller}>
-    {#each dispatch.messages as msg (msg.id)}
-      {#if msg.role === "system"}
-        <!-- Single legal {@html} site — text was escapeHtml-cleaned at dispatch
-             OR sendPrompt time before reaching here (T-1-27 mitigation). -->
-        <div class="bubble system" class:error={isErrorMsg(msg)}>
-          {@html msg.text}
-        </div>
-      {:else if msg.role === "user"}
-        <div class="bubble user">{msg.text}</div>
-      {:else if msg.role === "assistant" && msg.streaming}
-        <pre
-          class="assistant streaming"
-          data-msg-role="assistant"
-          data-msg-streaming="true"
-        >{msg.text}</pre>
-        {#if msg.thinking}
-          <span class="thinking-indicator">💭 thinking…</span>
-        {/if}
-      {:else if msg.role === "assistant"}
-        <div
-          class="assistant finalized"
-          data-msg-role="assistant"
-          data-msg-streaming="false"
-        >{msg.text}</div>
-      {/if}
-    {/each}
+<section class="chat">
+  <header class="chat-header">
+    <span class="slot-path">
+      <svg class="folder-ico" width="12" height="12" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+           stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+      </svg>
+      <span>COMP3027</span>
+      <span class="sep">/</span>
+      <span class="leaf">Rod-cutting recurrence</span>
+    </span>
+  </header>
 
-    <!-- A-14: tool-use group rendered as <details>. Open during streaming;
-         collapsed on result event. Header text from gerundHeader() / pastTenseHeader(). -->
-    {#if dispatch.toolUseGroup.toolUses.length > 0}
-      <details class="tool-use-group" open={dispatch.toolUseGroup.open}>
-        <summary>
-          {dispatch.toolUseGroup.open
-            ? gerundHeader(dispatch.toolUseGroup)
-            : pastTenseHeader(dispatch.toolUseGroup)}
-        </summary>
-        {#each dispatch.toolUseGroup.toolUses as t (t.id)}
-          <div class="tool-use" class:complete={t.completed}>
-            <span class="tool-name">{t.name}</span>
-            <code class="tool-input">{t.inputPreview}</code>
-            {#if t.completed}<span class="tool-status">✓</span>{/if}
+  <div class="chat-scroll" bind:this={scroller}>
+    <div class="messages">
+      {#each dispatch.messages as msg (msg.id)}
+        {#if msg.role === "system"}
+          <!-- Single legal {@html} site for system errors — text was
+               escapeHtml-cleaned at dispatch / sendPrompt time (T-1-27). -->
+          <div class="bubble system" class:error={isErrorMsg(msg)}>
+            {@html msg.text}
           </div>
-        {/each}
-      </details>
-    {/if}
+        {:else if msg.role === "user"}
+          <UserBubble text={msg.text} />
+        {:else if msg.role === "assistant"}
+          <AssistantMessage
+            html={assistantHtmlCache.get(msg.id) ?? ""}
+            streaming={msg.streaming}
+          />
+        {/if}
+      {/each}
+
+      <!-- A-14 tool-use group (collapsed/expanded driven by dispatch.toolUseGroup.open). -->
+      <ToolUseGroup
+        group={dispatch.toolUseGroup}
+        streaming={dispatch.isStreaming}
+      />
+    </div>
   </div>
 
   <div class="composer">
-    <!-- A-09: usage meter above input -->
     <UsageMeter dispatchState={dispatch} sessionStartedAt={sessionStartedAt} />
 
     <div class="input-shell" class:streaming={dispatch.isStreaming}>
@@ -420,41 +434,29 @@
         bind:value={prompt}
         oninput={autoGrow}
         onkeydown={handleKey}
-        placeholder="Ask anything…"
+        placeholder="Write a message…"
         rows="1"
         spellcheck="false"
       ></textarea>
 
-      <!-- A-13: chat footer with 5 left buttons + model pill + Send/Stop slot -->
       <ChatFooter
         vaultContextActive={vaultContextActive}
         onToggleVaultContext={toggleVaultContext}
       >
         {#snippet sendStopSlot()}
           {#if dispatch.isStreaming}
-            <button
-              type="button"
-              class="send-btn stop"
-              onclick={onStop}
-              aria-label="Stop streaming"
-              title="Stop"
-            >
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+            <button type="button" class="send-btn" data-state="streaming"
+                    onclick={onStop} aria-label="Stop streaming" title="Stop">
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" aria-hidden="true">
                 <rect x="5" y="5" width="14" height="14" rx="1.5" />
               </svg>
             </button>
-            {#if pulseDotVisible}
-              <span class="streaming-dot" aria-label="Connecting to Claude…"></span>
-            {/if}
           {:else}
-            <button
-              type="button"
-              class="send-btn send"
-              onclick={sendPrompt}
-              disabled={!prompt.trim()}
-              aria-label="Send message"
-              title="Send"
-            >
+            <button type="button" class="send-btn"
+                    data-state={prompt.trim() ? "idle-typed" : "idle-empty"}
+                    onclick={sendPrompt}
+                    disabled={!prompt.trim()}
+                    aria-label="Send message" title="Send">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                    stroke-linejoin="round" aria-hidden="true">
@@ -467,227 +469,177 @@
       </ChatFooter>
     </div>
 
-    <div class="disclaimer">
-      Claude can make mistakes; verify against the source.
-    </div>
+    <div class="disclaimer">Claude can make mistakes; verify against the source.</div>
   </div>
-</div>
+</section>
 
 <style>
-  .chat-panel {
-    display: flex;
-    flex-direction: column;
+  /* SSOT: Mneme.html L587-1022. */
+
+  .chat {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
     height: 100%;
-    background: var(--bg);
-    color: var(--ink);
+    min-height: 0;
+    position: relative;
+    background: var(--color-cream);
   }
 
-  .message-scroller {
-    flex: 1;
+  /* Chat header — slot-path breadcrumb (mono 11.5px). Mneme.html L595-615 +
+     L1293-1303. Padding tuned so it sits in the right pane's 36px reserved
+     zone (TitlebarMeta lives at top-right of the WINDOW; this header lives
+     at top-of-pane so it ends up below the meta). */
+  .chat-header {
+    position: relative;
+    min-height: 42px;
+    padding: 14px 22px 8px;
+    display: flex;
+    align-items: center;
+  }
+  .chat-header .slot-path {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.01em;
+    color: var(--color-warm-dark-soft);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .chat-header .slot-path .sep { color: var(--color-warm-dark-mute); opacity: 0.55; }
+  .chat-header .slot-path .leaf { color: var(--color-warm-dark); }
+  .chat-header .folder-ico { opacity: 0.55; flex: 0 0 auto; }
+
+  /* Scroll surface — Mneme.html L617-630. */
+  .chat-scroll {
     overflow-y: auto;
-    padding: var(--s-lg);
+    padding: 8px 26px 16px;
+    min-height: 0;
+    scroll-behavior: smooth;
+  }
+  .messages {
     display: flex;
     flex-direction: column;
-    gap: var(--s-sm);
+    gap: 22px;
+    max-width: 720px;
+    margin: 0 auto;
   }
 
-  /* === Bubbles === */
+  /* System bubble — quiet variant + error variant. Single {@html} site upstream. */
   .bubble.system {
     background: transparent;
-    color: var(--ink-mute);
+    color: var(--color-warm-dark-mute);
     font-family: var(--font-mono);
-    font-size: var(--fs-meta);
-    border-left: 3px solid var(--border-strong);
-    padding: var(--s-sm) var(--s-md);
-    margin: var(--s-sm) 0;
+    font-size: 12.5px;
+    border-left: 3px solid var(--border-soft);
+    padding: 8px 14px;
+    margin: 8px 0;
+    align-self: flex-start;
+    max-width: 78%;
   }
   .bubble.system.error {
-    border-left-color: var(--error);
-    color: var(--error);
+    border-left-color: var(--color-error);
+    color: var(--color-error);
   }
 
-  .bubble.user {
-    background: var(--bubble-user);
-    color: var(--ink);
-    font-family: var(--font-body);
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    padding: var(--s-sm) var(--s-md);
-    border-radius: var(--r-lg);
-    border-bottom-right-radius: var(--r-xs);
-    align-self: flex-end;
-    max-width: 75%;
-    margin: var(--s-sm) 0;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-
-  .assistant.streaming {
-    font-family: var(--font-mono);
-    font-size: var(--fs-meta);
-    color: var(--ink-soft);
-    white-space: pre-wrap;
-    padding: 0;
-    margin: var(--s-sm) 0;
-    max-width: 75%;
-    align-self: flex-start;
-    background: transparent;
-    border: none;
-  }
-
-  .assistant.finalized {
-    font-family: var(--font-body);
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    color: var(--ink);
-    margin: var(--s-sm) 0;
-    max-width: 75%;
-    align-self: flex-start;
-    background: transparent;
-    border: none;
-    word-break: break-word;
-  }
-
-  .thinking-indicator {
-    font-style: italic;
-    color: var(--ink-mute);
-    font-family: var(--font-body);
-    font-size: var(--fs-meta);
-    align-self: flex-start;
-  }
-
-  /* === A-14 tool-use group <details> === */
-  .tool-use-group {
-    background: var(--bg-soft);
-    border-left: 3px solid var(--orange);    /* allow-list site #6 */
-    border-radius: 0 var(--r-sm) var(--r-sm) 0;
-    margin: var(--s-sm) 0;
-    align-self: flex-start;
-    max-width: 75%;
-    font-family: var(--font-mono);
-    font-size: var(--fs-meta);
-    color: var(--ink-soft);
-    padding: var(--s-sm);
-  }
-  .tool-use-group summary {
-    cursor: pointer;
-    user-select: none;
-    color: var(--ink);
-    font-weight: var(--fw-semibold);
-  }
-  .tool-use {
-    padding: var(--s-xs) 0;
-    display: flex;
-    align-items: baseline;
-    gap: var(--s-sm);
-  }
-  .tool-use .tool-name {
-    font-weight: var(--fw-semibold);
-    color: var(--ink);
-  }
-  .tool-use .tool-input {
-    color: var(--ink-mute);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-  }
-  .tool-use .tool-status { color: var(--orange-deep); }
-  .tool-use.complete .tool-name { color: var(--ink-soft); }
-
-  /* === Composer === */
+  /* Composer — Mneme.html L870-1022. */
   .composer {
     flex: 0 0 auto;
     padding: 4px 22px 16px;
-    background: var(--bg);
-    position: sticky;
-    bottom: 0;
+    background: var(--color-cream);
   }
 
   .input-shell {
     position: relative;
-    background: var(--paper);
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    padding: var(--s-sm) var(--s-sm);
-    box-shadow: var(--shadow-sm);
+    background: var(--color-cream);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
     transition:
-      border-color var(--d-base) var(--ease),
-      box-shadow var(--d-base) var(--ease);
+      border-color var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out);
+    box-shadow: var(--shadow-1);
+    padding: 4px 4px 6px;
   }
   .input-shell:focus-within {
-    border-color: var(--orange);
-    box-shadow: var(--shadow-sm), 0 0 0 3px var(--orange-ring);
+    border-color: rgba(217, 119, 87, 0.45);
+    box-shadow:
+      0 0 0 3px rgba(217, 119, 87, 0.08),
+      var(--shadow-1);
   }
 
   textarea {
+    display: block;
     width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
+    border: 0;
+    outline: 0;
     resize: none;
-    font-family: var(--font-body);
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    color: var(--ink);
-    min-height: 20px;
-    max-height: 200px;
-    padding: 4px 4px;
+    background: transparent;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 14.5px;
+    line-height: 1.5;
+    padding: 10px 14px 6px;
+    min-height: 30px;
+    max-height: 160px;
   }
-  textarea::placeholder {
-    color: var(--ink-mute);
-    font-style: italic;
-  }
+  textarea::placeholder { color: var(--color-warm-dark-mute); }
 
-  /* === Send / Stop button === */
+  /* Send/Stop button — Mneme.html L982-1013.
+     idle-empty: mute-fill; idle-typed/streaming: warm-dark filled. */
   .send-btn {
+    appearance: none;
     width: 28px;
     height: 28px;
-    border-radius: var(--r-pill);
-    background: var(--orange);
-    border: none;
+    border-radius: 50%;
+    background: var(--color-warm-dark);
+    border: 0;
+    color: var(--color-cream);
+    display: grid;
+    place-items: center;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
     transition:
-      transform var(--d-fast) var(--ease),
-      background var(--d-fast) var(--ease),
-      opacity var(--d-base);
+      transform var(--duration-fast) var(--ease-out),
+      background var(--duration-base) var(--ease-out),
+      border-radius var(--duration-base) var(--ease-out),
+      opacity var(--duration-base) var(--ease-out);
   }
-  .send-btn:active {
-    transform: scale(0.96);
-  }
+  .send-btn:hover { transform: scale(1.05); }
+  .send-btn:active { transform: scale(0.96); }
+  .send-btn[data-state="idle-empty"],
   .send-btn:disabled {
-    background: var(--orange-soft);
-    cursor: not-allowed;
-    opacity: 0.7;
+    background: rgba(20, 20, 19, 0.08);
+    color: var(--color-warm-dark-mute);
+    cursor: default;
   }
-
-  /* === Streaming dot === */
-  .streaming-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: var(--r-pill);
-    background: var(--orange);
-    margin-left: 4px;
-    animation: pulse var(--pulse-period) var(--ease) infinite;
-    pointer-events: none;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50%      { opacity: 1.0; }
+  .send-btn[data-state="idle-empty"]:hover,
+  .send-btn:disabled:hover { transform: none; }
+  .send-btn[data-state="streaming"] {
+    border-radius: 8px;     /* circle → squared morph */
+    background: var(--color-warm-dark);
   }
 
   .disclaimer {
     text-align: center;
     margin-top: 8px;
-    font-family: var(--font-body);
+    font-family: var(--font-serif);
     font-size: 11.5px;
-    color: var(--ink-mute);
-    font-style: italic;
+    color: var(--color-warm-dark-mute);
+    letter-spacing: 0;
+  }
+
+  /* Scrollbars — Mneme.html L1124-1138. */
+  .chat-scroll::-webkit-scrollbar { width: 10px; }
+  .chat-scroll::-webkit-scrollbar-thumb {
+    background: rgba(20, 20, 19, 0.10);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 10px;
+  }
+  .chat-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(20, 20, 19, 0.18);
+    background-clip: padding-box;
+    border: 3px solid transparent;
   }
 </style>
