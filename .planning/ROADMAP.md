@@ -119,7 +119,8 @@ Plans:
 - [x] 01-06-PLAN.md — Wave 4: ChatPanel.svelte E2E wiring (Command spawn + dispatch + sanitize + IPC + Stop button + hotkey unbinding)
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [x] 01-07-PLAN.md — Wave 5: Husky pre-commit + 5-cycle lifecycle harness + 50-row dogfood checklist + VALIDATION.md sign-off (CHECKPOINT)
+- [ ] 01-07-PLAN.md — Wave 5: Husky pre-commit + 5-cycle lifecycle harness + 73-row dogfood checklist + VALIDATION.md sign-off (CHECKPOINT — tasks 1-3 done, tasks 4-5 await user dogfood signoff)
+- [x] 01-08-PLAN.md — Wave 6 (gap closure): SvelteKit kit.csp nonce mode (T-1-46 dev-mode white-screen fix; unblocks 01-07 dogfood)
 **UI hint**: yes
 
 ### Phase 2: Vault + Canvas/Ed Sync + Onboarding
