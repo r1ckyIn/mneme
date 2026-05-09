@@ -1,0 +1,12 @@
+{"type":"system","subtype":"init","session_id":"sess_abc123","model":"claude-sonnet-4.5","cwd":"/Users/qinyuan/.mneme/scratch"}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" world"}}}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"."}}}
+{"type":"assistant","message":{"id":"msg_001","role":"assistant","content":[{"type":"text","text":"Hello world."}]}}
+{"type":"assistant","message":{"id":"msg_002","role":"assistant","content":[{"type":"tool_use","id":"toolu_001","name":"Read","input":{"file_path":"/Users/qinyuan/.mneme/scratch/notes.md"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_001","content":"file contents here"}]}}
+{"type":"assistant","message":{"id":"msg_003","role":"assistant","content":[{"type":"thinking","thinking":"REDACTED","signature":"BASE64_ENCRYPTED_SIG"}]}}
+{"type":"rate_limit_event","subtype":"snapshot","remaining":42}
+{"type":"system","subtype":"error","message":"network timeout reading from anthropic"}
+{"type":"result","subtype":"success","total_cost_usd":0.0123,"duration_ms":4500,"usage":{"input_tokens":150,"output_tokens":50,"cache_creation_input_tokens":18000,"cache_read_input_tokens":0}}
+{"type":"unknown_future_event_kind","payload":"reserved for forward-compat default arm"}
