@@ -11,7 +11,6 @@
   (locked)" — do NOT alter without UI-SPEC re-approval.
 -->
 <script lang="ts">
-  import { onMount } from "svelte";
   import Splitter from "$lib/components/Splitter.svelte";
   import FileArea from "$lib/components/FileArea.svelte";
   import LectureVideo from "$lib/components/LectureVideo.svelte";
@@ -20,45 +19,6 @@
   import TitlebarMeta from "$lib/components/TitlebarMeta.svelte";
   import ChatPanel from "$lib/components/ChatPanel.svelte";
   import MindMapBar from "$lib/components/MindMapBar.svelte";
-
-  // Explicit window-drag fallback. Tauri 2's `data-tauri-drag-region` is
-  // sometimes flaky on macOS overlay-style titlebars under HMR (the webview
-  // injects its mousedown handler at boot and doesn't always re-scan after
-  // attribute changes). We bind our own mousedown on document.body and call
-  // getCurrentWindow().startDragging() directly when the click lands inside
-  // a [data-tauri-drag-region] ancestor and NOT on an interactive element.
-  // This is idempotent with Tauri's native handler — startDragging() is safe
-  // to call once per mousedown.
-  onMount(() => {
-    let cleanup: (() => void) | undefined;
-    (async () => {
-      try {
-        const { getCurrentWindow } = await import("@tauri-apps/api/window");
-        const win = getCurrentWindow();
-        const onMouseDown = (e: MouseEvent) => {
-          if (e.button !== 0) return;       // primary click only
-          const target = e.target as HTMLElement | null;
-          if (!target) return;
-          // Skip native interactive elements (button, input, textarea, select, a, label)
-          if (target.closest("button, input, textarea, select, a, label")) return;
-          // Find nearest [data-tauri-drag-region] ancestor (any value)
-          const drag = target.closest("[data-tauri-drag-region]");
-          if (!drag) return;
-          // If the nearest drag-region is explicitly "false", click is in a
-          // non-draggable zone (e.g., chat scroller inside the window). Skip.
-          if (drag.getAttribute("data-tauri-drag-region") === "false") return;
-          // Double-click on titlebar = macOS zoom (system default — leave it alone)
-          if (e.detail === 2) return;
-          win.startDragging().catch(() => {/* ignore — non-Tauri runtime */});
-        };
-        document.addEventListener("mousedown", onMouseDown);
-        cleanup = () => document.removeEventListener("mousedown", onMouseDown);
-      } catch {
-        // Not running in Tauri (e.g., browser preview) — silently skip
-      }
-    })();
-    return () => { cleanup?.(); };
-  });
 </script>
 
 <!-- Plan 01-09 Task 10: window chrome wrapper added so headless 1280×860
@@ -131,9 +91,7 @@
     place-items: center;
     padding: 24px;
     background: #1f1e1c;     /* Mneme.html L84 — matte dark stage */
-    cursor: grab;            /* visual cue: drag bezel = drag window */
   }
-  .stage:active { cursor: grabbing; }
 
   .window {
     width: 1280px;
@@ -173,9 +131,7 @@
     padding: 0 var(--space-4);
     background: transparent;
     z-index: 5;
-    cursor: grab;            /* visual cue: titlebar = drag window */
   }
-  .titlebar:active { cursor: grabbing; }
   .titlebar-spacer {
     /* Reserves space for OS-rendered traffic lights (≈ 70px on macOS overlay
        titleBarStyle). Without this, TitlebarMeta would render under the dots. */

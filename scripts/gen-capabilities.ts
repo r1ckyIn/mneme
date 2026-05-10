@@ -69,6 +69,7 @@ const capability = {
   windows: ["main"],
   permissions: [
     "core:default",
+    "core:window:allow-start-dragging",
     "shell:default",
     {
       identifier: "shell:allow-spawn",
