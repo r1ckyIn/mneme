@@ -150,7 +150,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ### Pending Todos
 
-6 pending — captured during sessions, surface at appropriate phase:
+7 pending — captured during sessions, surface at appropriate phase:
 
 - **Evaluate thea for question generation** (research, 2026-05-07, **product REJECTED · algorithm-layer worth a Phase 10 spike**) — thea.study (closed cloud SaaS, K-12) fails KP-01/KP-02/KD-06/form-factor as a dependency. Separately, the *algorithm* — AI takes source material → produces good concept-review items — is a real engineering problem mneme also has to solve in Phase 10 (REQ-09 concept review, not flashcard). Recommended path: when approaching Phase 10, promote to `/gsd-spike concept-review-item-generation` (½–1 day timebox; black-box probe of thea + Claude API prompt-pipeline experiment against a real USYD lecture). File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before `/gsd-discuss-phase 10`.
 
@@ -163,6 +163,8 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - **Built-in PDF editor — Claude Code direct edit/annotate** (planning, 2026-05-09, **defer to Phase 6 plan stage 或新增 PDF-annotation phase**) — 当前 PDF 仅只读预览（Phase 01 FilePreview.svelte + PDF.js）；学习场景需要 freehand / highlight / text annotation，且 Claude Code 通过 tool call 能自动加结构化标注（区别 Obsidian/NotebookLM 的关键 wedge，KP-04）。三选一：(A) PDF.js Editor API 嵌入（最快）/ (B) Excalidraw 覆盖 + 侧车 JSON（KP-01 数据所有权清晰）/ (C) Tauri Rust + pdf-lib/muPDF（精度高 UX 差）。决策依据：标注是否需要烧录到原 PDF（A/C）还是 vault 私有（B）。需暴露 MCP/Tauri command `pdf_annotate(file, page, type, bbox, content)`。File: `.planning/todos/pending/2026-05-09-built-in-pdf-editor-claude-code-direct-edit-annotate.md`. Surface trigger: before `/gsd-discuss-phase 6` 或 ROADMAP 增 PDF-annotation 独立 phase 时。
 
 - **Auto-collapse PDF/video panes when no file/video selected** (ui, 2026-05-09, **可作 Phase 01-N 子任务或 Phase 02 micro-fix**) — Phase 01 三栏布局当前无论是否选中文件/视频都占固定宽度，挤窄对话栏 + 浪费空白。期望：`selectedFile === null` 折叠 PDF 栏；`currentVideo === null` 折叠 video 栏；持久化展开宽度（`localStorage` `mneme.splitter.{pdf,video}`）；折叠把手 ~32px 可点击展开；过渡 ~200ms（KP-09 克制有反馈）。需 `Splitter.svelte` 增 `collapsed` / `collapsedWidth` / `expandedWidth` / `onExpand` props。Files: `src/routes/+page.svelte`、`src/lib/components/{FilePreview,LectureVideo,Splitter}.svelte`. File: `.planning/todos/pending/2026-05-09-auto-collapse-pdf-and-video-panes-when-no-file-or-video-sele.md`. Surface trigger: Phase 01 window-drag blocker 解锁、走 dogfood 阶段时；或独立 Phase 02 micro-fix 启动时。
+
+- **Husky v10 compat — remove deprecated hook shim** (tooling, 2026-05-11, **跨 phase 维护、不阻塞当前 paused-for-exploration**) — `.husky/pre-commit` 顶部仍有旧式 shebang + `_/husky.sh` source 两行，husky v9 兼容、v10 会 fail。每次 commit 都打 deprecation warning（commit `c96ada6` 触发）。修复：删掉那两行（v9 不需要 shim，hook 本身即可执行），grep `.husky/` 全目录确认其它 hook 文件无同样问题，跑空 commit 验证 hook 仍触发 + 无 warning。装这个 hook 的 plan 是 01-07 Task 1（Husky pre-commit + lifecycle harness），现在不处理的话下次升级 husky 会把 audit + scoped vitest 两道 SSOT 守门一起冲掉。File: `.planning/todos/pending/2026-05-11-husky-v10-compat-remove-deprecated-hook-shim.md`. Surface trigger: Phase 1 收尾或 Phase 2 启动前顺手处理。
 
 ---
 
