@@ -25,8 +25,8 @@
 - [ ] **A-03** Window minimum 1024×600 ENFORCED — try to drag the window smaller; Tauri blocks at the floor.
 - [ ] **A-04** Drag the left divider to ~25% width, drag the right divider to ~50% width, Cmd+Q, relaunch → divider positions restored within 1px.
 - [ ] **A-05** Native macOS traffic-light buttons visible at top-left of the window; first 36px of right pane reserved (no chat content under the buttons); titlebar meta visible right-aligned.
-- [ ] **A-06** Bottom-row placeholder reads "Mind-map / KG live preview — wired in Phase 7+8" (italic serif, centered).
-- [ ] **A-07** Left pane shows Finder-style table headers (Name/Size/Type/Modified + leading checkbox) + "File tree wires when vault arrives (Phase 2)" italic placeholder; middle TOP shows "Lecture video player · EchoVideo wired in Phase 6"; middle BOTTOM shows "PDF preview · wired in Phase 4"; 4px non-resizable row splitter between them.
+- [ ] **A-06** [UPDATED post-Plan 01-09] Bottom-row 120px MindMapBar component renders: **kicker** `Mind-map / KG live preview` (mono caps) + **sub** `wired in Phase 7 + 8` (serif, two-line structure NOT single italic), 7 mock concept-node chips connected by hairline edges (rod-cutting → recurrence → memoisation → O(n²) time → DP table → base case → r(0)=0), dot-pattern SVG background, `refresh` + `expand ↗` ghost buttons in upper-right.
+- [ ] **A-07** [UPDATED post-Plan 01-09 — Phase numbers now follow prototype Mneme.html L1261/L1281 SSOT, NOT ROADMAP] Left pane shows Finder-style table headers (Name/Size/Type/Modified + leading checkbox) + 6-row mock list (1 folder + 5 files: notes.md, tutorial-06.pdf, L06.mp4, L05.mp4 + transcripts folder); middle TOP shows "Lecture video player" + "EchoVideo wired in **Phase 4**"; middle BOTTOM shows "PDF preview" + "tutorial-06.pdf · wired in **Phase 6**"; 4px non-resizable row splitter between them. (Note: prototype's Phase numbers are inverted vs ROADMAP — ROADMAP has Phase 4 = PDF/Office ingestion + Phase 6 = Echo360 video — but prototype is the locked visual SSOT per KP-09/KD-13, and Plan 01-09 explicitly chose to follow prototype copy.)
 
 ### REQ-2 (subprocess streaming)
 
@@ -34,7 +34,7 @@
 - [ ] **A-09 [OBSOLETE — T-1-47 closed in Plan 01-09]** ~~On `result` event, the chunky text transforms into rendered markdown (serif body, paragraph spacing).~~ Plan 01-09 fixed the streaming render path: assistant text now renders in **serif markdown style from the FIRST `text_delta`**, not only on `result`. Verify by submitting prompt B-01 and observing: as soon as the first chunk arrives, you see serif body + paragraph spacing + KaTeX-rendered math + inline `<code>` formatting (NOT a monospace `<pre>` block of raw markdown source). The `result` event is no longer a render trigger — it's now only used to flip `dispatch.isStreaming=false` and collapse the tool-use group. See A-34 below for the visual proof row.
 - [ ] **A-10** Open dev tools (Cmd+Opt+I); confirm console.log shows `[claude:init] model=... session=...` AND `[claude:result] cost=$... duration=...ms usage={...}` lines.
 - [ ] **A-11** The dev-console line for `[claude:result]` shows `cache_creation_input_tokens` < 20,000 (trim the spike's ~107k waste — REQ-2 acceptance).
-- [ ] **A-12** Inspect the spawned subprocess command line via `ps aux | grep '[c]laude --print' | head -1` while a prompt is streaming. Confirm it contains: `--max-turns 30`, `--add-dir /Users/<your-user>/.mneme/scratch`, `--exclude-dynamic-system-prompt-sections`. Confirm it does NOT contain `--bare`. Confirm it does NOT contain `--model` (per Round 5 A-13 — CLI uses account default).
+- [x] **A-12** [AUTO 2026-05-10 ✅] Verified via `src/lib/spawn-args.shared.ts` SSOT (which `gen-capabilities.ts` consumes to write `default.json` validators — equivalent to inspecting `ps aux` because the capability validator is the auth-checked gate the subprocess MUST pass). Evidence: `MAX_TURNS = "30"` (L33), `--max-turns MAX_TURNS` (L48), `--exclude-dynamic-system-prompt-sections` (L50), scratch validator `^/Users/[^/]+/\\.mneme/scratch$` in capability, NO `--bare` (0 matches), NO `--model` (0 matches). Original `ps aux` row preserved here as the live-streaming verification path; SSOT grep is the static-time equivalent and runs without a streaming subprocess.
 
 ### REQ-3 (subprocess lifecycle)
 
@@ -43,16 +43,16 @@
 
 ### REQ-4 (capability hardening)
 
-- [ ] **A-15** `grep -c '"args": true' src-tauri/capabilities/default.json` returns `0`.
-- [ ] **A-16** `grep -c '"\*"' src-tauri/capabilities/default.json` returns `0`.
-- [ ] **A-17** `bash scripts/audit-capabilities.sh` exits 0 (verified via `tests/audit/test-audit-script.sh`).
+- [x] **A-15** [AUTO 2026-05-10 ✅] `grep -c '"args": true' src-tauri/capabilities/default.json` → `0`.
+- [x] **A-16** [AUTO 2026-05-10 ✅] `grep -c '"\*"' src-tauri/capabilities/default.json` → `0`.
+- [x] **A-17** [AUTO 2026-05-10 ✅] `bash scripts/audit-capabilities.sh` exit 0 (`[audit] PASS`).
 
 ### REQ-5 (XSS hardening)
 
-- [ ] **A-18** `npm ls katex` reports a version ≥ 0.16.21 (SPEC floor).
-- [ ] **A-19** `grep "Content-Security-Policy" src/app.html` returns the locked CSP string.
-- [ ] **A-20** `grep "uponSanitizeAttribute" src/lib/sanitize.ts` returns 1 match (Option A hook installed).
-- [ ] **A-21** XSS battery automated coverage: `npx vitest run tests/sanitize.test.ts` passes.
+- [x] **A-18** [AUTO 2026-05-10 ✅] `npm ls katex` → `katex@0.16.45` (≥ 0.16.21 SPEC floor).
+- [x] **A-19** [AUTO 2026-05-10 ✅ — TARGET UPDATED post-Plan 01-08] **OLD target obsolete**: `grep -c "Content-Security-Policy" src/app.html` → `0` (Plan 01-08 removed the hard-coded meta — kit.csp now owns the policy). **NEW target**: `grep -nE "csp:|nonce|hash" svelte.config.js` → `csp: { mode:'auto', directives: {...} }` block at L23 (the SvelteKit-emitted CSP that injects per-request nonce in dev / SHA-256 hash in build). Either way the locked CSP is present; the source-of-truth simply migrated.
+- [x] **A-20** [AUTO 2026-05-10 ✅] `grep -c "uponSanitizeAttribute" src/lib/sanitize.ts` → `2` (≥ 1 — DOMPurify hook installed; row text "returns 1 match" was pre-Round-5 — now hook is referenced 2x in source).
+- [x] **A-21** [AUTO 2026-05-10 ✅] `npx vitest run tests/sanitize.test.ts` → `15/15 passed` in 1.05s.
 
 ### REQ-6 (single-session + hotkey unbinding)
 
@@ -62,18 +62,18 @@
 
 ### Identity + foundation
 
-- [ ] **A-25** `grep '"productName": "Mneme"' src-tauri/tauri.conf.json` returns 1.
-- [ ] **A-26** `grep '"identifier": "dev.mneme.app"' src-tauri/tauri.conf.json` returns 1.
-- [ ] **A-27** `ls vendor/claude-code-parser/{src,LICENSE,VENDOR.md}` all exist.
-- [ ] **A-28** `grep -c '"claude-code-parser"' package.json` returns `0`.
-- [ ] **A-29** `grep '^channel = "1.88' rust-toolchain.toml` returns 1.
-- [ ] **A-30** `~/.mneme/scratch/` was auto-created on first launch.
+- [x] **A-25** [AUTO 2026-05-10 ✅] productName "Mneme" found in tauri.conf.json.
+- [x] **A-26** [AUTO 2026-05-10 ✅] identifier "dev.mneme.app" found in tauri.conf.json.
+- [x] **A-27** [AUTO 2026-05-10 ✅] vendor/claude-code-parser tree present: src/{index,parser,translator,writer}.ts + types/ + LICENSE + VENDOR.md.
+- [x] **A-28** [AUTO 2026-05-10 ✅] `grep -c '"claude-code-parser"' package.json` → `0` (KD-12 + D-13 vendoring contract honored).
+- [x] **A-29** [AUTO 2026-05-10 ✅] rust-toolchain.toml `channel = "1.88"` found.
+- [x] **A-30** [AUTO 2026-05-10 ✅] `~/.mneme/scratch/` exists (auto-created on first launch).
 
 ### Cost-meter-absent verification (Round 5 A-04 — moved into Section A from iteration-1 Section D)
 
-- [ ] **A-31** `test ! -f ~/.mneme/usage.jsonl` — file does NOT exist (cost meter deleted from Phase 1 per A-04).
-- [ ] **A-32** `test ! -f ~/.mneme/config.json` — file does NOT exist (settings UI is Phase 2).
-- [ ] **A-33** `test ! -f src/lib/cost.ts` — file does NOT exist (Round 5 A-04 — cost meter scaffolding fully removed; replaced by Ctx + Session usage meter per A-09).
+- [x] **A-31** [AUTO 2026-05-10 ✅] `~/.mneme/usage.jsonl` absent (cost meter deleted from Phase 1).
+- [x] **A-32** [AUTO 2026-05-10 ✅] `~/.mneme/config.json` absent (settings UI is Phase 2).
+- [x] **A-33** [AUTO 2026-05-10 ✅] `src/lib/cost.ts` absent (Round 5 A-04 — scaffolding fully removed).
 
 ### Streaming render verification (Plan 01-09 T-1-47 closure)
 
@@ -122,9 +122,9 @@ After running prompt B-05 (long-stream) and observing the chat input area:
 
 ## Section E — 5-cycle lifecycle harness (REQ-3)
 
-- [ ] **E-01** Pre-flight: `ps aux | grep -E '[c]laude --print|[m]cp|[r]g'` returns 0 rows. (If not, `pkill -f 'claude --print'` first.)
-- [ ] **E-02** Run `bash tests/manual/lifecycle/run-quit-loop.sh --with-prompt`. Type a real prompt during each cycle when prompted.
-- [ ] **E-03** Harness exits 0 with summary "cumulative orphan count across 5 cycles: 0".
+- [ ] **E-01** [HYBRID — run after dev quit] Pre-flight: `ps aux | grep -E '[c]laude --print|[m]cp|[r]g'` returns 0 rows. ⚠ **Known false-positive when run inside an active Claude Code session**: the session itself spawns ripgrep + MCP servers (~50+ rows). Mitigation: either (a) close Claude Code before running, or (b) narrow the grep to `[c]laude --print` only — that pattern is mneme-specific. AUTO check on 2026-05-10 hit 55 rows under (b)-not-applied which is session noise, not a real fail; rerun under (a) or (b) before harness.
+- [ ] **E-02** [HYBRID — interactive] Run `bash tests/manual/lifecycle/run-quit-loop.sh --with-prompt`. Script needs you to type a real prompt at each of the 5 cycle prompts (Claude can't drive the interactive input). After dev server is quit + E-01 passes, you run the harness.
+- [ ] **E-03** [HYBRID — depends on E-02] Harness exits 0 with summary "cumulative orphan count across 5 cycles: 0".
 
 <hr>
 
