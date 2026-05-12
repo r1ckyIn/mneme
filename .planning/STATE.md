@@ -31,17 +31,25 @@ progress:
 
 ## Current Position
 
-Phase: 01.1 (dev-feedback-loop-infrastructure) — EXECUTING
-Plan: 1 of 10
+Phase: **01.1 (dev-feedback-loop-infrastructure) — READY-TO-SHIP** (execute complete; ship pending)
+Plan: 10 of 10 (closeout plan complete pre-ship)
 
-> ⚠ **Authoritative current state is `.planning/HANDOFF.json`** (`status: paused_for_exploration`, plan `01-07 + 01-10`, task 4/5, timestamp `2026-05-11T09:46:39Z`). This Current Position block is a hand-patched summary after `.planning/forensics/report-20260512-102126.md` exposed that `/gsd-pause-work` does not sync STATE.md (upstream GSD workflow spec gap — see report Finding 1).
+**Phase 01.1 complete (10/10 plans)** — dogfood approved 2026-05-12 in 2 cycles (cycle 1 KD-13 rejected, cycle 2 Living adopted). Living visual contract locked at `.planning/references/design/living-visual-contract.md` as new hard contract for generated HTML. F1 mitigated in template, full SDK fix demoted to followup. Ready for `/gsd-ship`.
 
-**Phase 1 actual progress** (per HANDOFF.json + `.planning/phases/01-.../.continue-here.md`): plans 01-01..01-09 + 01-10 H4 capability fix all shipped (~88% of Phase 1 complete); remaining work = 01-07 Task 4 VISUAL half (47-row dogfood checklist, paused mid-walkthrough) + 01-10 SUMMARY + deferred 01-11 (CSP `connect-src ipc:` gap closure via `/gsd-execute-phase 1 --gaps-only`) + 01-13 (proposed milestone-level `test-foundation` plan — outcome of the `/gsd-explore test-automation` session that triggered the pause).
+**Next action**: `/gsd-ship 01.1` → merge PR → `/gsd-extract-learnings 01.1` → (post-merge) `/opsx:archive automate-dev-feedback-loop` → resume Phase 1 dogfood remainder (`/gsd-resume-work`).
 
-**Pause rationale**: user fatigue on the 47-row manual visual checklist after 17/18 AUTO rows completed; opened `/gsd-explore test-automation` Socratic session to design AI-takeover of mechanical dogfood steps. That exploration produced `openspec/changes/automate-dev-feedback-loop/` (proposal + design + spec + tasks, validate strict ✓). Next planned action is `/gsd-phase insert 1.5` to lift the openspec change into a cross-cutting Phase 1.5, run `/gsd-plan-phase 1.5` consuming the four openspec artifacts as SPEC input, then `/gsd-execute-phase 1.5` → ship → `/gsd-resume-work` back into Phase 1 dogfood + SUMMARY.
+**Closeout artifacts** (plan 01.1-10):
+- `openspec/changes/automate-dev-feedback-loop/tasks.md` — 62 ticked, 1 open (10.5 future upstream PR, intentional)
+- `.planning/notes/upstream-pr-gsd-build-followup.md` — deferred upstream PR scope (5 groups A-E)
+- 91/91 vitest tests still PASS
+- `openspec validate automate-dev-feedback-loop --strict` → `Change 'automate-dev-feedback-loop' is valid`
+
+> ⚠ Historical note: prior Current Position blocks referenced `.planning/HANDOFF.json` as authoritative due to `/gsd-pause-work` not syncing STATE.md (per `.planning/forensics/report-20260512-102126.md` Finding 1). That gap is now superseded — Phase 01.1 execute completed cleanly; STATE.md is the single source of truth for ship-readiness.
+
+**Phase 1 actual progress** (preserved for resume-time context): plans 01-01..01-09 + 01-10 H4 capability fix all shipped (~88% of Phase 1 complete); remaining work = 01-07 Task 4 VISUAL half (47-row dogfood checklist, paused mid-walkthrough) + 01-10 SUMMARY + deferred 01-11 (CSP `connect-src ipc:` gap closure via `/gsd-execute-phase 1 --gaps-only`) + 01-13 (proposed milestone-level `test-foundation` plan). The Phase 01.1 ship unblocks Phase 1 resume — the dev feedback loop now handles the mechanical dogfood checklist work that triggered the original pause.
 
 ```
-[████████████████░░░░] ~80% (Phase 1 alone ~88%; milestone-level 8/11 plans)
+[█████████████████░░░] ~85% (Phase 1 ~88% paused; Phase 01.1 100% execute-complete; ship-ready)
 ```
 
 ---
@@ -51,7 +59,7 @@ Plan: 1 of 10
 ```
 Phase 0   ─ Identity & Branding Lock                    [complete]
 Phase 1   ─ Tauri Shell Foundation + Hardening          [paused ~88%]
-Phase 1.1 ─ Dev Feedback Loop Infrastructure (INSERTED) [pending; gates Phase 1 resume + all future UI work]
+Phase 1.1 ─ Dev Feedback Loop Infrastructure (INSERTED) [ready-to-ship 10/10; unblocks Phase 1 resume]
 Phase 2   ─ Vault + Canvas/Ed Sync + Onboarding         [pending]
 Phase 3  ─ Multi-Session + Cmd Palette + Editor        [pending]
 Phase 4  ─ Document Ingestion (PDF/Office → md)        [pending]
