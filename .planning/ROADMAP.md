@@ -129,15 +129,15 @@ Plans:
 **Goal:** Land the cross-repo dev feedback loop that eliminates Claude asking the user for terminal output / console logs / screenshots / DOM state during UI work. Two halves ship together: mneme-side capability (full-spectrum Svelte forwarder + 5 dev-only Tauri Rust commands + npm-script bridge + `.dev-logs/` scaffold) AND GSD upstream rule layer (3 patches to `workflows/verify-work.md` + 8 new `verify.*` SDK handlers + 1 shared `templates/visual-review.html`). `/gsd-verify-work 01.1` self-validates against its own patched workflow as the bootstrapping dogfood.
 **Requirements**: cross-cutting workflow infrastructure (no v1+v1.x REQ-NN ID; traceability via OpenSpec change `automate-dev-feedback-loop` → future `openspec/specs/dev-feedback-loop/spec.md` after `/opsx:archive`)
 **Depends on:** Phase 1 (extends `scripts/gen-capabilities.ts` SSOT from Phase 1 D-14)
-**Plans:** 5/10 plans executed
+**Plans:** 7/10 plans executed
 
 Plans:
 - [x] 01.1-01-PLAN.md — `.dev-logs/` scaffold + `.gitignore` (wave 1)
 - [x] 01.1-02-PLAN.md — GSD upstream `verify-work.md` 3 patches (wave 2)
 - [x] 01.1-03-PLAN.md — GSD upstream `templates/visual-review.html` (wave 2)
 - [x] 01.1-04-PLAN.md — GSD SDK 8 `verify.*` handlers (TS package + CJS shim; wave 3, TDD)
-- [ ] 01.1-05-PLAN.md — mneme Svelte forwarder + snapshot selectors (wave 4, TDD)
-- [ ] 01.1-06-PLAN.md — mneme Tauri Rust dev commands + `dev_invoke` bin (wave 4, TDD)
+- [x] 01.1-05-PLAN.md — mneme Svelte forwarder + snapshot selectors (wave 4, TDD)
+- [x] 01.1-06-PLAN.md — mneme Tauri Rust dev commands + `dev_invoke` bin (wave 4, TDD)
 - [ ] 01.1-07-PLAN.md — mneme `gsd-dev-*` npm-script bridge (wave 5, TDD)
 - [x] 01.1-08-PLAN.md — deps registry + `CLAUDE.md` pointer (wave 1, parallel-safe)
 - [ ] 01.1-09-PLAN.md — dogfood self-test (wave 6, blocking checkpoint)
