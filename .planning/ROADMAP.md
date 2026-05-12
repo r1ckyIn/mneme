@@ -129,7 +129,7 @@ Plans:
 **Goal:** Land the cross-repo dev feedback loop that eliminates Claude asking the user for terminal output / console logs / screenshots / DOM state during UI work. Two halves ship together: mneme-side capability (full-spectrum Svelte forwarder + 5 dev-only Tauri Rust commands + npm-script bridge + `.dev-logs/` scaffold) AND GSD upstream rule layer (3 patches to `workflows/verify-work.md` + 8 new `verify.*` SDK handlers + 1 shared `templates/visual-review.html`). `/gsd-verify-work 01.1` self-validates against its own patched workflow as the bootstrapping dogfood.
 **Requirements**: cross-cutting workflow infrastructure (no v1+v1.x REQ-NN ID; traceability via OpenSpec change `automate-dev-feedback-loop` → future `openspec/specs/dev-feedback-loop/spec.md` after `/opsx:archive`)
 **Depends on:** Phase 1 (extends `scripts/gen-capabilities.ts` SSOT from Phase 1 D-14)
-**Plans:** 9/10 plans executed
+**Plans:** 10/10 plans complete
 
 Plans:
 - [x] 01.1-01-PLAN.md — `.dev-logs/` scaffold + `.gitignore` (wave 1)
@@ -141,7 +141,7 @@ Plans:
 - [x] 01.1-07-PLAN.md — mneme `gsd-dev-*` npm-script bridge (wave 5, TDD)
 - [x] 01.1-08-PLAN.md — deps registry + `CLAUDE.md` pointer (wave 1, parallel-safe)
 - [x] 01.1-09-PLAN.md — dogfood self-test (wave 6, blocking checkpoint)
-- [ ] 01.1-10-PLAN.md — wrap-up: openspec validate + `tasks.md` sync + STATE.md (wave 7, blocking checkpoint)
+- [x] 01.1-10-PLAN.md — wrap-up: openspec validate + `tasks.md` sync + STATE.md (wave 7, blocking checkpoint)
 
 ### Phase 2: Vault + Canvas/Ed Sync + Onboarding
 **Goal**: Local-first markdown vault with PARA + course-root structure is the user's source of truth; Canvas + Ed pull real coursework into `_source/` on first run; sync status is always visible; settings UI and first-run wizard make setup deterministic for future-self.
