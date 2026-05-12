@@ -40,6 +40,50 @@ const ARG_VALIDATORS: Array<{ validator: string }> = [
   { validator: ".+" },                               // free-form prompt — last positional
 ];
 
+// Phase 01.1 (D-TR-04 + R9 Approach A): dev-only Tauri commands.
+//
+// EMPIRICAL FINDING (plan 01.1-06 task 6 + 7 — Rule 1 deviation):
+// The plan author's R9 Approach A assumes Tauri auto-generates
+// `allow-<command-snake-case>` permissions for every #[tauri::command]
+// function. Testing on Tauri 2.11.1 disproves this — the macro
+// `tauri::generate_handler!` registers commands at the IPC layer
+// without producing any permission identifier. Tauri only resolves
+// `allow-*` permissions that originate from a `tauri-plugin` crate's
+// manifest (e.g. `tauri-plugin-shell`'s `allow-spawn`). Listing a
+// raw `allow-dev-capture-screenshot` in capabilities/default.json
+// fails the build with `Permission allow-dev-capture-screenshot not
+// found, expected one of <core+plugin permissions>`.
+//
+// Consequence: user-defined `#[tauri::command]` functions registered
+// via `generate_handler!` do NOT need capability entries. The
+// `#[cfg(debug_assertions)]` gate alone hides them from release
+// builds (D-TR-05; verified empirically — `nm target/release/mneme`
+// reports zero dev_log_* / dev_capture_screenshot / dev_query_state
+// symbols, see plan 01.1-06 task 7).
+//
+// The `DEV_ONLY_PERMISSIONS` array below is kept as a documentation
+// anchor for the R9 Approach A discussion, but is INTENTIONALLY NOT
+// spread into the capability JSON. If Tauri 2 ever adds first-class
+// per-command permission generation (e.g. via a `#[tauri::command(name = "...", permission = "...")]` attribute), the spread can be
+// re-enabled in one line.
+//
+// Threat impact: zero. The dev commands are already triple-gated:
+//   (1) #![cfg(debug_assertions)] on bin + module
+//   (2) [[bin]] required-features = ['dev-invoke']
+//   (3) lib.rs invoke_handler split between debug/release branches
+// — the release binary lacks both the symbols AND the dispatch table
+// entries. Capability JSON cannot grant access to a symbol that does
+// not exist.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const DEV_ONLY_PERMISSIONS: string[] = [
+  "allow-dev-log-console-entry",
+  "allow-dev-log-network-entry",
+  "allow-dev-log-perf-entry",
+  "allow-dev-capture-screenshot",
+  "allow-dev-query-state",
+];
+void DEV_ONLY_PERMISSIONS; // suppress "unused" — kept for documentation
+
 // Sanity 1: regex array length MUST equal what buildClaudeArgs() emits.
 // We pass SCRATCH_DIR (Node-only resolved) here because Node context can use it.
 // Browser callers (ChatPanel) pass scratchDir from `homeDir()` (Tauri IPC bridge).
@@ -79,6 +123,10 @@ const capability = {
       identifier: "shell:allow-execute",
       allow: [{ name: "claude-bin", cmd: "claude", args: ARG_VALIDATORS }],
     },
+    // ...DEV_ONLY_PERMISSIONS, // SEE NOTE ABOVE: Tauri 2 user commands
+    //                              registered via generate_handler! do not
+    //                              accept allow-* permission entries; the
+    //                              cfg(debug_assertions) gate is sufficient.
   ],
 };
 
