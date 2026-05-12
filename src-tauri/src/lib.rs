@@ -9,6 +9,9 @@
 
 mod session;
 
+#[cfg(debug_assertions)]
+pub mod dev;
+
 pub use session::{ChildHandle, SessionId, SessionRegistry};
 
 use std::fs;
@@ -73,17 +76,46 @@ fn stop_session(state: State<SessionRegistry>) {
 // ---------------------------------------------------------------------------
 // Tauri builder — hook union per D-10 (T-1-01 + T-1-18 mitigation).
 // ---------------------------------------------------------------------------
+//
+// Phase 01.1 adds dev-only commands gated by #[cfg(debug_assertions)]. The
+// `tauri::generate_handler!` macro does NOT accept `#[cfg]` between entries,
+// so the builder must be split into two top-level branches (debug + release).
+// Setup + window-event + run-event hooks stay identical across branches.
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .manage(SessionRegistry::new())
-        .invoke_handler(tauri::generate_handler![
-            register_session_pid,
-            clear_session_pid,
-            stop_session
-        ])
+        .manage(SessionRegistry::new());
+
+    #[cfg(debug_assertions)]
+    let builder = {
+        // Resolve `.dev-logs/` under cwd at startup so Tauri-managed state
+        // has a stable target before the first forwarder dispatch.
+        let dev_log_dir = std::env::current_dir().unwrap_or_default().join(".dev-logs");
+        let _ = fs::create_dir_all(&dev_log_dir);
+        builder.manage(dev::DevWriter::new(dev_log_dir)).invoke_handler(
+            tauri::generate_handler![
+                register_session_pid,
+                clear_session_pid,
+                stop_session,
+                dev::dev_log_console_entry,
+                dev::dev_log_network_entry,
+                dev::dev_log_perf_entry,
+                dev::dev_capture_screenshot,
+                dev::dev_query_state,
+            ],
+        )
+    };
+
+    #[cfg(not(debug_assertions))]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        register_session_pid,
+        clear_session_pid,
+        stop_session
+    ]);
+
+    builder
         .setup(|_app| {
             // Auto-create ~/.mneme/scratch/ on first launch (REQ-10 --add-dir target).
             // Idempotent — create_dir_all silently no-ops if path exists.
