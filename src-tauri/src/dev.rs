@@ -453,6 +453,15 @@ pub async fn dev_query_state<R: Runtime>(window: WebviewWindow<R>) -> Result<Str
     // tells the webview to invoke a globally-registered snapshot function
     // and dispatch the result back via the Tauri invoke bridge. The whole
     // command is #[cfg(debug_assertions)]-gated and unreachable in release.
+    // WR-04: `__TAURI_INTERNALS__` is Tauri's private internal bridge (not a
+    // stable public API). The error path now embeds a hint about the likely
+    // cause so that if a future Tauri patch renames the object, callers see
+    // `[snapshot-error]bridge-unavailable:` in the log rather than a generic
+    // TypeError and a 3-second timeout in gsd-dev-snapshot.mjs.
+    //
+    // Phase 01.2 UDS upgrade (RESEARCH spike B2) will replace this entire
+    // script-injection path with a synchronous Unix domain socket round-trip,
+    // eliminating the dependency on __TAURI_INTERNALS__.
     let script = concat!(
         "(() => {",
         "  try {",
@@ -462,8 +471,12 @@ pub async fn dev_query_state<R: Runtime>(window: WebviewWindow<R>) -> Result<Str
         "    window.__TAURI_INTERNALS__.invoke('dev_log_console_entry',",
         "      { level: 'info', message: '[snapshot]' + j, tag: 'snapshot' });",
         "  } catch (e) {",
-        "    window.__TAURI_INTERNALS__.invoke('dev_log_console_entry',",
-        "      { level: 'error', message: '[snapshot-error]' + String(e), tag: 'snapshot' });",
+        "    var hint = (typeof window.__TAURI_INTERNALS__ === 'undefined')",
+        "      ? 'bridge-unavailable (Tauri __TAURI_INTERNALS__ missing — version change?)'",
+        "      : 'invoke-failed';",
+        "    window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke(",
+        "      'dev_log_console_entry',",
+        "      { level: 'error', message: '[snapshot-error]' + hint + ': ' + String(e), tag: 'snapshot' });",
         "  }",
         "})()",
     );
