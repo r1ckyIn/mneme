@@ -284,11 +284,14 @@ export function installConsoleForwarder(): void {
     if (trace) {
       trace.start =
         typeof performance !== "undefined" ? performance.now() : Date.now();
+      // WR-02: use { once: true } so the listener self-removes after it fires.
+      // Without this, reusing the same XHR instance (open+send again) would
+      // accumulate a second listener and produce duplicate network.log entries.
       this.addEventListener("loadend", () => {
         const end =
           typeof performance !== "undefined" ? performance.now() : Date.now();
         logNetwork(trace.method, trace.url, this.status, end - trace.start);
-      });
+      }, { once: true });
     }
     return (origSend as unknown as (...args: unknown[]) => void).apply(
       this,

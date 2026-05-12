@@ -84,7 +84,9 @@ function parseConsoleLine(line) {
   if (!tagRaw || !/^[A-Z-]+$/.test(tagRaw)) return null;
   const ts = parts[1];
   if (!ts) return null;
-  const message = parts[2];
+  // WR-01: format_console_entry escapes `|` in message as `<PIPE>` to prevent
+  // field-split corruption. Unescape here so callers see the original text.
+  const message = parts[2].replace(/<PIPE>/g, '|');
   const sourceWithLine = parts[3];
   // Extract line number if trailing :<digits>
   let source = sourceWithLine;

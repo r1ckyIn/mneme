@@ -92,6 +92,10 @@ fn is_leap(y: i64) -> bool {
 /// `tag` defaults to `level.to_uppercase()` when None. `source` is the JS
 /// source location (file/url); `line` appends `:<line>` only when both are
 /// provided. The trailing `\n` is mandatory — the writer task appends raw.
+///
+/// WR-01: pipe characters in `message` are replaced with `<PIPE>` before
+/// writing so that `parseConsoleLine`'s `|`-split correctly recovers all
+/// four fields. Parsers must unescape `<PIPE>` → `|` in the message field.
 pub fn format_console_entry(
     level: &str,
     message: &str,
@@ -101,13 +105,14 @@ pub fn format_console_entry(
 ) -> String {
     let ts = iso8601_now();
     let tag_str = tag.unwrap_or(level).to_uppercase();
+    let safe_message = message.replace('|', "<PIPE>");
     let source_str = source
         .map(|s| match line {
             Some(n) => format!("{s}:{n}"),
             None => s.to_string(),
         })
         .unwrap_or_default();
-    format!("[FRONTEND_CONSOLE]{tag_str}|{ts}|{message}|{source_str}\n")
+    format!("[FRONTEND_CONSOLE]{tag_str}|{ts}|{safe_message}|{source_str}\n")
 }
 
 /// `[FRONTEND_NETWORK]<METHOD>|<iso>|<url>|<status>|<duration>ms\n`
