@@ -326,7 +326,9 @@ export function installConsoleForwarder(): void {
         const po = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
             if (entry.entryType === "largest-contentful-paint") {
-              perfState.lcp_ms = entry.startTime + (entry.duration || 0);
+              // IN-03: LargestContentfulPaint.duration is always 0 per W3C spec;
+              // only startTime carries the meaningful render time. Use startTime only.
+              perfState.lcp_ms = entry.startTime;
               logPerf("lcp", perfState.lcp_ms);
             } else if (entry.entryType === "paint") {
               if (entry.name === "first-contentful-paint") {

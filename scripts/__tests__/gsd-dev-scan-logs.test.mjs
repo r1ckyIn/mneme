@@ -51,9 +51,10 @@ describe('gsd-dev-scan-logs — D-BR-02 + R3 contract', () => {
     writeFileSync(
       join(dir, '.dev-logs', 'console.log'),
       [
-        '[FRONTEND_CONSOLE]ERROR|2026-05-11T23:00:00Z|too-old|x.ts:1|',
-        '[FRONTEND_CONSOLE]ERROR|2026-05-12T10:00:00Z|fresh1|x.ts:42|',
-        '[FRONTEND_CONSOLE]ERROR|2026-05-12T11:00:00Z|fresh2|x.ts:43|'
+        // IN-02 fix: no trailing | — matches actual format_console_entry output
+        '[FRONTEND_CONSOLE]ERROR|2026-05-11T23:00:00Z|too-old|x.ts:1',
+        '[FRONTEND_CONSOLE]ERROR|2026-05-12T10:00:00Z|fresh1|x.ts:42',
+        '[FRONTEND_CONSOLE]ERROR|2026-05-12T11:00:00Z|fresh2|x.ts:43'
       ].join('\n') + '\n'
     );
     const r = runScan(['--since', '2026-05-12T00:00:00Z'], dir);
@@ -119,7 +120,7 @@ describe('gsd-dev-scan-logs — D-BR-02 + R3 contract', () => {
       join(dir, '.dev-logs', 'console.log'),
       [
         'garbage line with no tag at all',
-        '[FRONTEND_CONSOLE]ERROR|2026-05-12T10:00:00Z|good|x.ts:42|',
+        '[FRONTEND_CONSOLE]ERROR|2026-05-12T10:00:00Z|good|x.ts:42',
         '[FRONTEND_CONSOLE]incomplete',
         '[FRONTEND_NETWORK]wrong-file-content',
         '' // blank line
