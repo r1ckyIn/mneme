@@ -55,25 +55,25 @@ fn main() -> ExitCode {
             cli_capture_screenshot(&scope)
         }
         "dev_query_state" => {
-            // Without a webview accessible from this fresh process we
-            // cannot directly invoke the script-injection bridge that
-            // the in-app command uses. Drop a request file the running
-            // app polls (Phase 01.2 UDS upgrade replaces this fallback).
-            let res = (|| -> Result<(), String> {
-                let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
-                let dev_logs = cwd.join(".dev-logs");
-                std::fs::create_dir_all(&dev_logs).map_err(|e| e.to_string())?;
-                std::fs::write(dev_logs.join("snapshot.request"), "1")
-                    .map_err(|e| e.to_string())?;
-                Ok(())
-            })();
-            match res {
-                Ok(()) => Ok(
-                    r#"{"hint":"snapshot request file written; tail .dev-logs/console.log for [snapshot] line"}"#
-                        .to_string(),
-                ),
-                Err(e) => Err(e),
-            }
+            // HG-02 fix (short-term, option a): this command requires a live
+            // webview to call globalThis.__mnemeDevSnapshot__(). A fresh CLI
+            // process has no webview — the v1 "write snapshot.request and
+            // let the app poll" protocol was never implemented on the Tauri
+            // side (no poll loop exists in dev.rs / lib.rs). Rather than
+            // silently writing an orphan file that nothing reads, we surface
+            // an explicit structured error immediately so callers get a clear
+            // failure instead of a 3-second timeout.
+            //
+            // Phase 01.2 UDS IPC upgrade (RESEARCH spike B2) will replace
+            // this with a synchronous round-trip from the CLI to the running
+            // app via a Unix domain socket.
+            Err(
+                "dev_query_state via CLI requires a running Tauri app with webview. \
+                 Invoke from inside the app via __TAURI_INTERNALS__ bridge, or start \
+                 the dev shell (cargo tauri dev) first. \
+                 Phase 01.2 UDS IPC will add a synchronous CLI round-trip."
+                    .to_string(),
+            )
         }
         "dev_log_console_entry" | "dev_log_network_entry" | "dev_log_perf_entry" => Err(format!(
             "{cmd} via CLI is not a v1 path — invoke from inside the running Tauri app"
