@@ -297,3 +297,99 @@ Rollback: if any GSD upstream change breaks the workflow, `cp <file>.bak <file>`
 - **Q4: When to escalate to Tier C hook hardening?** Trigger: ≥2 verify cycles where Claude smuggles a forbidden question past `verify.validate-html`. Document in `.planning/notes/dev-feedback-loop-audit-*.md`.
 - **Q5: Echo360 webview (Phase 5+) cookie partitioning.** Tauri-shell-only edge case; deferred to Phase 5 as before. Workflow will route Echo360 phases to Tauri-shell branch automatically.
 - **Q6: `verify.parse-review-response` LLM call cost.** Each verify-work run incurs one LLM call for extraction. At Phase 01.1 cadence (one verify per phase ship) this is negligible. If verify is run more often (per-plan iterations) cost climbs; revisit in dogfood notes.
+
+---
+
+## v3.1 Errata (2026-05-12 — plan-phase research + spike)
+
+Plan-phase research (`01.1-RESEARCH.md`) + the user-requested R1+R2 third-path spike surfaced five factual errors in v3. v3 D-* section text is preserved above for proposal history; the corrections below are authoritative for planning and execution. Q1, Q2 in Open Questions section are resolved by E3, E1+E1a.
+
+### E1. D-TR-02 — `WebviewWindow::capture()` does not exist
+
+**v3 claim:** "primary via Tauri 2 `WebviewWindow::capture()`, fallback via macOS `screencapture`".
+
+**Reality:**
+- Tauri issue [#12501](https://github.com/tauri-apps/tauri/issues/12501) closed-not-planned — no built-in screenshot method on `WebviewWindow`.
+- wry issue [#1358](https://github.com/tauri-apps/wry/issues/1358) confirms no `capture_screenshot()` on the WebView crate either.
+- Community plugin `tauri-plugin-screenshots@2.2.0` (uses `xcap`) and direct `xcap` crate both wrap the same macOS `CGWindowListCreateImage` system call that `screencapture -l` already invokes — no functional gain. Plugin path additionally hardcodes save location to `app_data_dir/tauri-plugin-screenshots/window-{id}.png` (violates the `.dev-logs/screenshots/<ISO-ts>.png` contract) and lacks `#[cfg(debug_assertions)]` gating (pollutes release builds).
+
+**Resolution:**
+- **Primary path:** macOS-native `screencapture -l <CGWindowID> -x -o <path>.png` for `Webview` scope; `screencapture -R x,y,w,h -x <path>.png` for `Window` scope. Stable since macOS 10.2; `CGWindowListCreateImage` not deprecated until 14.0, not obsoleted until 15.0 — well within mneme's 13.4 target.
+- **CGWindowID retrieval:** from inside Tauri, via `objc2-app-kit` or `cocoa` crate using `NSWindow::windowNumber()` on the Tauri window's underlying NSWindow handle. The exact crate gets locked during group 3.0 spike.
+- **No Rust plugin / xcap dep added.** Zero new crates beyond what's needed for CGWindowID retrieval.
+
+### E2. D-TR-03 path 1 — `tauri invoke <name>` CLI does not exist
+
+**v3 claim:** "Try in order: (a) `tauri invoke <name>` CLI native, (b) custom dev-only binary `src-tauri/src/bin/dev_invoke.rs`, (c) `node -e` calling Tauri JS API."
+
+**Reality:**
+- Tauri 2 CLI documents 17 subcommands (`init`, `dev`, `build`, `bundle`, `android`, `ios`, `migrate`, `info`, `add`, `remove`, `plugin`, `icon`, `signer`, `completions`, `permission`, `capability`, `inspect`). No `invoke` subcommand. `invoke()` is exclusively a frontend JS API requiring `__TAURI_INTERNALS__` global inside the WebView context.
+
+**Resolution:**
+- **Primary path:** custom dev-only binary `src-tauri/src/bin/dev_invoke.rs` with Cargo `[[bin]]` entry. Mirrors the same `invoke_handler` registration the main lib uses; argv dispatches to command, prints stdout, exits. `[[bin]]` gated so symbols absent from release.
+- **Fallback path:** main binary's CLI mode (env-var branch in `main()`). Slightly simpler Cargo manifest but pollutes the main binary with a CLI-mode branch.
+- **Future upgrade (Phase 01.2 candidate):** B2 — Unix Domain Socket IPC at `.dev-logs/dev.sock`. Reuses running Tauri app (~5ms per call vs 500ms-1s cold start of fresh Rust process). `tokio` + `serde_json` already in dep tree; zero new crate. Trigger: if Group 3.0 spike measures cumulative cold-start cost > 1s per `/gsd-verify-work` run.
+
+**Eliminated paths (not retried):**
+- B1 (Tauri sidecar): only invokable from inside the app — reverse direction unsupported.
+- B3a (`tauri-invoke-http`): pinned to Tauri 1; no stable Tauri 2 release in 19 months.
+- B4 (`tauri-plugin-cli`): parses startup args only, can't invoke registered commands.
+- B5 (`tauri-driver` / WebDriver): macOS WKWebView not supported.
+- v3's path (c) `node -e` via WebView: requires the running app to evaluate Node code inside its WebView — recursive / functionally identical to running the main binary with a CLI-mode branch (covered by fallback path above).
+
+### E3. D-UP-03 — GSD SDK handler structure is NOT file-drop directory
+
+**v3 claim:** "8 new handler modules under `~/.claude/get-shit-done/lib/sdk/handlers/verify-*.{ts,js}`".
+
+**Reality:**
+- `~/.claude/get-shit-done/lib/sdk/handlers/` does not exist.
+- GSD SDK ships as npm package `@gsd-build/sdk@1.40.0` installed at `~/.npm-global/lib/node_modules/@gsd-build/sdk/` with TypeScript source under `src/query/` (compiled to `dist/`). The CJS shim at `~/.claude/get-shit-done/bin/gsd-tools.cjs` is a parallel surface that mirrors the TS registry through `bin/lib/verify-command-router.cjs` switch + generated alias file `bin/lib/command-aliases.generated.cjs`. **Both must be kept in sync.**
+
+**Resolution:** the 8 new `verify.*` handlers ship as the following concrete files:
+
+| Layer | File | Action |
+|---|---|---|
+| TS canonical declarations | `@gsd-build/sdk/src/query/command-manifest.verify.ts` | extend with 8 new `CommandManifestEntry` rows |
+| TS handler implementations | `@gsd-build/sdk/src/query/verify.ts` (existing file) | export 8 new functions (e.g., `verifyStartDevLoop`, `verifyScanSignals`, etc.) following existing `QueryHandler` type from `utils.ts` |
+| TS registration | `@gsd-build/sdk/src/query/index.ts` `createRegistry()` | register 8 new handlers explicitly (allow-list mechanism, not auto-discovery) |
+| TS build | `@gsd-build/sdk/dist/` regeneration via the SDK's existing build script | rebuild after manifest + handler + index updates |
+| CJS shim — handler logic | `~/.claude/get-shit-done/bin/lib/verify-dev-loop.cjs` (NEW single file) | 8 `cmdVerify*` functions exported, mirroring TS behavior |
+| CJS shim — router | `~/.claude/get-shit-done/bin/lib/verify-command-router.cjs` | extend switch with 8 new cases dispatching to the new file |
+| CJS shim — alias regeneration | `~/.claude/get-shit-done/bin/lib/command-aliases.generated.cjs` | add 8 new aliases via the existing generation script |
+
+**Why no separate-handler-file pattern:** the SDK's allow-list registration discovery + the CJS shim's central router pattern both reward consolidation into one file with multiple exports. Eight files would each require eight separate router entries; one file with eight exports + eight router cases keeps cross-file coupling minimal.
+
+### E4. D4 — Vite dev port is 5173, not 1420
+
+**v3 claim:** "write PID to `.dev-logs/dev-server.pid`, chosen port to `.dev-logs/dev-server.port` (fallback to 1421 if 1420 occupied)".
+
+**Reality:** mneme's `vite.config.ts` line 7-12 configures `port: 5173, strictPort: true, host: 'localhost', hmr: { port: 5173 }`. `strictPort: true` means Vite exits on port collision rather than falling back.
+
+**Resolution:**
+- `verify.start-dev-loop` writes the canonical port `5173` to `.dev-logs/dev-server.port`.
+- On `lsof -i :5173` returning an existing process OR a stale PID file detected, handler returns structured error `{ error: 'port 5173 in use', existing_pid: <pid>, hint: 'run verify.stop-dev-loop first' }` — **fail loud, no silent fallback.** Keeps the Phase 1 deliberate `strictPort: true` choice intact (clean port collision diagnostics over silent reallocation).
+- The OpenSpec D4 ports `1420 / 1421` were a copy-paste from older Tauri scaffolding default. All v3 references to `1420 / 1421` (D4 + tasks group 6.1 + visible scenarios) should read `5173`.
+
+### E5. D-TR-01 — `src-tauri/src/commands/dev.rs` directory does not exist
+
+**v3 claim:** "Create `src-tauri/src/commands/dev.rs` (entire file `#[cfg(debug_assertions)]`-gated)".
+
+**Reality:** Phase 1 wrote Tauri commands directly in `src-tauri/src/lib.rs` top-level (`#[tauri::command]` functions at L51-71). No `src-tauri/src/commands/` subdirectory exists.
+
+**Resolution:**
+- New file at `src-tauri/src/dev.rs`, parallel to `src-tauri/src/session.rs` (existing).
+- Entire file `#[cfg(debug_assertions)]`-gated via `#[cfg(debug_assertions)] pub mod dev;` declaration in `lib.rs`.
+- Avoids the scope-expansion cost of migrating Phase 1's existing top-level commands into a new `commands/` subdirectory. Aligns with the mneme Rust patterns "organize by domain, not by file type" convention (see `01.1-PATTERNS.md`).
+
+### E6. R5 — Safari 16 (macOS 13.4 WKWebView) `PerformanceObserver` partial support
+
+**Not a v3 spec error — implementation detail surfaced by R5.** Safari 16 (WKWebView on macOS 13.4) does NOT support `PerformanceObserver` entries of type `largest-contentful-paint`. (FCP `paint` / `layout-shift` / `longtask` are supported.)
+
+**Resolution:** Svelte forwarder wraps each `PerformanceObserver.observe({ type: '<entry-type>' })` call in try/catch. On `TypeError: <entry-type> is not a valid entry type`, the observer is skipped silently and the corresponding field in `__mnemeDevSnapshot__().performance` falls back to `null`. The D10 type signature `lcp_ms: number | null` already permits this. The dev-mode console emits a single-line `console.info("[forwarder] LCP unavailable on this WebKit version, skipped")` so engineers know why their LCP probe is empty.
+
+### Summary — net effect on Phase 01.1 PLAN.md
+
+- Group 3 (Tauri Rust dev commands): file path `src-tauri/src/dev.rs` (not `commands/dev.rs`); screenshot is `screencapture` shell-out (not `WebviewWindow::capture()` primary); CLI invocation is `src-tauri/src/bin/dev_invoke.rs` (primary) or main-binary CLI mode (fallback); B2 UDS upgrade deferred to Phase 01.2.
+- Group 6 (SDK handlers): edits live across `@gsd-build/sdk` npm package (3 files) AND the CJS shim (3 files) — six concrete files / one new + five edits — not the v3-imagined 8 separate handler files.
+- Group 2 (Svelte forwarder): each `PerformanceObserver.observe()` call wrapped in try/catch for Safari 16 compat.
+- Group 6.1 (`verify.start-dev-loop`): port `5173` with fail-loud `lsof` probe, not port `1420` with fallback `1421`.
