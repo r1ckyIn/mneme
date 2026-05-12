@@ -12,7 +12,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prebuild": "node --experimental-strip-types scripts/gen-capabilities.ts && bash scripts/audit-capabilities.sh",
-    "prepare": "husky"
+    "prepare": "husky",
+    "gsd-dev-screenshot": "node scripts/gsd-dev-screenshot.mjs",
+    "gsd-dev-snapshot": "node scripts/gsd-dev-snapshot.mjs",
+    "gsd-dev-scan-logs": "node scripts/gsd-dev-scan-logs.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.0",
