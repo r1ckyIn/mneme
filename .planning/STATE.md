@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
-status: unknown
-last_updated: "2026-05-09T02:16:30.105Z"
+status: paused_for_exploration
+last_updated: "2026-05-12T00:21:26Z"
 progress:
   total_phases: 12
   completed_phases: 1
@@ -31,15 +31,16 @@ progress:
 
 ## Current Position
 
-Phase: 01 (tauri-shell-foundation-subprocess-hardening) — EXECUTING
-Plan: 1 of 7
-**Phase**: 1 — Tauri Shell Foundation + Subprocess Hardening (Phase 0 retired 2026-05-07)
-**Plan**: 7 plans created (01-01 through 01-07; 36 tasks across 5 waves); next is `/gsd-execute-phase 1` Wave 1
-**Status**: phase-1-review-converged (cycle-2 Codex re-review PASS — 0 HIGH; convergence loop exits successfully after 2 cycles)
-**Progress**: 1/11 phases complete · 4 plans Phase 0 + 7 plans Phase 1 created (0/7 executed) · Phase 1 5-piece contract (SPEC + CONTEXT + AI-SPEC + UI-SPEC + AMENDMENT-2026-05-09) + RESEARCH + PATTERNS + VALIDATION + 7 PLANs in place + REVIEWS.md (cycles 1+2, codex); visual SSOT pinned to `.planning/handoff/2026-05-09-mneme-prototype/mneme/project/Mneme.html`
+Phase: 01 (tauri-shell-foundation-subprocess-hardening) — **PAUSED** (paused_for_exploration since 2026-05-11 19:48 +1000)
+
+> ⚠ **Authoritative current state is `.planning/HANDOFF.json`** (`status: paused_for_exploration`, plan `01-07 + 01-10`, task 4/5, timestamp `2026-05-11T09:46:39Z`). This Current Position block is a hand-patched summary after `.planning/forensics/report-20260512-102126.md` exposed that `/gsd-pause-work` does not sync STATE.md (upstream GSD workflow spec gap — see report Finding 1).
+
+**Phase 1 actual progress** (per HANDOFF.json + `.planning/phases/01-.../.continue-here.md`): plans 01-01..01-09 + 01-10 H4 capability fix all shipped (~88% of Phase 1 complete); remaining work = 01-07 Task 4 VISUAL half (47-row dogfood checklist, paused mid-walkthrough) + 01-10 SUMMARY + deferred 01-11 (CSP `connect-src ipc:` gap closure via `/gsd-execute-phase 1 --gaps-only`) + 01-13 (proposed milestone-level `test-foundation` plan — outcome of the `/gsd-explore test-automation` session that triggered the pause).
+
+**Pause rationale**: user fatigue on the 47-row manual visual checklist after 17/18 AUTO rows completed; opened `/gsd-explore test-automation` Socratic session to design AI-takeover of mechanical dogfood steps. That exploration produced `openspec/changes/automate-dev-feedback-loop/` (proposal + design + spec + tasks, validate strict ✓). Next planned action is `/gsd-phase insert 1.5` to lift the openspec change into a cross-cutting Phase 1.5, run `/gsd-plan-phase 1.5` consuming the four openspec artifacts as SPEC input, then `/gsd-execute-phase 1.5` → ship → `/gsd-resume-work` back into Phase 1 dogfood + SUMMARY.
 
 ```
-[██░░░░░░░░░░░░░░░░░░] 9% (1/11 phases)
+[████████████████░░░░] ~80% (Phase 1 alone ~88%; milestone-level 8/11 plans)
 ```
 
 ---
@@ -47,8 +48,8 @@ Plan: 1 of 7
 ## Phase Map (overview)
 
 ```
-Phase 0  ─ Identity & Branding Lock                    [pending]
-Phase 1  ─ Tauri Shell Foundation + Hardening          [pending]
+Phase 0  ─ Identity & Branding Lock                    [complete]
+Phase 1  ─ Tauri Shell Foundation + Hardening          [paused ~88%]
 Phase 2  ─ Vault + Canvas/Ed Sync + Onboarding         [pending]
 Phase 3  ─ Multi-Session + Cmd Palette + Editor        [pending]
 Phase 4  ─ Document Ingestion (PDF/Office → md)        [pending]
@@ -174,7 +175,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Session Continuity
 
-**Last GSD command**: `/gsd-pause-work` (2026-05-09 ~22:50 — paused on window-drag blocker)
+**Last GSD command**: `/gsd-pause-work` (2026-05-11 19:48 — paused for `/gsd-explore test-automation` Socratic session). Earlier pause 2026-05-09 ~22:50 (window-drag blocker) was resolved via plan 01-10 H4 capability fix (commit `fcd939a`); the Last action description below is from that earlier pause and is **historical** (preserved for the window-drag debugging trail). For the current 2026-05-11 pause state see `.planning/HANDOFF.json` and `.planning/phases/01-.../.continue-here.md`. For why STATE.md was 3 days stale see `.planning/forensics/report-20260512-102126.md`.
 **Last action**: Phase 1 paused mid-debug. 8 of 9 plans done (01-01..06 + 01-08 + 01-09); 01-07 dogfood checkpoint blocked. After plan 01-09 (UI pixel-level recreation + streaming render fix) merged successfully, dogfood walkthrough surfaced two Tauri-specific bugs: (1) traffic-light ghost halo from prototype's fake `.tl` DOM colliding with real macOS overlay traffic-lights — FIXED via commit `d84c1ad` (removed fake DOM, added 70px `.titlebar-spacer`). (2) Window not draggable from any edge ("钉死在屏幕上") — UNRESOLVED. Four fix attempts tried in this session: added `data-tauri-drag-region` on `.titlebar` (Tauri 2 syntax, replacing prototype's Electron-only `-webkit-app-region: drag`); added explicit JS fallback in `+page.svelte` onMount that imports `@tauri-apps/api/window` getCurrentWindow() and binds a global mousedown listener calling `startDragging()`; marked `.stage` as drag-region true and `.window` as drag-region "false" so matte bezel + titlebar resolve as drag targets while inner content opts out; added `cursor: grab/grabbing` for visual feedback. None solved the bug — user reports drag still fails on all edges. Hypotheses for next session in `.continue-here.md` (H1 Tauri JS bridge missing in dev webview / H2 HMR de-armed listener / H3 decorations:true+Overlay flaky on Tauri 2 macOS / H4 missing core:window:allow-start-dragging permission). User's MacBook 13" hits the `@media (max-width: 1340px)` fallback so `.stage` matte bezel is invisible (window 100vw × 100vh) — only the 36px titlebar is theoretically draggable, and even that doesn't work.
 
 **Earlier context (preserved for completeness)**: Phase 1 cross-AI plan review converged at HIGH=0 after cycle 2 (Codex, commit `f74c6e0`). 5 MEDIUMs + 1 LOW from cycle 1 carried forward and were absorbed during execution (PGID test mismatch in 01-04, A-10 connection state non-reactive in 01-05, ChatPanel try/catch in 01-06, ToolUseGroup state leak in 01-03+01-06, A-09 "Total" semantics LOW in 01-06). Plans 01-08 (CSP nonce) and 01-09 (UI pixel recreation + streaming render) added as gap closures during execution. T-1-46/47/48 closed; T-1-49 (window drag) NEW — to be opened when root-caused next session.
