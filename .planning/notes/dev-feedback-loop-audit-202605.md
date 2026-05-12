@@ -4,7 +4,7 @@ date: 2026-05-12
 phase: 01.1-dev-feedback-loop-infrastructure
 openspec_change: automate-dev-feedback-loop
 plan: 01.1-09
-verify_cycles_recorded: 1
+verify_cycles_recorded: 2
 ---
 
 # Dogfood Audit — 2026-05 (Phase 01.1 self-test)
@@ -179,16 +179,71 @@ Scanning Phase 1 task layout:
 | A1-improve | Optional `--auto-verified-path` + `--buckets-path` args for render-review-html (file alternates to inline JSON) | Low priority; defer |
 | Tier-C-watch | Continue monitoring smuggled-forbidden-phrasing count across verify cycles | Cumulative; trigger at ≥2 |
 
-## User checkpoint reply (to be appended)
+## User checkpoint reply
 
-_This section is left blank; will be filled in after the user reviews the HTML + screenshot and replies via the structured checkpoint._
+**Cycle 1 reply** — NOT approved. User rejected the KD-13 styling on the rendered HTML and dropped a complete replacement visual contract — **"Living 视觉规范"** — as the new hard contract for generated HTML (review / dogfood / handoff / checklist surfaces). User also corrected two implicit assumptions:
 
-```
-[Pending user reply]
-```
+1. HTML 是给用户看的 → 可见文本必须主中文（CSS 变量名 / class 名 / data 属性 / dev WHY-comments 保持英文）
+2. 修改完成后用 `open` 启动默认浏览器，**不要默认 playwright 截图**（覆盖此前 `feedback_prototype_html_playwright_verify.md` 在用户在场场景下的截图默认）
+
+Living spec 完整文本已落档到 `.planning/references/design/living-visual-contract.md`（16 章 + 自检清单，与 `anthropic-claude-aesthetic-deep-dive_zh.md` 并列为 SSOT）。
+
+**Cycle 2 (Living rewrite) reply** — `通过`. 用户在自己浏览器里审查了 Living-spec-rewritten HTML，确认配色 / 字体 / 编辑骨架 / olive 强调用法都到位。单次回合关闭。
 
 ---
 
-*Audit recorded: 2026-05-12*
-*Cycle: 1 (Phase 01.1 self-test — bootstrapping dogfood)*
+## Findings (cycle 2 update)
+
+### F1 status update — MITIGATED IN TEMPLATE (full SDK fix still deferred)
+
+The cycle-2 Living rewrite removed the `<section data-bucket=` literal from the top doc block. Forbidden bucket values are now listed as prose: "Forbidden values that MUST never appear as a data-bucket: hybrid, terminal, console, dom-check, log-paste, command-run." `verify.validate-html` now returns `{passed: true, bucket_count: 4, buckets_found: ["visual","window","motion","perf"]}` on the new template's rendered output. **F1 unblocked for the new template; underlying SDK regex bug remains for any other template using example-DOM-in-comment docs.** F1-fix in the open-work table demoted from blocking to nice-to-have.
+
+### F4 — Living visual contract supersedes KD-13 for generated HTML · LANDED IN TEMPLATE + SSOT
+
+**Trigger:** Cycle 1 user reply was a complete Living spec drop. The KD-13 template was rejected on this surface.
+
+**Action taken (cycle 2, orchestrator scope, after wave 6 worktree merge):**
+- Backed up KD-13 template to `$HOME/.claude/get-shit-done/templates/visual-review.html.kd13.bak` (252 lines preserved)
+- Rewrote `$HOME/.claude/get-shit-done/templates/visual-review.html` per Living spec (552 lines)
+  - Tokens: `--c-bg #E6E3DC` cream · `--c-ink #1A1715` · `--c-accent #6B6E3D` muted olive (only on `<em>`) · `--c-line #C8C0AE`
+  - Fonts: Fraunces variable axis (display + body, loaded from Google Fonts with opsz / SOFT / wght axes) · Geist sans (system fallback) · Geist Mono (system fallback)
+  - Tracking ladder: `--tr-pill 0.22em` / `--tr-ghost 0.24em` / `--tr-meta 0.28em` / `--tr-mono 0.18em`; titles `-0.022em`; body `0.005em`
+  - Motion: `--dur-fast 320ms` / `--dur-base 620ms` / `--dur-slow 1100ms`; `--ease cubic-bezier(0.32, 0.72, 0, 1)`; `--ease-soft cubic-bezier(0.22, 1, 0.36, 1)`
+  - Section rhythm: `padding: var(--section-py) var(--pad-x); border-top: 1px solid var(--c-line);` on every section
+  - Editorial skeleton on every section: num (mono) + num__label (sans + 1.4rem horizontal line prefix) + section-head__title (Fraunces serif with `<em>italic olive accent</em>`) + section-head__caption (Fraunces light, ink-soft, max-width 42ch)
+  - NO max-width container · NO backdrop-filter blur · NO transition:filter · NO equal-distributed grids
+  - Chinese-primary visible text · `lang="zh-CN"`
+- Saved full Living spec to `.planning/references/design/living-visual-contract.md` (mneme repo, permanent SSOT)
+- Re-rendered via `gsd-sdk query verify.render-review-html --phase 01.1` → `.planning/handoff/2026-05-12-phase-01.1-verify.html` (552 lines, 18.6 KB)
+- Validated via `gsd-sdk query verify.validate-html --path ...` → `{passed: true, bucket_count: 4}`
+- Opened in user's default browser via `open <path>` (no playwright)
+- User reviewed in browser → replied `通过`
+
+**Scope ambiguity to revisit:** Living is locked for **generated HTML** (review / dogfood / handoff / checklist surfaces). Mneme's main App UI (Tauri Svelte) is still under KD-13. User has not yet declared whether Living globally supersedes KD-13 (option a), is permanently scoped to tooling HTML (option b — current default), or will eventually converge (option c). Documented in the Living SSOT's frontmatter. Any future plan that wants to apply Living tokens to main App UI must first surface this decision to the user.
+
+### F5 — Playwright screenshot was unwanted UX overhead · NEW PREFERENCE LOCKED
+
+**Trigger:** Cycle 1 user response: "我不要截图". User in their own browser is faster + truer than a captured screenshot when they're present.
+
+**Action:** New persistent preference saved at `~/.claude/projects/-Users-qinyuan-claude-r1ckyIn-GitHub-mneme/memory/feedback_html_zh_primary_open_not_screenshot.md`. The earlier saved memory `feedback_prototype_html_playwright_verify.md` (screenshot-as-visual-SSOT default) now applies only when the user is NOT in front of a browser (remote session, archival, regression-diff scenarios). Cross-link recorded in both memory files.
+
+**Cycle 2 flow:** Orchestrator ran `open <html_path>` directly. User reviewed in default browser. Single round trip to approval. No playwright invocation in cycle 2.
+
+## Open work tracked (updated post-cycle-2)
+
+| ID | Description | Owner / when |
+|----|-------------|--------------|
+| F1-fix | Strip HTML comments in `verify.validate-html` before regex (BOTH TS + CJS surfaces per E3 mirror). **Demoted from blocking to nice-to-have** — current template no longer triggers it; bug remains for any future template using example-DOM-in-comment docs | Future tuning plan or upstream PR |
+| F1-test | Add test scenario: render a template with example `<section data-bucket=` in `<!-- -->` doc, validate, expect `{passed: true}` (currently would FAIL — that's the regression test) | Same plan as F1-fix |
+| F4-scope | Resolve Living-vs-KD-13 scope ambiguity (option a/b/c) before any Living tokens land in mneme main App UI | Surface to user when first new HTML / UI work touches the boundary |
+| F5-memory | Cross-link the two HTML-verification memories (`feedback_prototype_html_playwright_verify` vs `feedback_html_zh_primary_open_not_screenshot`) so the "user-present" default is clear | Done — already noted in both memory files' how-to-apply blocks |
+| D-DF-02 | Run second dogfood against a Phase 1 remainder VISUAL row | After Phase 01.1 ships + Phase 1 resumes |
+| A1-improve | Optional `--auto-verified-path` + `--buckets-path` args for render-review-html (file alternates to inline JSON) | Low priority; defer |
+| Tier-C-watch | Continue monitoring smuggled-forbidden-phrasing count across verify cycles | Cumulative; trigger at ≥2 |
+
+---
+
+*Audit recorded: 2026-05-12 (2 cycles)*
+*Cycle 1: KD-13 template → rejected; F1 surfaced*
+*Cycle 2: Living rewrite + F1 template-side mitigation + open-in-browser + Chinese-primary HTML → approved (`通过`)*
 *Next audit target: D-DF-02 (post-ship, Phase 1 remainder UI sub-task)*
