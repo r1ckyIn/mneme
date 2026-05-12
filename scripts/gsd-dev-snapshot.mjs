@@ -102,7 +102,12 @@ while (Date.now() - startTs < deadlineMs) {
       const tail = readFileSync(consoleLog, 'utf8').slice(startSize);
       // Match the LAST [snapshot]<json> in the tail (most recent wins).
       // The JSON payload itself may contain { and }, so we match greedy.
-      const matches = [...tail.matchAll(/\[snapshot\](\{[\s\S]*?\})\s*(?:$|\n)/gm)];
+      //
+      // HG-01 fix: format_console_entry emits
+      //   [FRONTEND_CONSOLE]SNAPSHOT|<ts>|[snapshot]{...json...}|<source>\n
+      // so after the closing } comes `|` (empty source delimiter), NOT \n.
+      // Accept either `|` or whitespace/EOL as a valid terminator.
+      const matches = [...tail.matchAll(/\[snapshot\](\{[\s\S]*?\})(?:\||\s*(?:$|\n))/gm)];
       if (matches.length > 0) {
         snapshot = matches[matches.length - 1][1];
         break;
