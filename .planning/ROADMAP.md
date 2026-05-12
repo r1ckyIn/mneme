@@ -124,6 +124,16 @@ Plans:
 - [x] 01-09-PLAN.md — Wave 7 (gap closure): UI pixel-level recreation of Mneme.html prototype + ChatPanel streaming render fix (T-1-47 / T-1-48)
 **UI hint**: yes
 
+### Phase 01.1: dev-feedback-loop-infrastructure (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 1
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 01.1 to break down)
+
 ### Phase 2: Vault + Canvas/Ed Sync + Onboarding
 **Goal**: Local-first markdown vault with PARA + course-root structure is the user's source of truth; Canvas + Ed pull real coursework into `_source/` on first run; sync status is always visible; settings UI and first-run wizard make setup deterministic for future-self.
 **Depends on**: Phase 1
