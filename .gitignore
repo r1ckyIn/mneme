@@ -47,6 +47,11 @@ CLAUDE.md
 # (the prototype HTML itself IS committed; only the source screenshots are excluded)
 .planning/handoff/*/mneme/project/uploads/
 
+# Visual Review HTML — ephemeral per design D-UP-06 (R8 of dev-feedback-loop spec).
+# Each /gsd-verify-work <N> run produces a fresh .planning/handoff/<date>-phase-<N>-verify.html;
+# never amended; not part of project record.
+.planning/handoff/*-verify.html
+
 # Dev feedback loop (Phase 01.1) — ephemeral signals, never committed.
 # Tracked exemptions: .gitkeep + README.md.
 # NOTE: pattern is `.dev-logs/*` (contents), not `.dev-logs/` (the directory
