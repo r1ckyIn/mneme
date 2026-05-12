@@ -34,15 +34,17 @@ progress:
 Phase: 2
 Plan: Not started
 
-**Phase 01.1 complete (10/10 plans)** — dogfood approved 2026-05-12 in 2 cycles (cycle 1 KD-13 rejected, cycle 2 Living adopted). Living visual contract locked at `.planning/references/design/living-visual-contract.md` as new hard contract for generated HTML. F1 mitigated in template, full SDK fix demoted to followup. Ready for `/gsd-ship`.
+**Phase 01.1 complete (10/10 plans)** — dogfood approved 2026-05-12 in 2 cycles (cycle 1 KD-13 rejected, cycle 2 Living adopted). Living visual contract locked at `.planning/references/design/living-visual-contract.md` as new hard contract for generated HTML. F1 mitigated in template, full SDK fix demoted to followup. REVIEW.md fix pass applied 2026-05-12 (8 fixed / 1 deferred). Ready for `/gsd-ship`.
 
 **Next action**: `/gsd-ship 01.1` → merge PR → `/gsd-extract-learnings 01.1` → (post-merge) `/opsx:archive automate-dev-feedback-loop` → resume Phase 1 dogfood remainder (`/gsd-resume-work`).
 
-**Closeout artifacts** (plan 01.1-10):
+**Closeout artifacts** (plan 01.1-10 + fix pass):
 - `openspec/changes/automate-dev-feedback-loop/tasks.md` — 62 ticked, 1 open (10.5 future upstream PR, intentional)
 - `.planning/notes/upstream-pr-gsd-build-followup.md` — deferred upstream PR scope (5 groups A-E)
-- 91/91 vitest tests still PASS
+- 97/97 vitest tests PASS (was 91; +6 new snapshot tests from WR-03 fix)
+- 13/13 cargo tests PASS
 - `openspec validate automate-dev-feedback-loop --strict` → `Change 'automate-dev-feedback-loop' is valid`
+- REVIEW.md fix pass: HG-01 regex fixed, HG-02 clear error, WR-01 pipe escape, WR-02 once:true, WR-03 tests added, WR-04 bridge hint, IN-02 fixtures corrected, IN-03 LCP formula; IN-01 deferred
 
 > ⚠ Historical note: prior Current Position blocks referenced `.planning/HANDOFF.json` as authoritative due to `/gsd-pause-work` not syncing STATE.md (per `.planning/forensics/report-20260512-102126.md` Finding 1). That gap is now superseded — Phase 01.1 execute completed cleanly; STATE.md is the single source of truth for ship-readiness.
 
