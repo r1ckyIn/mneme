@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-12T00:37:40.182Z"
+last_updated: "2026-05-12T11:30:00.000Z"
 progress:
   total_phases: 13
   completed_phases: 1
-  total_plans: 14
+  total_plans: 24
   completed_plans: 13
-  percent: 93
+  percent: 54
 ---
 
 # mneme Project State
@@ -85,6 +85,7 @@ Phase 10 ─ FSRS-6 Reviews + Focus Mode                 [pending]
 ### Roadmap Evolution
 
 - Phase 01.1 inserted after Phase 1: dev-feedback-loop-infrastructure (URGENT)
+- Phase 01.1 planned 2026-05-12 via `/gsd-plan-phase 01.1 --research --tdd`: CONTEXT + RESEARCH + PATTERNS + 10 PLAN.md (~57 tasks, 7 waves, 12 TDD test tasks), anchored to OpenSpec `automate-dev-feedback-loop` (tasks.md authoritative WHAT per CONTEXT D-PG-01). Design.md patched with v3.1 Errata E1-E6 (no `WebviewWindow::capture()` → `screencapture -l`; no `tauri invoke` CLI → `dev_invoke` binary; SDK is npm pkg not file-drop dir → 6 concrete files across `@gsd-build/sdk` + CJS shim; port 5173 strictPort fail-loud not 1420 fallback 1421; `src-tauri/src/dev.rs` parallel to `session.rs` not `commands/`; Safari 16 LCP try/catch). plan-checker verdict APPROVE / HIGH confidence; 5 non-blocking execute-time concerns flagged (C1 busy-wait → must-fix, C2 nm positive-control → should-fix, C3 playwright devDep → must-fix, C4 vitest regex → info, C5 objc2 MSRV → info).
 
 ### Locked Decisions (KD-01 through KD-13)
 
