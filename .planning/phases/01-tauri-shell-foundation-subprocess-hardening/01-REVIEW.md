@@ -1,170 +1,493 @@
 ---
 phase: 01-tauri-shell-foundation-subprocess-hardening
-reviewed: 2026-05-14T04:24:00Z
+reviewed: 2026-05-14T08:30:00Z
 depth: standard
-iteration: 2
-files_reviewed: 50
+files_reviewed: 14
 files_reviewed_list:
-  - .husky/pre-commit
-  - package.json
-  - rust-toolchain.toml
   - scripts/audit-capabilities.sh
   - scripts/gen-capabilities.ts
-  - scripts/screenshot-01-06.mjs
-  - scripts/take-screenshot.mjs
-  - src-tauri/Cargo.toml
-  - src-tauri/build.rs
   - src-tauri/capabilities/default.json
-  - src-tauri/src/lib.rs
-  - src-tauri/src/main.rs
-  - src-tauri/src/session.rs
-  - src-tauri/tauri.conf.json
-  - src-tauri/tests/kill_pgid.rs
-  - src/app.html
   - src/lib/components/AssistantMessage.svelte
-  - src/lib/components/ChatFooter.svelte
   - src/lib/components/ChatPanel.svelte
-  - src/lib/components/DragHandle.svelte
-  - src/lib/components/FileArea.svelte
-  - src/lib/components/FilePreview.svelte
-  - src/lib/components/LectureVideo.svelte
-  - src/lib/components/MindMapBar.svelte
-  - src/lib/components/SettingsModal.svelte
-  - src/lib/components/Splitter.svelte
-  - src/lib/components/TitlebarMeta.svelte
-  - src/lib/components/ToolUseGroup.svelte
-  - src/lib/components/UsageMeter.svelte
-  - src/lib/components/UserBubble.svelte
-  - src/lib/connection-state.svelte.ts
-  - src/lib/sanitize.ts
-  - src/lib/spawn-args.node.ts
   - src/lib/spawn-args.shared.ts
   - src/lib/stream-dispatch.ts
-  - src/lib/styles/tokens.css
-  - src/routes/+layout.svelte
-  - src/routes/+layout.ts
-  - src/routes/+page.svelte
-  - svelte.config.js
+  - tests/audit/fixture-append-system-prompt.json
+  - tests/audit/fixture-clean.json
+  - tests/audit/fixture-system-prompt-rejected.json
   - tests/audit/test-audit-script.sh
   - tests/capability-regex.test.ts
-  - tests/manual/lifecycle/run-quit-loop.sh
-  - tests/sanitize.test.ts
   - tests/spawn-args.test.ts
   - tests/stream-dispatch.test.ts
-  - tests/tool-use-collapsible.test.ts
-  - tsconfig.json
-  - vite.config.ts
-  - vitest.config.ts
 findings:
-  blocker: 0
-  warning: 0
-  info: 0
-  total: 0
-status: clean
+  critical: 1
+  warning: 5
+  info: 4
+  total: 10
+status: issues_found
 ---
 
-# Phase 1: Code Review Report — Iteration 2
+# Phase 01 (Gap Closure): Code Review Report
 
-**Reviewed:** 2026-05-14T04:24:00Z
+**Reviewed:** 2026-05-14T08:30:00Z
 **Depth:** standard
-**Iteration:** 2
-**Files Reviewed:** 50
-**Status:** clean
+**Files Reviewed:** 14
+**Scope:** Plans 01-12 (session resume + chat-rendering hints) + 01-13 (docs amendment). Plans 01-01..01-10 received prior review (preserved as `01-REVIEW.pre-gap-closure.md`).
+**Status:** issues_found (1 BLOCKER · 5 WARNING · 4 INFO)
 
 ## Summary
 
-Iteration 2 of the adversarial code review on Phase 1 (Tauri 2 shell wrapping the `claude` CLI). Iteration 1 closed all 15 in-scope findings (3 BLOCKER + 12 WARNING) across 14 atomic fix commits (`0a96c19..c393494`). This iteration re-reviewed the 50 source files at standard depth, with particular focus on the eight surfaces called out by the orchestrator: BL-01 detach pattern, BL-02 CSP, BL-03 deferred KaTeX, WR-01 mutex poison recovery, WR-02/WR-03 stream-dispatch type safety, WR-04 SCRATCH_DIR_REGEX, WR-05 Splitter ratio normalization, WR-09 tempfile isolation.
+The gap-closure additions for Phase 01 are largely well-engineered. Defense-in-depth at the three capability layers (SSOT → validator → audit) is preserved; KP-04 OAuth compliance (`--bare` absent, `--system-prompt` full-replacement now also absent) is enforced at both the validator-layer (audit check 4b) and SSOT-layer (audit check 9); the Option-B dual-Command-names topology (`claude-bin-fresh` / `claude-bin-resume`) cleanly avoids Tauri's shell-plugin scope shadowing pitfall; the dispatcher's `session_id` capture and `freshState()` initialization are sane; backward-compat for the 2-arg `buildClaudeArgs()` call shape is preserved with explicit tests; all 74 unit/regex/dispatch tests pass; `svelte-check` reports 0 errors and 0 warnings; audit gate (`scripts/audit-capabilities.sh`) passes with zero findings on the production JSON; gen-capabilities is regen-idempotent (`diff --exit-code` returns 0); the audit fixture integration test (`tests/audit/test-audit-script.sh`) reports 7/7 cases PASS.
 
-**Verdict: all iter-1 fixes hold cleanly; no regressions detected; no new BLOCKER or WARNING findings.**
+That said, one **BLOCKER** emerged from tracing the `setStatus()` state machine across the 4 enumerated transition sites: the `cmd.on("close")` path is not represented. If a `claude` subprocess exits naturally without ever emitting a `text_delta` (a realistic case — auth handshake error producing only stderr; rate-limit immediate close; spurious early-EOF), the connection-state dot is left stuck at "connecting" for the rest of the app session because `setStatus("connected")` only fires on first text_delta and `setStatus("disconnected")` only fires on three error paths and on destroy. The plan 01-12 GAP-1 contract enumerated four sites but missed this one. See **CR-01** below.
 
-Verification baseline:
-- `npx vitest run` — 11 / 11 test files pass; 139 / 139 tests pass; 2.61s.
-- `bash scripts/audit-capabilities.sh` — PASS (8 checks).
-- `bash tests/audit/test-audit-script.sh` — 5 / 5 audit fixtures pass.
-- `cargo test --test kill_pgid` — 3 / 3 integration tests pass; 3.32s. The whole-process-group drain assertion (Cycle-1 MEDIUM carry-forward) and the two safety tests against nonexistent / already-dead PGIDs all hold against the new detached-SIGKILL implementation.
+Beyond the BLOCKER, findings are mostly test-quality and defense-in-depth tautology concerns. None of them re-opens the 49-threat register; the KP-04 invariant chain is intact at all three layers.
 
-## Verification of Iteration 1 Fixes
+## Critical Issues
 
-### BL-01 — `kill_pgid` event-loop block (FIXED CLEANLY)
+### CR-01: Connection state can permanently stick at "connecting" after a natural subprocess close that emitted no text_delta
 
-`src-tauri/src/lib.rs:52-64` now spawns the `sleep(2s) + SIGKILL` leg via `std::thread::spawn`. The caller (`kill_all()` → `WindowEvent::CloseRequested` / `RunEvent::ExitRequested`) returns after delivering SIGTERM, so the Tauri event loop is no longer parked for 2 seconds on quit. The race the orchestrator asked me to verify — SIGKILL fires after the process group has already been reaped legitimately — is benign: `killpg(pgid, SIGKILL)` on a defunct PG returns ESRCH, which `let _ = killpg(...)` discards. The same defensive `let _ =` pattern was already established for the SIGTERM path; the spawned thread mirrors it correctly. No EPERM concern in practice — the thread inherits the same process credentials as the parent, so the kernel does not reject the signal mid-shutdown.
+**File:** `src/lib/components/ChatPanel.svelte:250-272`
 
-The 2.5s integration test (`kill_pgid_eradicates_whole_process_group`) was previously coupled to the synchronous timing; now it relies on the asynchronous SIGKILL landing within 2.5s of the function returning, which is exactly the new behavior. All 3 tests pass.
+**Issue:**
 
-### BL-02 — CSP `connect-src ipc:` (FIXED CLEANLY)
+Plan 01-12 GAP-1 promised that `setStatus("disconnected")` fires only at four enumerated sites and that the per-prompt `teardown()` primitive no longer touches connection state. The four sites are:
 
-`svelte.config.js:42` now reads `'connect-src': ['self', 'ipc:', 'http://ipc.localhost', 'ws:', 'http://localhost:*']`. No other CSP directive was loosened as collateral — `script-src` still excludes `'unsafe-inline'`, `style-src` is unchanged, `img-src` / `default-src` are untouched. The fix unblocks every `@tauri-apps/api/core` `invoke()` call once the production SHA-256-pinned CSP takes over, closing the dogfood-flagged plan 01-11 gap as a side-effect.
+- `onDestroy` (L448 — "app close")
+- `cmd.on("error")` (L241 — "spawn-level error")
+- spawn-or-register catch (L283 — "spawn() rejected OR register_session_pid IPC failed")
+- scratchDir-unresolved early return (the comment at L300-306 enumerates this but the actual no-op early return at L133-147 does NOT call `setStatus`)
 
-### BL-03 — `renderKatexInDom` walker (FIXED VIA BEHAVIORAL CHANGE)
+`setStatus("connected")` fires at exactly one site (L213): the first observed `text_delta`.
 
-`src/lib/components/AssistantMessage.svelte:35-57` now skips the KaTeX walk while `streaming === true`. The post-result render path is preserved: ChatPanel's `cmd.on("close")` handler (`ChatPanel.svelte:223-245`) flips every assistant `Msg.streaming` to false via the `result` event dispatcher, then calls `scheduleHtmlRecompute()`, which seeds `assistantHtmlCache` with the finalized sanitized HTML. The `streaming` prop on `<AssistantMessage>` then becomes false, the `$effect` re-runs without the early return, and `renderKatexInDom(host)` walks the FINAL stable text. Verified via the existing `result`-event tests in `tests/stream-dispatch.test.ts:143-166`, which assert `asst?.streaming === false` post-result.
+Now consider the natural-close-without-text-delta path. After `onMount` flips status to `"connecting"`:
 
-`tests/sanitize.test.ts` still asserts the no-XSS invariant — `\href{javascript:...}` (line 54), event handler stripping (lines 38-52), DOMPurify idempotency (lines 110-124). The walker tests cover the pure `renderKatex` function; the dom-walker's deferred-during-streaming behavior is not directly pinned by a test (see "Minor latent concerns" below), but the existing tests confirm the math-rendering pathway itself is unchanged.
+1. User sends a prompt.
+2. `cmd.spawn()` succeeds and `register_session_pid` succeeds.
+3. The subprocess emits zero or more non-text-delta events (e.g., `system/init`, `system/error`, an immediate `result` with no content, or simply nothing).
+4. `cmd.on("close")` fires (L250-272) — `teardown()` runs (no status change per the new contract), the "stream ended unexpectedly" info bubble is appended, the handler returns.
 
-### WR-01 — Mutex poison recovery (FIXED CLEANLY)
+At no point did `setStatus("connected")` or `setStatus("disconnected")` fire. The connection-state rune stays at `"connecting"` for the rest of the app session.
 
-`src-tauri/src/session.rs:33-46` defines a `locked()` helper that calls `self.inner.lock().unwrap_or_else(|poisoned| { eprintln!(...); poisoned.into_inner() })`. All four call sites (`register`, `drain_one`, `drain_all`, `kill_all`) route through `locked()`. There are no remaining `.unwrap()` calls anywhere in `session.rs`. A future panic mid-mutation will no longer cascade into the close handler and orphan child processes.
+Reproduction without a live claude CLI: any path that closes the subprocess before delivering a `text_delta` exhibits this. Realistic triggers include (a) the OAuth keychain failing silently so claude exits with a stderr-only complaint; (b) a `--max-turns` early termination on a turn that emitted only tool_use without text; (c) network jitter causing premature SIGPIPE on stdout.
 
-### WR-02 — `as any` in stream-dispatch (FIXED CLEANLY)
+Worse: clicking Send a second time runs the same path again (because `dispatch.isStreaming` is correctly reset by `teardown()`). The titlebar continues to display "connecting" indefinitely while the user keeps sending prompts and getting nothing back. The user has no in-app signal that the subprocess actually failed.
 
-`src/lib/stream-dispatch.ts` now uses the vendor `ClaudeEvent` type directly in every case arm. The five `as any` sites originally flagged (lines 99, 115, 127, 176, 206) are gone. The extension fields the vendor doesn't model (`event.delta.text`, `block.input`, `block.tool_use_id`, `cwd` on `system/init`, `message` on `system/error`, `usage.input_tokens`) are narrowed via `typeof`/`in` checks at the parse boundary — the new `readString(obj, key)` helper (lines 124-130) encapsulates the pattern.
+**Fix:**
 
-Adversarial NDJSON like `{"event":{"delta":{"type":"text_delta","text":["a","b"]}}}` is now rejected by the `typeof === "string"` guard at line 171 instead of silently concatenating an array into the assistant text buffer. The dispatcher fixture in `tests/stream-dispatch.test.ts` still passes all 12 arm tests.
+Add an explicit terminal-state transition at the top of `cmd.on("close")`:
 
-Note: ChatPanel.svelte:372, 387, 426, 433, 438, 443 retain `as any` casts on the synthetic-event injection paths. These were pre-iter-1 and are confined to `import.meta.env.DEV`-gated test/dev-probe code (the `?stream=demo` query and `window.__mneme_inject_stream__` window probe). They were NOT in the original WR-02 scope (which specified `stream-dispatch.ts` line numbers) and remain as dev-only test scaffolding. Not a regression of iter-1.
+```svelte
+cmd.on("close", () => {
+  // Plan 01-12 GAP-1 missing site (e): natural subprocess close without a
+  // text_delta. setStatus("connected") never fired, and the close path is not
+  // a spawn-level error so cmd.on("error") didn't fire either. Flip to
+  // disconnected when the close happens before any text was delivered so the
+  // titlebar stops gaslighting the user with a stuck "connecting" dot.
+  if (!firstTextDeltaSeen) {
+    setStatus("disconnected");
+  }
+  teardown();
+  if (!dispatch.resultReceived) {
+    // ... existing "stream ended unexpectedly" bubble ...
+  }
+  scheduleHtmlRecompute();
+});
+```
 
-### WR-03 — Module-scope `msgCounter` (FIXED CLEANLY)
+Alternative: flip unconditionally on every close (simpler, but loses the "we were connected and now reconnected" history if you later add re-connect logic). Given Phase 1 has no re-connect path, the conditional form above is enough; it matches Claude.ai web's "grey-orange while a stream is starting" UX.
 
-`src/lib/stream-dispatch.ts:74` adds `_uidCounter: number` to `DispatchState`; `freshState()` initializes it to 0 (line 84); `uid(state)` reads/increments off `state._uidCounter`. The module-scope `let msgCounter = 0` is gone.
+Then in the next prompt's `sendPrompt`, before the spawn block, transition back to `"connecting"` so the dot re-engages:
 
-The no-state-leak contract is now structurally guaranteed: two distinct `freshState()` instances start at counter=0 and increment independently. The two pinning tests in `tests/tool-use-collapsible.test.ts:140-192` ("two distinct freshState instances do not share toolUseGroup state" and "collapsing one stream does not collapse a sibling stream") still pass and the underlying contract is stronger after the fix.
+```svelte
+async function sendPrompt() {
+  // ... validation ...
+  setStatus("connecting"); // re-engage per-prompt; onMount only covers the initial app boot
+  // ... rest unchanged ...
+}
+```
 
-### WR-04 — `SCRATCH_DIR_REGEX` tightening (FIXED CLEANLY)
+This restores the per-prompt connection feedback that plan 01-12 GAP-1's A-16 contract appears to have inadvertently removed by deleting both the `teardown()`-time and the `sendPrompt()`-time `setStatus` calls.
 
-`src/lib/spawn-args.shared.ts:41` reads `^/Users/[A-Za-z0-9_.\\-]+/\\.mneme/scratch$`. The POSIX portable-name body now rejects space-only usernames and other punctuation shapes the prior `[^/]+` admitted. The change correctly propagated through the SSOT pipeline: `src-tauri/capabilities/default.json:50, 100` carries the same tightened regex in both `shell:allow-spawn` and `shell:allow-execute` validators. `tests/audit/fixture-clean.json` was refreshed in the same commit, so the audit gate stays green.
+## Warnings
 
-The new test `SCRATCH_DIR_REGEX rejects non-portable username shapes (WR-04)` (`tests/spawn-args.test.ts:88-100`) pins the tighter contract — admits `qinyuan`, `test.user`, `test-user`, `test_user`; rejects `/Users/ /` (space-only) and `/Users/qin yuan/` (embedded space). The capability-regex test (`tests/capability-regex.test.ts:69-75`) still verifies the runtime regex matches what `buildClaudeArgs` emits.
+### WR-01: `fixture-append-system-prompt.json` is byte-identical to `fixture-clean.json` and to production `default.json` — the "positive fixture" adds zero distinct coverage
 
-### WR-05 — Splitter ratio normalization (FIXED CLEANLY)
+**File:** `tests/audit/fixture-append-system-prompt.json:1-240`
+**File:** `tests/audit/fixture-clean.json:1-240`
+**File:** `tests/audit/test-audit-script.sh:42,46`
 
-`src/lib/components/Splitter.svelte:83-97` defines `clampAndNormalize(leftDesired, middleDesired)` returning a frame where `leftRatio + middleRatio + rightRatio === 1` exactly. The clamp ceilings are coherent: left's ceiling is `1 - 2*RATIO_MIN = 0.60` (because both other panes must remain ≥ RATIO_MIN); middle's effective ceiling is `min(RATIO_MAX, 1 - l - RATIO_MIN)` (cap at half-window AND honor right's floor). `rightRatio` is derived as `1 - l - m` — never `Math.max(...)`-floored, so the overshoot bug is structurally eliminated.
+**Issue:**
 
-I traced the drag interactions through extreme inputs (xRatio = 0.21, 0.30, 0.61, 0.85, 0.95) and confirmed the sum-to-1 invariant holds at every animation frame. The `rightRatio = $derived(1 - leftRatio - middleRatio)` reactive expression at line 144 is now also coherent — no overlap with a separate `Math.max` floor.
+Verified via `md5`:
 
-### WR-09 — `kill_pgid` test isolation (FIXED CLEANLY)
+```
+7d0cac16edfa868c0ea9dc67e68127da  tests/audit/fixture-append-system-prompt.json
+7d0cac16edfa868c0ea9dc67e68127da  tests/audit/fixture-clean.json
+7d0cac16edfa868c0ea9dc67e68127da  src-tauri/capabilities/default.json
+```
 
-`src-tauri/tests/kill_pgid.rs:68-71` allocates a per-test `tempfile::TempDir` and injects per-test paths into the Python wrapper via `format!()`. The hard-coded `/tmp/mneme_test_*.pid` paths are gone. The TempDir handle is RAII — directory removed on drop at line 203. The `cleanup_pid_files()` helper is no longer needed and was correctly removed.
+All three files have identical bytes. The test cases at L42 and L46 of `test-audit-script.sh`:
 
-## Findings
+```bash
+run_case "fixture-clean (matches SSOT)"        tests/audit/fixture-clean.json        0
+run_case "fixture-append-system-prompt (accepts --append-system-prompt)"  tests/audit/fixture-append-system-prompt.json  0
+```
 
-**None.** No BLOCKER or WARNING-level issues introduced by the iter-1 fixes; no pre-existing BLOCKER/WARNING findings remain.
+are testing the exact same input twice. The L46 case adds no distinct test path — when both files are byte-equal to production, both runs exercise the same code path (audit gate runs against an unchanged JSON and returns 0). The L46 label promises to verify that the audit **accepts** `--append-system-prompt` specifically, but since `fixture-clean` already contains `--append-system-prompt` in its 14 occurrences, that property was already covered.
 
-## Minor latent concerns (sub-WARNING; not flagged as findings)
+This is a TDD-evidence gap: plan 01-12 marked the audit check 9 / check 4b acceptance side as TDD-verified, but the positive fixture is a duplicate.
 
-For the record, two minor sub-WARNING concerns surfaced during the verification pass. Neither rises to BLOCKER or WARNING and neither blocks shipping:
+**Fix:**
 
-1. **`AssistantMessage.svelte` has no test pinning the new "skip KaTeX during streaming" behavior** (BL-03 fix). `tests/sanitize.test.ts` covers the pure `renderKatex` function and the post-result render pathway, but no test directly asserts that `renderKatexInDom` is NOT called while `streaming === true`. A future refactor that re-enables streaming KaTeX (e.g. by removing the `if (streaming) return;` line) would not break any existing test. This is a deferred test-gap, not a code defect — the iter-1 fix report acknowledged it as a "behavioral choice (deferred render) rather than a fundamental bug-fix to the walker."
+Either delete the duplicate fixture and the L46 test case (and rename the line 42 case to mention the acceptance property), OR mutate the fixture in a way that exercises a distinct positive path. Examples:
 
-2. **`Splitter.svelte` `onMount` restores `leftRatio` via `clamp(parsed.leftRatio, RATIO_MIN, RATIO_MAX)`** (line 60) — the ceiling here is `RATIO_MAX = 0.50`, but the new `clampAndNormalize` permits left up to `1 - 2*RATIO_MIN = 0.60`. So a user who drags left to 0.55 and saves will see it restored as 0.50 on next session. The sum-to-1 invariant is still preserved (middle/right get re-derived inside normalize on the next drag), but the restore ceiling is mildly inconsistent with the new normalize ceiling. Trivial fix: change line 60 to `clamp(parsed.leftRatio, RATIO_MIN, 1 - RATIO_MIN * 2)`. Below the BLOCKER/WARNING threshold and orthogonal to the WR-05 sum-to-1 bug it fixed.
+1. Reformat the JSON with different indentation (e.g., 4-space instead of 2-space). The audit's check 1 (`diff` against `gen-capabilities --dry-run`) would still fail, so this only works if the audit allowed JSON-equivalent variations — which it does not.
+2. Construct a fixture where `--append-system-prompt`'s value validator literal differs from `CHAT_RENDERING_HINTS` by a benign whitespace tweak (would fail check 1 too — same problem).
 
-## INFO items from iter-1 (still out of scope per `critical_warning` policy)
+Given the audit's check 1 is unconditional and bypasses all downstream checks, no realistic "accept --append-system-prompt at the validator layer in isolation" positive fixture exists. The honest fix is to **delete the L46 case** and update the doc / plan to mark the positive side as "covered by check 1 implicitly — production JSON contains the literal, audit passes, ergo --append-system-prompt is accepted." That matches the actual test surface.
 
-The 7 INFO findings from iter-1 (IN-01 through IN-07) were never in fix-scope and remain unchanged in the codebase:
+### WR-02: `fixture-system-prompt-rejected.json` does not isolate audit check 4b — check 1 fires first and masks 4b's contribution
 
-- IN-01 `DEV_ONLY_PERMISSIONS` doc-array still at `scripts/gen-capabilities.ts:78-85`.
-- IN-02 `LEGACY COMPAT TOKENS` block still at `src/lib/styles/tokens.css:81-160`.
-- IN-03 `connectionState` mutable singleton — Svelte-idiomatic exception unchanged.
-- IN-04 `prebuild` regen-then-audit ordering — unchanged.
-- IN-05 `data-tauri-drag-region` on `.stage` bezel — unchanged.
-- IN-06 `tests/sanitize.test.ts` `\href{javascript:...}` selector — weak assertion still present.
-- IN-07 `shell:allow-execute` permission still duplicated — unchanged.
+**File:** `tests/audit/fixture-system-prompt-rejected.json:56`
+**File:** `tests/audit/test-audit-script.sh:47`
+**File:** `scripts/audit-capabilities.sh:34-38,57-71`
 
-These remain as low-priority polish items; none affect correctness or security.
+**Issue:**
+
+The negative fixture mutates ONE line (validator at index 14 of `claude-bin-fresh` allow-spawn) from `^--append-system-prompt$` to `^--system-prompt$`. Verified via `diff`:
+
+```
+56c56
+<               "validator": "^--system-prompt$"
+---
+>               "validator": "^--append-system-prompt$"
+```
+
+When the audit runs on this fixture, BOTH check 1 (SSOT drift — verified independently: `diff` against `gen-capabilities --dry-run` exits 1) AND check 4b (`--system-prompt` validator regex match) fire. Empirically:
+
+```
+[audit] FAIL: SSOT drift between spawn-args.shared/node.ts and src-tauri/capabilities/default.json
+[audit] FAIL: '--system-prompt' (full replacement) validator detected — Phase 9 REQ-17 scope, NOT Phase 1
+```
+
+The test only asserts `expected_exit=1` — it cannot distinguish "check 4b detected the violation" from "check 1 noticed JSON drift and the 4b match was a bonus." If check 4b were silently removed from `audit-capabilities.sh`, the test would still pass on this fixture because check 1 alone catches the same drift.
+
+This is a test-isolation defect. The TDD plan claimed check 4b was independently RED-then-GREEN-verified; the actual test does not prove that.
+
+**Fix:**
+
+Either:
+1. Add a second assertion to the integration test that captures stderr and grep-asserts `--system-prompt` appears in the failure output (specific to check 4b's error message).
+2. Construct a fixture that passes check 1 but fails check 4b. This requires a JSON whose `gen-capabilities --dry-run` produces it — which means modifying `gen-capabilities.ts` to emit a `--system-prompt` validator. That defeats the purpose.
+3. Refactor `audit-capabilities.sh` to allow `--skip-ssot-drift` mode for tests, then run the rejected fixture under that mode and assert check 4b alone still fails.
+
+Option 1 is the cheapest and clearest. Suggested patch to `test-audit-script.sh`:
+
+```bash
+# Stricter variant: ensure the specific check fires, not just that audit fails.
+run_case_strict_4b() {
+  local label="$1"; local fixture="$2"
+  cp -f "$fixture" "$REAL_JSON"
+  local stderr=$(bash scripts/audit-capabilities.sh 2>&1 >/dev/null)
+  if echo "$stderr" | grep -q "'--system-prompt' (full replacement) validator detected"; then
+    echo "[PASS] $label (check 4b fired)"
+  else
+    echo "[FAIL] $label (check 4b did NOT fire — only check 1 caught it)"
+    FAIL=1
+  fi
+}
+run_case_strict_4b "check 4b specifically fires on standalone --system-prompt" tests/audit/fixture-system-prompt-rejected.json
+```
+
+### WR-03: `SYSTEM_PROMPT_MAX_LEN` cap is tautological — defined as `CHAT_RENDERING_HINTS.length`, so the bounds-check at L120-126 can never reject the canonical literal
+
+**File:** `src/lib/spawn-args.shared.ts:82`
+**File:** `src/lib/spawn-args.shared.ts:119-126`
+**File:** `tests/spawn-args.test.ts:230-234`
+
+**Issue:**
+
+L82:
+
+```ts
+export const SYSTEM_PROMPT_MAX_LEN = CHAT_RENDERING_HINTS.length;
+```
+
+L119-126:
+
+```ts
+if (
+  opts.appendSystemPrompt !== undefined &&
+  opts.appendSystemPrompt.length > SYSTEM_PROMPT_MAX_LEN
+) {
+  throw new Error(...);
+}
+```
+
+The cap is set to the length of the only canonical value the call site ever passes (`CHAT_RENDERING_HINTS`, hard-coded in ChatPanel L178). So:
+
+- The canonical call (`appendSystemPrompt: CHAT_RENDERING_HINTS`) has `opts.appendSystemPrompt.length === SYSTEM_PROMPT_MAX_LEN` — not strictly greater than — so the check passes.
+- Any other caller would have to pass a string ≤ 260 chars to satisfy the cap. Since there are no other callers in Phase 1, the cap is effectively dead code.
+
+The test at L230-234 of `spawn-args.test.ts`:
+
+```ts
+it("CHAT_RENDERING_HINTS string is non-empty AND length ≤ SYSTEM_PROMPT_MAX_LEN AND length ≤ 500", () => {
+  expect(CHAT_RENDERING_HINTS.length).toBeGreaterThan(0);
+  expect(CHAT_RENDERING_HINTS.length).toBeLessThanOrEqual(SYSTEM_PROMPT_MAX_LEN);
+  expect(CHAT_RENDERING_HINTS.length).toBeLessThanOrEqual(500);
+});
+```
+
+contains a tautology: `CHAT_RENDERING_HINTS.length <= SYSTEM_PROMPT_MAX_LEN` is always true because `SYSTEM_PROMPT_MAX_LEN === CHAT_RENDERING_HINTS.length`. This assertion can never fail. The `<= 500` part is the real assertion (the only non-tautological line is the third); the second line should be deleted or rephrased.
+
+The "audit gate has a fixed upper bound to refuse drift" claim in the comment at L78-81 is undermined by this design — if a future maintainer edits `CHAT_RENDERING_HINTS` to be much longer, `SYSTEM_PROMPT_MAX_LEN` automatically grows in lockstep and the cap continues to permit the new length. Drift is not refused.
+
+**Fix:**
+
+Pick one:
+
+1. **Hard-code the cap** (recommended): replace `= CHAT_RENDERING_HINTS.length` with `= 500` (or whatever upper bound you actually want to refuse drift above). Then the bounds check has real teeth, and the audit / tests give a meaningful signal. Update L230-234 accordingly:
+
+   ```ts
+   it("CHAT_RENDERING_HINTS fits within SYSTEM_PROMPT_MAX_LEN (drift sentinel)", () => {
+     expect(CHAT_RENDERING_HINTS.length).toBeLessThanOrEqual(SYSTEM_PROMPT_MAX_LEN);
+   });
+   ```
+
+   The test now fails if anyone bumps `CHAT_RENDERING_HINTS` past the hard cap.
+
+2. **Delete the cap entirely** as YAGNI — Phase 1 has one caller passing one literal, and that literal is anchored in the capability validator. The defense-in-depth comment at L78-81 is aspirational; admit it.
+
+Either fix removes the tautology. Option 1 preserves the intent; option 2 reduces accidental complexity.
+
+### WR-04: Dispatcher accepts arbitrarily-long `session_id` into state without bounds, RAM-pinned until next system/init
+
+**File:** `src/lib/stream-dispatch.ts:156-158`
+
+**Issue:**
+
+L154-158:
+
+```ts
+if (typeof evt.session_id === "string" && evt.session_id.length > 0) {
+  state.sessionId = evt.session_id;
+}
+```
+
+Verified empirically — feeding a 10 MB string via `dispatchEvent({type:"system", subtype:"init", session_id: "x".repeat(10_000_000)})` results in the 10 MB string being stored verbatim in `state.sessionId`. The subsequent spawn boundary (`buildClaudeArgs` → `SESSION_ID_REGEX`) rejects it, so the user cannot weaponize it for argv injection. But:
+
+1. The 10 MB string sits in WebView memory until the next system/init replaces it (or app close).
+2. Every reactive `$state` change that touches the object containing `sessionId` (via Svelte 5's proxy) walks the string for change detection — not a hot path here, but unbounded inputs always invite future regressions.
+3. Worse: `console.log(\`[claude:init] session=${evt.session_id ?? "?"} ...\`)` at L148-150 stringifies the entire 10 MB blob into the dev console (and, in dev mode, into the `.dev-logs/console.log` file via the forwarder). That CAN exhaust disk on a malicious feed.
+
+This is a defense-in-depth gap, not a security incident — the spawn validator is the real gate. But the dispatcher's "accept whatever wire-format Claude emits" stance (per L154-155 comment) is overly trusting given the input is untrusted NDJSON.
+
+**Fix:**
+
+Cap the session_id length at the dispatcher boundary BEFORE storing or logging:
+
+```ts
+// Same defense-in-depth narrowness as the spawn validator (SESSION_ID_REGEX
+// expects 36 chars exactly). Don't store / log past that.
+const SESSION_ID_MAX_LEN = 64; // generous slack vs the 36-char UUID format
+if (
+  typeof evt.session_id === "string" &&
+  evt.session_id.length > 0 &&
+  evt.session_id.length <= SESSION_ID_MAX_LEN
+) {
+  state.sessionId = evt.session_id;
+}
+```
+
+This matches the existing pattern used for the `appendSystemPrompt` bounds check and keeps the dispatcher's contract honest: "accept the wire format, but refuse pathological inputs that could not possibly be a real session id."
+
+Note: this is **not** a regex check (that lives at the spawn boundary, which is correct per the comment). It's a length sanity check.
+
+### WR-05: `if (!host || rafScheduled) return` reads `host` before the streaming early-return, but Svelte 5 effects re-run on host-bind too — fine, but the order is brittle
+
+**File:** `src/lib/components/AssistantMessage.svelte:35-57`
+
+**Issue:**
+
+The effect reads:
+
+```ts
+$effect(() => {
+  void html;                        // dependency tracking for html
+  if (!host || rafScheduled) return; // dependency tracking for host
+  if (streaming) return;             // dependency tracking for streaming
+  rafScheduled = true;
+  requestAnimationFrame(() => {
+    rafScheduled = false;
+    if (host) renderKatexInDom(host);
+  });
+});
+```
+
+In Svelte 5, $effect tracks every reactive read during synchronous execution. After the first early-return at `!host`, subsequent reads (`streaming`) are NOT in the dependency set for that effect run. On the next render when `host` becomes defined (via `bind:this`), the effect re-runs, reads `streaming`, and from then on `streaming` is tracked.
+
+This works in practice because `host` is set via `bind:this` BEFORE the first content arrives. But the dependency-graph order is subtle:
+
+- Initial mount: `host=undefined`, `streaming=true`. Effect runs, returns at `!host`. NO dependency on `streaming` was registered.
+- After mount: `host` is bound. Effect re-runs (host changed). Reads `streaming=true`, returns. NOW depends on `streaming`.
+- Streaming flips false: Effect re-runs (streaming changed). Reads streaming=false, runs `renderKatexInDom`.
+
+This works, but if any future refactor changes the early-return order (e.g., moves `if (streaming) return` above `if (!host) return`), the effect may register `streaming` as a dep but not `host`, causing it to miss host-bind re-runs.
+
+Also: the `void html;` at L49 is fine for dependency tracking, but the comment doesn't say so. A casual reader might think this is dead code and remove it.
+
+**Fix:**
+
+1. Make the dependency reads explicit and ordered with a comment:
+
+```ts
+$effect(() => {
+  // Track all three reactive deps EAGERLY so the effect re-runs on any change.
+  // Svelte 5 tracks reads, not values; reading once at the top guarantees
+  // the dep set is stable across early returns.
+  const _html = html;
+  const _host = host;
+  const _streaming = streaming;
+  void _html;
+  if (!_host || rafScheduled) return;
+  if (_streaming) return;
+  rafScheduled = true;
+  requestAnimationFrame(() => {
+    rafScheduled = false;
+    if (_host) renderKatexInDom(_host);
+  });
+});
+```
+
+2. Or simply add a comment line above L49: `// Dependencies: html, host, streaming. ORDER MATTERS — host is bound after mount, so tracking host first ensures the effect re-runs.`
+
+This is a low-severity hardening; the current code works in observed cases.
+
+## Info
+
+### IN-01: Audit check 4b regex alternation `([^-]|^)` does not match `--system-prompt` at the literal-start-of-validator-string position when no preceding chars exist
+
+**File:** `scripts/audit-capabilities.sh:68`
+
+**Issue:**
+
+The regex:
+
+```bash
+'"validator":[[:space:]]*"[^"]*([^-]|^)--system-prompt[^"]*"'
+```
+
+requires either a non-dash preceding character OR start-of-line before `--system-prompt`. In ERE, `^` inside a sub-pattern at this position means start-of-line — which is the start of the GREP INPUT LINE, not the start of the validator string. Since the line always contains text before the validator (at minimum `"validator": "`), `^` cannot fire.
+
+This means `--system-prompt` AT THE LITERAL START OF THE VALIDATOR STRING (with no `^` regex-anchor in the validator itself) is detectable only via the `[^-]` branch — which requires a preceding non-dash char. The opening `"` (quote) before the validator value is non-dash, so this case fires.
+
+I tested all realistic mutations:
+
+- `"validator":"--system-prompt"` → matches (`[^-]` fires on the leading `"`)
+- `"validator":"^--system-prompt$"` → matches (`[^-]` fires on `^`)
+- `"validator":"^#--system-prompt$"` → matches (`[^-]` fires on `#`)
+- `"validator":"^----system-prompt$"` → DOES NOT MATCH (the char before `--system-prompt` is `-`; alternation fails)
+
+The last case is theoretical only — `----system-prompt` is not a valid claude flag and the SSOT (check 9) would catch the literal `"--system-prompt"` regardless of how many leading dashes. The audit's check 1 (SSOT drift) would also catch any hand-edited JSON that didn't come from `gen-capabilities.ts`. Defense-in-depth is intact.
+
+**Fix:**
+
+Nothing required. Either accept the theoretical edge-case as guarded by check 1, OR replace the alternation with a simpler `--system-prompt` that doesn't require negation:
+
+```bash
+# Stricter form: detect --system-prompt unless it follows `append-`.
+if grep -E '"validator":[[:space:]]*"[^"]*(^|[^a-z-])--system-prompt[^"]*"' src-tauri/capabilities/default.json >/dev/null 2>&1; then
+```
+
+The improvement is marginal; current form is acceptable.
+
+### IN-02: Audit check 9 SSOT grep can be evaded by string concatenation in `spawn-args.shared.ts`
+
+**File:** `scripts/audit-capabilities.sh:131`
+**File:** `src/lib/spawn-args.shared.ts` (hypothetical)
+
+**Issue:**
+
+Check 9 greps for the exact literal `"--system-prompt"` (with surrounding double quotes). String concatenation evades:
+
+```ts
+export const FLAG = "--system-prom" + "pt"; // grep misses
+```
+
+Or template literals:
+
+```ts
+export const FLAG = `--${'system'}-prompt`; // grep misses
+```
+
+This is not a real-world attack — a malicious maintainer with commit access can do worse than this. But it's a defense-in-depth weakness worth recording.
+
+**Fix:**
+
+Add a semantic check (compile + introspect the spawn-args module) instead of / in addition to the grep. Since `gen-capabilities.ts` already imports `buildClaudeArgs` at audit time, the audit could:
+
+```ts
+// In gen-capabilities or a sibling audit script:
+const sample = buildClaudeArgs("p", SCRATCH_DIR, { appendSystemPrompt: CHAT_RENDERING_HINTS, resumeSessionId: "00000000-0000-0000-0000-000000000000" });
+if (sample.includes("--system-prompt")) process.exit(1);
+```
+
+This is robust against any source-level encoding. Not urgent.
+
+### IN-03: AssistantMessage uses hardcoded font-size values (21 / 17.5 / 15.5 px) instead of token references
+
+**File:** `src/lib/components/AssistantMessage.svelte:126,138,148`
+
+**Issue:**
+
+Plan 01-12 GAP-2 added h1/h2/h3 differentiated CSS scale (21 / 17.5 / 15.5 px). These are hardcoded inline:
+
+```css
+.msg-assistant :global(h1) { font-size: 21px; ... }
+.msg-assistant :global(h2) { font-size: 17.5px; ... }
+.msg-assistant :global(h3) { font-size: 15.5px; ... }
+```
+
+`tokens.css` does NOT export `--text-h1` / `--text-h2` / `--text-h3` tokens. This is consistent with the rest of the codebase (hardcoded px values are pervasive across 30+ usages in `src/lib/components/*.svelte`), so this is NOT a regression of the gap-closure — it's an existing project convention.
+
+That said, the "Living visual contract" memory note (`feedback_living_visual_contract`) explicitly forbids "裸 hex / ms / px" for review / dogfood HTML — though the rule applies to generated HTML deliverables, not Svelte component source. The convention boundary is fuzzy.
+
+**Fix:**
+
+Optional. Either:
+1. Adopt typography tokens in `tokens.css` (e.g., `--text-h1: 21px; --text-h2: 17.5px; --text-h3: 15.5px;`) and replace inline values in AssistantMessage. Then apply the same treatment to the other 30 inline values in a future cleanup.
+2. Accept the existing inline-px pattern as project convention and document it in `PATTERNS.md`.
+
+Not blocking for Phase 1.
+
+### IN-04: Dev probe (`__mneme_inject_stream__` / `?stream=demo`) exposed on `window` could be left in production by accident if the `import.meta.env.DEV` guard is bypassed
+
+**File:** `src/lib/components/ChatPanel.svelte:392-440,475-497`
+
+**Issue:**
+
+The `if (import.meta.env.DEV && typeof window !== "undefined")` guards are correct and Vite tree-shakes the dev branch in production builds. But if a future refactor accidentally changes the guard (e.g., `if (import.meta.env.PROD === false)` — equivalent at build time but different surface), or if the build pipeline shifts to a mode where `import.meta.env.DEV` is not statically resolved (some dev/prod hybrid), the dev probe could leak.
+
+The probe accepts arbitrary `chunks: string[]` and dispatches them as text_deltas. In production this would give arbitrary JS in the page (via the dev console) the ability to mutate `dispatch.messages` and trigger `scheduleHtmlRecompute`. Since the page already runs as a Tauri WebView with no third-party scripts, the risk is theoretical.
+
+**Fix:**
+
+Optional. Add a runtime gate AS WELL as the build-time gate:
+
+```ts
+if (typeof window !== "undefined" && import.meta.env.DEV) {
+  // Defense-in-depth: also require a debug flag in localStorage to enable.
+  if (window.localStorage.getItem("mneme.dev.probe") !== "1") return;
+  (window as any).__mneme_inject_stream__ = ...;
+}
+```
+
+Or assert in CI that the production bundle does not contain the strings `__mneme_inject_stream__` / `__mneme_finalize_stream__`. The current setup is acceptable for Phase 1 (single-user, never distributed).
 
 ---
 
-_Reviewed: 2026-05-14T04:24:00Z_
+_Reviewed: 2026-05-14T08:30:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
-_Iteration: 2_
 _Depth: standard_
-_Status: clean — orchestrator's --auto loop terminates here; no iter-3 fix pass needed._
+_Scope: Plan 01-12 (session resume + chat-rendering hints) + 01-13 (docs amendment). 14 files reviewed. Prior review preserved as `01-REVIEW.pre-gap-closure.md`._
