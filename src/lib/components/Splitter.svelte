@@ -57,8 +57,15 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         if (typeof parsed.leftRatio === "number" && typeof parsed.middleRatio === "number") {
-          leftRatio = clamp(parsed.leftRatio, RATIO_MIN, RATIO_MAX);
-          middleRatio = clamp(parsed.middleRatio, RATIO_MIN, RATIO_MAX);
+          // WR-05-pin fix (2026-05-14): route restore through clampAndNormalize
+          // so DRAG and RESTORE paths share identical bounds. Prior asymmetric
+          // ceilings (RESTORE used RATIO_MAX=0.50 on left; DRAG admitted up to
+          // 1-2*RATIO_MIN=0.60) silently clamped saved leftRatio in (0.50, 0.60]
+          // down to 0.50 — up to 64px UX drift, violating SPEC L130 "restore
+          // within 1px". Surfaced by /gsd-validate-phase 1 audit.
+          const normalized = clampAndNormalize(parsed.leftRatio, parsed.middleRatio);
+          leftRatio = normalized.leftRatio;
+          middleRatio = normalized.middleRatio;
         }
       }
     } catch (err) {
