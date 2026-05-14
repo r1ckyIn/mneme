@@ -33,10 +33,22 @@
   let rafScheduled = false;
 
   $effect(() => {
-    // Re-trigger on `html` change. Reading streaming would also work but
-    // we WANT KaTeX to re-render even on chunk arrivals during streaming.
+    // BL-03 fix (2026-05-14): only run renderKatexInDom on FINALIZED assistant
+    // messages. The walker's $..$ / $$..$$ regex pair is correct on complete
+    // input but ambiguous on partial streaming buffers — during streaming the
+    // buffer may carry a half-arrived `$$x =` that the inline regex misreads
+    // as `$x =$ ` math (interpreting only one of the two dollar signs). The
+    // walker would then write malformed KaTeX into the DOM that never gets
+    // cleaned up until the next ChatPanel scheduleHtmlRecompute regenerates
+    // assistantHtml from scratch.
+    //
+    // Deferring the walk until streaming flips false matches Claude Desktop's
+    // actual UX (math renders when the answer is complete) and the on-screen
+    // .stream-dot already communicates "still arriving" so users read the
+    // unrendered $$...$$ as "writing in progress", not as a bug.
     void html;
     if (!host || rafScheduled) return;
+    if (streaming) return;
     rafScheduled = true;
     requestAnimationFrame(() => {
       rafScheduled = false;
