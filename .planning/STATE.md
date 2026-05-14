@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-14T01:43:52.050Z"
+last_updated: "2026-05-14T03:35:43.138Z"
 progress:
   total_phases: 13
   completed_phases: 2
@@ -31,12 +31,16 @@ progress:
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 1
+Plan: 01-10 (retroactive, SUMMARY pending)
 
-**Phase 01.1 complete (10/10 plans)** — dogfood approved 2026-05-12 in 2 cycles (cycle 1 KD-13 rejected, cycle 2 Living adopted). Living visual contract locked at `.planning/references/design/living-visual-contract.md` as new hard contract for generated HTML. F1 mitigated in template, full SDK fix demoted to followup. REVIEW.md fix pass applied 2026-05-12 (8 fixed / 1 deferred). Ready for `/gsd-ship`.
+**Phase 01.1 complete (10/10 plans, shipped)** — PR #1 merged (commit `77ebe92`), `/gsd-extract-learnings 01.1` ran (`01.1-LEARNINGS.md` written), `/opsx:archive automate-dev-feedback-loop` ran (spec moved from `openspec/changes/` → `openspec/specs/dev-feedback-loop/`). All ship-track artifacts retired.
 
-**Next action**: `/gsd-ship 01.1` → merge PR → `/gsd-extract-learnings 01.1` → (post-merge) `/opsx:archive automate-dev-feedback-loop` → resume Phase 1 dogfood remainder (`/gsd-resume-work`).
+**Phase 01 status (9/10 plans executed)** — plan 01-10 is a *retroactive gap-closure* plan (`gap_closure: true`, `retroactive: true`): the window-drag capability fix + `cursor: grab` cleanup were applied via `/gsd-debug` on 2026-05-09–10 and merged ahead of the plan being written. Code is in `main`; only `01-10-SUMMARY.md` is outstanding. Plan 01-11 (CSP `connect-src` missing `ipc:` protocol) is the follow-up dogfood-remainder gap noted in 01-10-PLAN.md.
+
+**Next action**: `/gsd-execute-phase 1` (executor will detect retroactive flag and write 01-10-SUMMARY without re-applying changes, then route to plan 01-11 CSP fix). Alt: hand-write `01-10-SUMMARY.md` + `/gsd-plan-phase 1 --gaps-only` for plan 01-11.
+
+**Stale handoff cleared 2026-05-14**: `.planning/HANDOFF.json` and `.continue-here.md` (both stamped 2026-05-11 paused_for_exploration) deleted — the `/gsd-explore test-automation` they pointed to has long since completed, and Phase 01.1 was the actual follow-up that shipped. Their persistence was caused by Phase 01.1 plan/execute bypassing `/gsd-resume-work` (which would have deleted them post-resumption per workflow).
 
 **Closeout artifacts** (plan 01.1-10 + fix pass):
 
