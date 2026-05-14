@@ -1,15 +1,20 @@
 ---
 name: Living 视觉规范 — mneme 生成 HTML 硬契约
 date_locked: 2026-05-12
-locked_by: user (Phase 01.1-09 dogfood checkpoint reply)
+date_scope_decided: 2026-05-14
+locked_by: user (Phase 01.1-09 dogfood checkpoint reply 2026-05-12; scope b ratified by user 2026-05-14)
 applies_to: 生成 HTML（review / dogfood / handoff / checklist 等用户可见 HTML 输出）
 scope_relationship_with_kd13: |
-  KD-13（Anthropic/Claude family — warm cream `#faf9f5` + 橙 `#d97757` + Charter serif）当前仍是 mneme 主 App UI（Tauri Svelte）的视觉锁。Living（cream `#E6E3DC` + olive `#6B6E3D` + Fraunces / Geist / Geist Mono）是 2026-05-12 起新增的工具型 HTML 硬契约。
-  二者关系尚未由用户显式裁决：
-    (a) Living 完全替换 KD-13（全局收敛）
-    (b) Living 仅适用工具型 HTML，KD-13 保留给主 App UI（双轨）
-    (c) 二者将来收敛为同一套 token
-  在用户明示之前默认 (b)。任何把 Living token 写入 mneme 主 App UI 前必须先得到用户确认。
+  **DECIDED 2026-05-14: option (b) — 双轨永久。** Living 永远只管工具型 HTML（review / dogfood / handoff / checklist），KD-13（Anthropic/Claude family — warm cream `#faf9f5` + 橙 `#d97757` + Charter serif）永远保留给 mneme 主 App UI（Tauri Svelte 三栏聊天界面 + 后续所有 UI phase）。两套独立演进，不交叠。
+  
+  Living（cream `#E6E3DC` + olive `#6B6E3D` + Fraunces / Geist / Geist Mono）和 KD-13 的视觉差异是有意保留的——工具型 HTML 是给"分析者视角"的（编辑感、密集信息、editorial），主 App UI 是给"学习者视角"的（暖、亲、聚焦学习）。
+  
+  历史选项（2026-05-14 已决，仅供参考）：
+    (a) Living 完全替换 KD-13（全局收敛）— 否决
+    (b) Living 工具型 HTML / KD-13 主 App UI（双轨）— **CHOSEN**
+    (c) 二者将来收敛为同一套 token — 否决
+  
+  任何把 Living token 写入 mneme 主 App UI（或反之）的提议都需要重新拍板这条决定。
 ---
 
 # Living 视觉规范（生成 HTML 必读）

@@ -6,9 +6,9 @@
 
 ---
 
-## 切分概览（v0.3）
+## 切分概览（v0.4 — 2026-05-14）
 
-**18 个 feature spec**（#08 command-palette 已 retired）+ **3 个横切 spec（约束 / 承诺）** = 21 个文件。
+**18 个 feature spec**（#08 command-palette 已 retired）+ **3 个横切 spec（约束 / 承诺）** + **1 个工作流工具 spec**（2026-05-14 新增 dev-feedback-loop）= 22 个文件。
 
 ### Feature 域 spec（19 个）
 
@@ -34,13 +34,21 @@
 | 18 | **per-course-rules** | REQ-17 | v1.x | Phase 8 | hypothesis |
 | 19 | **fsrs-review** | REQ-09 · REQ-15 · KD-06 | v1.x | Phase 10 | hypothesis |
 
-### 横切 spec（2 个）
+### 横切 spec（3 个）
 
 | Spec | 性质 | 覆盖项 | 适用范围 |
 |------|------|--------|----------|
 | **visual-design-system** | 约束 spec | KP-09 · KD-13 | 所有 UI spec 必须遵守 |
 | **proactive-recall** | 体验承诺 spec | KP-07 | memory-engine + multi-session + per-course-rules 协同（**或合进 memory-engine — 待用户定**） |
 | **interaction-paradigm** ⚡新 | 约束 spec | 鼠标优先 · Cmd+Q 唯一全局热键 | 所有 UI spec + subprocess 退出路径 |
+
+### 工作流工具 spec（1 个，2026-05-14 新增）
+
+> 不是产品能力 / 不是用户可见 surface —— 是 mneme 开发流程本身的工具基础设施。Phase 01.1 ship + archive 后从 OpenSpec change `automate-dev-feedback-loop` 折出。
+
+| Spec | 性质 | 覆盖项 | 适用范围 |
+|------|------|--------|----------|
+| **dev-feedback-loop** ⚡新 | 工作流工具 spec | R1-R9（Svelte forwarder + Tauri dev commands + npm bridge + 8 verify.* SDK handlers + verify-work workflow patches + visual-review.html template + ephemeral handoff HTML 契约 + validate-html 强制 4-bucket） | `/gsd-verify-work` 自动化路径；mneme 对 GSD upstream 的反向贡献候选；Phase 01.1 + Living visual contract 的产物 |
 
 ---
 
@@ -401,6 +409,42 @@
 **与 voice-input REQ-19 协同**：REQ-19 之前约束"与 command-palette 快捷键不冲突"。command-palette 砍掉后，voice-input 的快捷键约束改为"与 Cmd+Q 不冲突"。如果未来 voice-input 落地，重新讨论是否破例启用 `Cmd+Shift+V`。
 
 **重评触发**：用户实测鼠标在多会话切换 / 长 vault 浏览 / FSRS review 1/2/3/4 评分等高频窄场景低效 → 启用窄场景快捷键（不是全面回归键盘优先）
+
+---
+
+### 工作流工具：dev-feedback-loop ⚡【新增 2026-05-14 · Phase 01.1 ship + archive 折出】
+
+**它是什么**：自动化 `/gsd-verify-work` 的 UI 验证流——把"open DevTools / paste log / 跑 cargo / inspect DOM"路由用户的旧路径替换为 SDK-handler 驱动的自动化。**不是产品能力**，是 mneme 开发流程本身的工具基础设施。
+
+**覆盖**：R1-R9（见 `openspec/specs/dev-feedback-loop/spec.md`）
+- R1: 全谱 Svelte console-forwarder（8 信号类，DEV-only，prod 完全 strip）
+- R2: 5 个 Tauri Rust dev commands（`#[cfg(debug_assertions)]` gated，release-binary clean）
+- R3: 3 个 npm-script 桥（gsd-dev-screenshot/snapshot/scan-logs，D-BR-02 错误信封）
+- R4: execute-phase 静默规则（不在执行中提问）
+- R5: verify-work.md 工作流 3 patches（critical_rules + package_manual_review + Tauri 分支）
+- R6: 8 个 verify.* SDK handlers（TS + CJS dual-surface）
+- R7: visual-review.html 4-bucket 模板（**已切到 Living 视觉契约 cycle 2 之后**）
+- R8: 用户单回合（一个 HTML 路径 + 一次回复）
+- R9: 渲染输出经 verify.validate-html 通过（4 桶 whitelist + forbidden phrasing 黑名单）
+
+**关键产物**：
+- mneme 侧：`src/lib/dev/` (forwarder + selectors)、`src-tauri/src/dev.rs` + `bin/dev_invoke.rs`、`scripts/gsd-dev-*.mjs`、`.dev-logs/` 标准、`.planning/references/design/living-visual-contract.md`
+- GSD upstream 侧：`~/.claude/get-shit-done/workflows/verify-work.md` 3 patches、`~/.claude/get-shit-done/templates/visual-review.html`、`@gsd-build/sdk` 8 个 verify.* handlers + CJS shim
+- 开发流程标准：dogfood self-test → audit notes → followup table → upstream PR draft
+
+**E1-E6 errata**（实施过程中发现 v3 design 假设错误，已修正）：见 `.planning/changes/archive/2026-05-14-automate-dev-feedback-loop/design.md` v3.1 errata block。
+
+**Living 视觉契约（cycle 2 引入）**：详见 `.planning/references/design/living-visual-contract.md`。Scope = "工具型 HTML only"（决定: option **b 双轨永久**，2026-05-14 用户拍板）。mneme 主 App UI 仍走 KD-13 / visual-design-system 横切 spec。
+
+**Followup（不阻塞 archive，已记在各自文件）**：
+- F1 SDK regex 跳 HTML 注释 → upstream PR 待发（`upstream-pr-gsd-build-followup.md`）
+- HG-02 `dev_invoke dev_query_state` proper IPC bridge → 下一个合适 phase（phase 3 multi-session 或 phase 7 KG）
+- IN-01 Cargo `tokio` cfg-gate → 下一个改 src-tauri/Cargo.toml 的 phase 顺手
+- D-DF-02 第二轮非自指 dogfood → Phase 1 resume 时启动
+
+**评估过的备选**：纯手动 dogfood checklist（user fatigue 2026-05-11 触发本 spec）/ playwright MCP attach 到 Tauri WKWebView（不可行，CDP vs Webkit Inspector Protocol 不兼容）
+
+**重评触发**：Anthropic 发布 Claude Code 原生 verify 工具 / GSD upstream 接受 PR 后 mneme-side 简化为依赖
 
 ---
 
