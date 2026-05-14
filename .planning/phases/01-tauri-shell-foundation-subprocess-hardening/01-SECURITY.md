@@ -202,7 +202,30 @@ The deferred reminder for Phase 2: when REQ-14 settings introduce a user-configu
 
 ---
 
+## Plan 01-12 amendment (2026-05-14)
+
+Two new CLI flags landed in spawn-args: `--resume <session_id>` and
+`--append-system-prompt <CHAT_RENDERING_HINTS>`. Pre-flight analysis vs the
+49-threat register concluded: no new attack surface, no new threats. Rationale:
+
+- Session id is opaque + per-user + per-machine + ephemeral (Claude-CLI-managed).
+  mneme captures it server-side from system/init events and feeds back only into
+  spawn-args. Defense-in-depth: SESSION_ID_REGEX narrows the validator to
+  UUID-format only; malformed events cannot widen the spawn surface.
+
+- CHAT_RENDERING_HINTS is a compile-time literal (≤500 chars) anchored
+  byte-for-byte in the validator regex. User input cannot reach this position.
+
+- KP-04 3-layer OAuth defense extended: full --system-prompt replacement is
+  now FORBIDDEN at the audit layer (checks 4b + 9) in addition to the SSOT
+  layer. Only --append-system-prompt is allowed.
+
+49 threats remain CLOSED, 0 new threats opened.
+
+---
+
 *Phase: 01-tauri-shell-foundation-subprocess-hardening*
 *Audit performed: 2026-05-14*
 *Auditor: gsd-secure-phase (Claude Opus 4.7 1M context)*
 *Verification baseline: vitest 147/147 · svelte-check 0/0 · cargo test 3/3 · audit-capabilities.sh PASS · test-audit-script.sh 5/5*
+*Plan 01-12 footer baseline: vitest 177/177 · svelte-check 0/0 · audit-capabilities.sh PASS · test-audit-script.sh 7/7*

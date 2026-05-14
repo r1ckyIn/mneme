@@ -9,6 +9,17 @@
 // legal consumer of spawn-args.node.ts (which imports `homedir` from "node:os").
 // SvelteKit pages and Svelte components MUST import only spawn-args.shared.ts.
 //
+// Plan 01-12 (2026-05-14) — Option B per Task 4a spike:
+//   The capability JSON registers TWO Command names under each shell identifier:
+//     - claude-bin-fresh (15-arg shape, no --resume)
+//     - claude-bin-resume (17-arg shape, with --resume + SESSION_ID_REGEX)
+//   ChatPanel.sendPrompt picks the Command name based on dispatch.sessionId
+//   presence. Tauri 2's `tauri-plugin-shell` scope resolution does
+//   `scopes.iter().find(|s| s.name == command_name)` — short-circuit on first
+//   matching name — so multiple `allow` entries with the SAME name silently
+//   shadow each other (only the first is consulted). Distinct names avoid that
+//   pitfall. See `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/spike-tauri-capability-multi-entry.md`.
+//
 // Modes:
 //   node scripts/gen-capabilities.ts            → writes to disk (default)
 //   node scripts/gen-capabilities.ts --dry-run  → emits to stdout (audit script consumer)
@@ -16,16 +27,34 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { buildClaudeArgs, SCRATCH_DIR_REGEX, MAX_TURNS } from "../src/lib/spawn-args.shared.ts";
+import {
+  buildClaudeArgs,
+  SCRATCH_DIR_REGEX,
+  SESSION_ID_REGEX,
+  CHAT_RENDERING_HINTS,
+  MAX_TURNS,
+} from "../src/lib/spawn-args.shared.ts";
 import { SCRATCH_DIR } from "../src/lib/spawn-args.node.ts";
 
 const isDryRun = process.argv.includes("--dry-run");
 
-// Build the validator regex array. We use Option A (all-Var) per RESEARCH §4.2:
-// every flag literal is `^literal$`; the path is SCRATCH_DIR_REGEX; the prompt is `.+`.
-// The order MUST match buildClaudeArgs() positionally.
-const ARG_VALIDATORS: Array<{ validator: string }> = [
-  { validator: "^--print$" },
+/**
+ * Escape regex metacharacters so a literal string can be embedded in a
+ * `^...$`-anchored validator regex. CHAT_RENDERING_HINTS contains `$`, `$$`,
+ * `#`, `---`, `(`, `)`, `.`, `+`, `?` — all regex metachars — so the literal
+ * must be escaped before insertion into the validator array.
+ *
+ * Source: MDN "Regular_Expressions/Escaping"; matches the set
+ * [.*+?^${}()|[\]\\] verbatim.
+ */
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Common tail of validators — shared by both Option-B Command shapes. Order
+// MUST match the positional emission inside buildClaudeArgs() between
+// "--permission-mode" (start) and the free-form prompt (end).
+const COMMON_TAIL: Array<{ validator: string }> = [
   { validator: "^--permission-mode$" },
   { validator: "^bypassPermissions$" },
   { validator: "^--output-format$" },
@@ -33,11 +62,27 @@ const ARG_VALIDATORS: Array<{ validator: string }> = [
   { validator: "^--include-partial-messages$" },
   { validator: "^--verbose$" },
   { validator: "^--max-turns$" },
-  { validator: `^${MAX_TURNS}$` },                   // ^30$
+  { validator: `^${MAX_TURNS}$` },                              // ^30$
   { validator: "^--add-dir$" },
-  { validator: SCRATCH_DIR_REGEX },                  // ^/Users/[^/]+/\.mneme/scratch$
+  { validator: SCRATCH_DIR_REGEX },                             // ^/Users/<name>/.mneme/scratch$
   { validator: "^--exclude-dynamic-system-prompt-sections$" },
-  { validator: ".+" },                               // free-form prompt — last positional
+  { validator: "^--append-system-prompt$" },                    // Plan 01-12 GAP-2 flag
+  { validator: `^${escapeRegex(CHAT_RENDERING_HINTS)}$` },      // Anchored literal — defense-in-depth
+  { validator: ".+" },                                          // Free-form prompt — last positional
+];
+
+// Option-B fresh shape: 15 args. No --resume; first prompt of an app-session.
+const FRESH_ARGS: Array<{ validator: string }> = [
+  { validator: "^--print$" },
+  ...COMMON_TAIL,
+];
+
+// Option-B resumed shape: 17 args. --resume + SESSION_ID_REGEX after --print.
+const RESUMED_ARGS: Array<{ validator: string }> = [
+  { validator: "^--print$" },
+  { validator: "^--resume$" },
+  { validator: SESSION_ID_REGEX },                              // ^[a-f0-9]{8}-...$
+  ...COMMON_TAIL,
 ];
 
 // Phase 01.1 (D-TR-04 + R9 Approach A): dev-only Tauri commands.
@@ -84,14 +129,29 @@ const DEV_ONLY_PERMISSIONS: string[] = [
 ];
 void DEV_ONLY_PERMISSIONS; // suppress "unused" — kept for documentation
 
-// Sanity 1: regex array length MUST equal what buildClaudeArgs() emits.
-// We pass SCRATCH_DIR (Node-only resolved) here because Node context can use it.
-// Browser callers (ChatPanel) pass scratchDir from `homeDir()` (Tauri IPC bridge).
-const sample = buildClaudeArgs("__SAMPLE_PROMPT__", SCRATCH_DIR);
-if (sample.length !== ARG_VALIDATORS.length) {
+// Sanity 1: each validator-shape's length MUST equal what buildClaudeArgs()
+// emits with the matching opts shape. SCRATCH_DIR is passed because Node
+// context can resolve it; the WebView caller passes the same value via
+// homeDir() (Tauri IPC bridge).
+const SAMPLE_SESSION_ID = "00000000-0000-0000-0000-000000000000";
+const sampleFresh = buildClaudeArgs("__SAMPLE__", SCRATCH_DIR, {
+  appendSystemPrompt: CHAT_RENDERING_HINTS,
+});
+if (sampleFresh.length !== FRESH_ARGS.length) {
   console.error(
-    `[gen-capabilities] FATAL: spawn-args.shared.ts emits ${sample.length} args ` +
-    `but ARG_VALIDATORS has ${ARG_VALIDATORS.length} entries.`
+    `[gen-capabilities] FATAL: buildClaudeArgs(opts={append}) emits ${sampleFresh.length} args ` +
+      `but FRESH_ARGS has ${FRESH_ARGS.length} entries.`,
+  );
+  process.exit(1);
+}
+const sampleResumed = buildClaudeArgs("__SAMPLE__", SCRATCH_DIR, {
+  resumeSessionId: SAMPLE_SESSION_ID,
+  appendSystemPrompt: CHAT_RENDERING_HINTS,
+});
+if (sampleResumed.length !== RESUMED_ARGS.length) {
+  console.error(
+    `[gen-capabilities] FATAL: buildClaudeArgs(opts={resume, append}) emits ${sampleResumed.length} args ` +
+      `but RESUMED_ARGS has ${RESUMED_ARGS.length} entries.`,
   );
   process.exit(1);
 }
@@ -101,10 +161,19 @@ if (sample.length !== ARG_VALIDATORS.length) {
 if (!new RegExp(SCRATCH_DIR_REGEX).test(SCRATCH_DIR)) {
   console.error(
     `[gen-capabilities] FATAL: spawn-args.node.ts resolved SCRATCH_DIR="${SCRATCH_DIR}" ` +
-    `which does not match SCRATCH_DIR_REGEX="${SCRATCH_DIR_REGEX}". Are you on macOS?`,
+      `which does not match SCRATCH_DIR_REGEX="${SCRATCH_DIR_REGEX}". Are you on macOS?`,
   );
   process.exit(1);
 }
+
+// Plan 01-12 Option B: TWO `allow` entries under each shell identifier with
+// distinct Command names (claude-bin-fresh + claude-bin-resume). Tauri 2's
+// shell-plugin scope-resolution uses `find` (short-circuit on first matching
+// name); distinct names avoid the multi-entry-with-same-name pitfall.
+const SPAWN_ALLOW = [
+  { name: "claude-bin-fresh", cmd: "claude", args: FRESH_ARGS },
+  { name: "claude-bin-resume", cmd: "claude", args: RESUMED_ARGS },
+];
 
 const capability = {
   $schema: "../gen/schemas/desktop-schema.json",
@@ -117,11 +186,11 @@ const capability = {
     "shell:default",
     {
       identifier: "shell:allow-spawn",
-      allow: [{ name: "claude-bin", cmd: "claude", args: ARG_VALIDATORS }],
+      allow: SPAWN_ALLOW,
     },
     {
       identifier: "shell:allow-execute",
-      allow: [{ name: "claude-bin", cmd: "claude", args: ARG_VALIDATORS }],
+      allow: SPAWN_ALLOW,
     },
     // ...DEV_ONLY_PERMISSIONS, // SEE NOTE ABOVE: Tauri 2 user commands
     //                              registered via generate_handler! do not

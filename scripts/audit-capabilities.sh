@@ -59,6 +59,17 @@ if grep -E '"validator":\s*"[^"]*bare[^"]*"' src-tauri/capabilities/default.json
   FAIL=1
 fi
 
+# 4b. --system-prompt (FULL REPLACEMENT) absent (plan 01-12).
+#     The validator's preceding character must be `-` (from `--append-`) OR
+#     it's a violation. The regex below matches `--system-prompt` preceded by
+#     ANY char that is NOT `-`, OR matches it at string start.
+#     `--append-system-prompt` is allowed because the `t` of `append-` precedes
+#     the `--system-prompt` substring, blocking the match.
+if grep -E '"validator":[[:space:]]*"[^"]*([^-]|^)--system-prompt[^"]*"' src-tauri/capabilities/default.json >/dev/null 2>&1; then
+  echo "[audit] FAIL: '--system-prompt' (full replacement) validator detected — Phase 9 REQ-17 scope, NOT Phase 1" >&2
+  FAIL=1
+fi
+
 # 5. --max-turns sanity in the SSOT (Round 5 A-04 — only loop guard).
 if ! grep -q '"--max-turns"' src/lib/spawn-args.shared.ts; then
   echo "[audit] FAIL: --max-turns not found in src/lib/spawn-args.shared.ts SSOT" >&2
@@ -109,6 +120,16 @@ fi
 # 8. Legacy file guard — pre-split spawn-args.ts must not exist.
 if [[ -f src/lib/spawn-args.ts ]]; then
   echo "[audit] FAIL: legacy src/lib/spawn-args.ts exists — split into .shared + .node per Cycle-2 HIGH-1 fix." >&2
+  FAIL=1
+fi
+
+# 9. --system-prompt (FULL REPLACEMENT) absent from SSOT (plan 01-12).
+#    Match the EXACT literal "\"--system-prompt\"" (open-quote + --system-prompt + close-quote).
+#    The append-system-prompt literal is "\"--append-system-prompt\"" — differs in the
+#    preceding `append-` so the regex below won't false-match it. Defense-in-depth at the
+#    SSOT layer; complements check 4b at the validator layer.
+if grep -E '"--system-prompt"' src/lib/spawn-args.shared.ts >/dev/null 2>&1; then
+  echo "[audit] FAIL: --system-prompt (full replacement) found in spawn-args.shared.ts SSOT — Phase 9 REQ-17 scope only" >&2
   FAIL=1
 fi
 

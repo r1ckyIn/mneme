@@ -39,7 +39,11 @@
   import { Command } from "@tauri-apps/plugin-shell";
   import { invoke } from "@tauri-apps/api/core";
   import { homeDir } from "@tauri-apps/api/path";
-  import { buildClaudeArgs, SCRATCH_DIR_REGEX } from "$lib/spawn-args.shared";
+  import {
+    buildClaudeArgs,
+    SCRATCH_DIR_REGEX,
+    CHAT_RENDERING_HINTS,
+  } from "$lib/spawn-args.shared";
   import {
     dispatchEvent,
     freshState,
@@ -127,6 +131,8 @@
     if (!prompt.trim() || dispatch.isStreaming) return;
 
     if (!scratchDir) {
+      // Plan 01-12 GAP-1 site (d): scratchDir unresolved — keep current
+      // connection status; this path never reached "connecting" transition.
       dispatch.messages = [
         ...dispatch.messages,
         {
@@ -152,11 +158,29 @@
     dispatch.isStreaming = true;
     dispatch.resultReceived = false;
     pulseDotVisible = true;
-    setStatus("connecting");
+    // Plan 01-12 GAP-1 (A-16 supersedes A-10): setStatus("connecting") moved
+    // to onMount; sendPrompt no longer touches connection status because the
+    // app is already "connecting" or "connected" by the time the user clicks.
+    // teardown() on per-prompt close also no longer flips status (see below).
+
+    // Plan 01-12 GAP-1 (Option B per Task 4a spike): thread captured session id
+    // via --resume on prompts 2+; pick the Command name to match Tauri's
+    // shell-plugin scope `find` semantics (first allow-entry by name wins, no
+    // multi-entry fallback). dispatch.sessionId is null on the FIRST prompt of
+    // an app-session; Claude's first system/init event populates it via plan
+    // 01-12 Task 2 capture; the SECOND prompt then reads the captured id.
+    // Plan 01-12 GAP-2: ALWAYS thread CHAT_RENDERING_HINTS via
+    // --append-system-prompt so Claude does not emit ASCII fallbacks after
+    // KaTeX math (CLI default coding-agent prompt artifact).
+    const cmdName = dispatch.sessionId ? "claude-bin-resume" : "claude-bin-fresh";
+    const opts = {
+      resumeSessionId: dispatch.sessionId ?? undefined,
+      appendSystemPrompt: CHAT_RENDERING_HINTS,
+    };
 
     let cmd: Command<string>;
     try {
-      cmd = Command.create("claude-bin", buildClaudeArgs(userText, scratchDir));
+      cmd = Command.create(cmdName, buildClaudeArgs(userText, scratchDir, opts));
     } catch (e) {
       console.error("[claude:build-args]", e);
       dispatch.messages = [
@@ -212,6 +236,9 @@
     });
 
     cmd.on("error", (err) => {
+      // Plan 01-12 GAP-1 site (b): genuine spawn-level error — flip to
+      // disconnected at the TOP of the handler, before any other side effect.
+      setStatus("disconnected");
       console.error("[claude:spawn-error]", err);
       dispatch.messages = [
         ...dispatch.messages,
@@ -249,6 +276,11 @@
       await invoke("register_session_pid", { pid: child.pid });
     } catch (e) {
       console.error("[claude:spawn-or-register]", e);
+      // Plan 01-12 GAP-1 site (c): spawn() rejected OR register_session_pid
+      // IPC failed — neither path leaves us connected. Flip status to
+      // disconnected; otherwise the titlebar would stick on "connecting"
+      // forever after onMount's initial transition fails to complete.
+      setStatus("disconnected");
       dispatch.messages = [
         ...dispatch.messages,
         { id: uid(), role: "system", systemKind: "error", text: escapeHtml(`Failed to spawn claude or register PID: ${String(e)}`), streaming: false },
@@ -265,9 +297,15 @@
   }
 
   function teardown() {
+    // Plan 01-12 GAP-1 (A-16 supersedes A-10): teardown() is the per-prompt
+    // subprocess cleanup primitive. It MUST NOT touch connection state
+    // anymore — per-prompt natural close (cmd.on('close') path) is NOT a
+    // connection event. setStatus("disconnected") fires only at the four
+    // enumerated sites: onDestroy + cmd.on('error') + spawn-or-register catch
+    // + the scratchDir-unresolved no-op early return. The 'connected' status
+    // is held for the entire app lifetime once flipped.
     if (finalizeOnce) finalizeOnce();
     invoke("clear_session_pid").catch(() => {});
-    setStatus("disconnected");
     dispatch.isStreaming = false;
     pulseDotVisible = false;
   }
@@ -339,6 +377,13 @@
     window.addEventListener("keydown", onWindowKeydown);
     if (inputBox) inputBox.focus();
     void resolveScratchDir();
+    // Plan 01-12 GAP-1 (A-16 supersedes A-10): the app is "connecting" the
+    // moment the chat shell mounts — matches Claude.ai web's UX where the
+    // status dot is grey at app boot and flips green on first successful
+    // stream chunk (via the existing setStatus("connected") at the first
+    // text_delta site). sendPrompt no longer fires setStatus("connecting")
+    // per-prompt; this onMount call is the SOLE entry transition.
+    setStatus("connecting");
     // Plan 01-09 Task 10 dev hook: visiting `?stream=demo` triggers the
     // dev probe with a synthetic stream-event sequence so the visual
     // verification step can capture an in-progress (mid-stream) snapshot
@@ -395,7 +440,12 @@
     }
   });
   onDestroy(() => {
+    // Plan 01-12 GAP-1 site (a): app close — only legitimate "we're going
+    // offline" moment. setStatus("disconnected") fires BEFORE teardown() so
+    // the connection-state rune transitions before the per-prompt cleanup
+    // primitive runs (teardown() no longer touches status — A-16 contract).
     window.removeEventListener("keydown", onWindowKeydown);
+    setStatus("disconnected");
     teardown();
   });
 

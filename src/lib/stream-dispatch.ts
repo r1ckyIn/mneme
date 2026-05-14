@@ -72,6 +72,14 @@ export type DispatchState = {
   // Phase 3 multi-session dispatch (N concurrent streams sharing the module)
   // would otherwise see monotonically-merged IDs.
   _uidCounter: number;
+  // Plan 01-12 GAP-1 (2026-05-14): captured server-side session id from the
+  // first system/init event of the FRESH `claude --print` subprocess. Threaded
+  // back into subsequent spawns via buildClaudeArgs(..., { resumeSessionId }).
+  // null on initial state and on a vendor event with non-string / empty
+  // session_id; replaced verbatim by every system/init event that carries a
+  // non-empty string. NO regex check at this layer — the spawn boundary's
+  // SESSION_ID_REGEX in buildClaudeArgs is where defense-in-depth lives.
+  sessionId: string | null;
 };
 
 export function freshState(): DispatchState {
@@ -82,6 +90,7 @@ export function freshState(): DispatchState {
     totalInputTokens: 0,
     toolUseGroup: { open: false, toolUses: [] },
     _uidCounter: 0,
+    sessionId: null,
   };
 }
 
@@ -139,6 +148,14 @@ export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
         console.log(
           `[claude:init] model=${evt.model ?? "?"} session=${evt.session_id ?? "?"} cwd=${readString(evt, "cwd") ?? "?"}`,
         );
+        // Plan 01-12 GAP-1 (2026-05-14): capture the server-side session id
+        // so ChatPanel's NEXT prompt threads it via --resume <id>. Guard:
+        // accept only non-empty string values. The defense-in-depth regex
+        // check lives at the spawn boundary (buildClaudeArgs); the dispatcher
+        // accepts whatever wire-format Claude emits.
+        if (typeof evt.session_id === "string" && evt.session_id.length > 0) {
+          state.sessionId = evt.session_id;
+        }
       } else if (evt.subtype === "error") {
         // SPEC L93: surface raw subprocess error message in chat (HTML-escaped).
         // UI-SPEC §"System bubble — error variant" handles the visual.
