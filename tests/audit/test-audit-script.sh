@@ -3,6 +3,12 @@
 #
 # Strategy: temporarily swap each fixture into src-tauri/capabilities/default.json,
 # run the audit, assert expected exit code, restore the real default.json.
+#
+# Plan 01-12 (2026-05-14): two new fixtures added — fixture-append-system-prompt
+# (positive, audit MUST exit 0) and fixture-system-prompt-rejected (negative,
+# audit MUST exit 1 — check 4b triggers on the standalone --system-prompt
+# validator that was mutated in from --append-system-prompt). Total cases:
+# 6 fixtures + 1 final-sanity = 7.
 
 set -uo pipefail   # NOTE: NOT -e — we deliberately allow non-zero exits on corrupted
                     # fixtures and assert on them.
@@ -37,6 +43,8 @@ run_case "fixture-clean (matches SSOT)"        tests/audit/fixture-clean.json   
 run_case "fixture-args-true (rejects wildcard)" tests/audit/fixture-args-true.json   1
 run_case "fixture-wildcard (rejects literal *)" tests/audit/fixture-wildcard.json    1
 run_case "fixture-bare (rejects --bare)"       tests/audit/fixture-bare.json         1
+run_case "fixture-append-system-prompt (accepts --append-system-prompt)"  tests/audit/fixture-append-system-prompt.json  0
+run_case "fixture-system-prompt-rejected (rejects standalone --system-prompt via check 4b)"  tests/audit/fixture-system-prompt-rejected.json  1
 
 # Restore real default.json before final audit (so we don't leave a corrupted file)
 cp -f "$BACKUP" "$REAL_JSON"

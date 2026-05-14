@@ -115,15 +115,49 @@
     color: var(--color-warm-dark);
     font-size: 16px;
   }
-  .msg-assistant :global(h1),
-  .msg-assistant :global(h2),
+  /* Plan 01-12 GAP-2 (A-18): h1/h2/h3 differentiated CSS scale. Prior
+     combined rule rendered all three levels at 16px / 600 with no contrast;
+     markdown hierarchy was visually invisible. Three font-size steps
+     (21 / 17.5 / 15.5) carry ≥2px scale contrast across all three levels,
+     matching Anthropic's serif hierarchy on Claude.ai web. Margins create
+     vertical rhythm without leaving headings floating. */
+  .msg-assistant :global(h1) {
+    font-family: var(--font-serif);
+    font-size: 21px;
+    font-weight: 600;
+    margin: 28px 0 12px;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.012em;
+    line-height: 1.3;
+  }
+  .msg-assistant :global(h1:first-child) {
+    margin-top: 0;
+  }
+  .msg-assistant :global(h2) {
+    font-family: var(--font-serif);
+    font-size: 17.5px;
+    font-weight: 600;
+    margin: 22px 0 10px;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.008em;
+    line-height: 1.35;
+  }
   .msg-assistant :global(h3) {
     font-family: var(--font-serif);
-    font-size: 16px;
+    font-size: 15.5px;
     font-weight: 600;
     margin: 16px 0 8px;
     color: var(--color-warm-dark);
     letter-spacing: -0.005em;
+    line-height: 1.4;
+  }
+  /* Plan 01-12 GAP-2 (A-18): hr previously had no rule — default browser
+     inset 3D line didn't match the Anthropic family. New rule: 1px soft
+     separator with breathing room around it. */
+  .msg-assistant :global(hr) {
+    border: 0;
+    border-top: 1px solid var(--border-soft);
+    margin: 28px 0;
   }
   .msg-assistant :global(ul),
   .msg-assistant :global(ol) {

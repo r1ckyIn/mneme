@@ -53,7 +53,7 @@
               "validator": "^--exclude-dynamic-system-prompt-sections$"
             },
             {
-              "validator": "^--append-system-prompt$"
+              "validator": "^--system-prompt$"
             },
             {
               "validator": "^Output rendering context: the client renders Markdown with KaTeX math \\(display via \\$\\$\\.\\.\\.\\$\\$, inline via \\$\\.\\.\\.\\$\\)\\. Use pure LaTeX only — do NOT add ASCII-fallback lines after math blocks\\. Use # / ## / ### for section hierarchy\\. Use --- \\(hr\\) between major sections\\.$"

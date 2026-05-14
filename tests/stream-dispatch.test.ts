@@ -191,3 +191,79 @@ describe("dispatchEvent — 6-arm router", () => {
     expect(state.messages.some((m) => m.role === "tool")).toBe(true);
   });
 });
+
+// === Plan 01-12 GAP-1 — system/init session_id capture ===
+
+describe("system/init session_id capture (plan 01-12 GAP-1)", () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    logSpy.mockRestore();
+  });
+
+  it("freshState() sets sessionId to null", () => {
+    const state = freshState();
+    expect(state.sessionId).toBeNull();
+  });
+
+  it("dispatching {type:'system', subtype:'init', session_id:'<uuid>'} sets state.sessionId", () => {
+    const state = freshState();
+    const uuid = "a1b2c3d4-e5f6-4a8b-9c0d-e1f2a3b4c5d6";
+    dispatchEvent(
+      { type: "system", subtype: "init", session_id: uuid, model: "claude-sonnet-4.5", cwd: "/tmp" } as any,
+      state,
+    );
+    expect(state.sessionId).toBe(uuid);
+  });
+
+  it("subsequent non-init events preserve state.sessionId (e.g. stream_event does not clear it)", () => {
+    const state = freshState();
+    const uuid = "11111111-2222-3333-4444-555555555555";
+    dispatchEvent(
+      { type: "system", subtype: "init", session_id: uuid } as any,
+      state,
+    );
+    expect(state.sessionId).toBe(uuid);
+    dispatchEvent(
+      { type: "stream_event", event: { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "hi" } } } as any,
+      state,
+    );
+    expect(state.sessionId).toBe(uuid);
+    dispatchEvent(
+      { type: "assistant", message: { id: "msg_x", role: "assistant", content: [{ type: "tool_use", id: "t1", name: "Read", input: {} }] } } as any,
+      state,
+    );
+    expect(state.sessionId).toBe(uuid);
+    dispatchEvent(
+      { type: "result", subtype: "success", total_cost_usd: 0.01, duration_ms: 100, usage: { input_tokens: 5 } } as any,
+      state,
+    );
+    expect(state.sessionId).toBe(uuid);
+  });
+
+  it("a second system/init event with a new session_id REPLACES state.sessionId", () => {
+    const state = freshState();
+    const first = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const second = "ffffffff-0000-1111-2222-333333333333";
+    dispatchEvent({ type: "system", subtype: "init", session_id: first } as any, state);
+    expect(state.sessionId).toBe(first);
+    dispatchEvent({ type: "system", subtype: "init", session_id: second } as any, state);
+    expect(state.sessionId).toBe(second);
+  });
+
+  it("system/init WITHOUT session_id (defensive — vendor protocol marks it optional) leaves state.sessionId unchanged", () => {
+    const state = freshState();
+    dispatchEvent({ type: "system", subtype: "init", model: "claude-sonnet-4.5" } as any, state);
+    expect(state.sessionId).toBeNull();
+  });
+
+  it("non-string session_id (defensive against malformed NDJSON) leaves state.sessionId unchanged", () => {
+    const state = freshState();
+    dispatchEvent({ type: "system", subtype: "init", session_id: 12345 } as any, state);
+    expect(state.sessionId).toBeNull();
+    dispatchEvent({ type: "system", subtype: "init", session_id: "" } as any, state);
+    expect(state.sessionId).toBeNull();
+  });
+});
