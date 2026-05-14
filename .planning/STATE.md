@@ -167,6 +167,14 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - Locked patterns documented in `spike-findings-mneme/references/{claude-subprocess.md, tauri-shell-ui.md}`
 - Phase 1 success criteria explicitly assume this seed; do NOT re-validate the basic subprocess+streaming pattern
 
+### Active Threads
+
+2 open — long-running investigation / decision lines (not phase-scoped):
+
+- **Visual Design System** (open, 2026-05-14) — UI 设计 → 实现工作流契约（user 在 Claude Design Lab 出 HTML 原型 → 我像素级复刻）+ KP-09 / KD-13 美学锁 quick reference + Mneme.html prototype 路径跟踪（`/Users/qinyuan/Downloads/mneme/project/Mneme.html`）。任何 UI phase 启动前先读。File: `.planning/threads/visual-design-system.md`. Resume: `/gsd-thread visual-design-system`.
+
+- **Interaction Paradigm** (open, 2026-05-14) — 鼠标优先 + Cmd+Q 唯一全局热键 + 4 个窄场景例外候选跟踪（voice-input Cmd+Shift+V / fsrs-review 1234 / multi-session Cmd+K / fsrs-review Esc）。每个例外单独评估，不全面回归键盘优先。File: `.planning/threads/interaction-paradigm.md`. Resume: `/gsd-thread interaction-paradigm`.
+
 ### Pending Todos
 
 9 pending — captured during sessions, surface at appropriate phase:
