@@ -61,3 +61,7 @@ CLAUDE.md
 .dev-logs/*
 !.dev-logs/.gitkeep
 !.dev-logs/README.md
+
+# Graphify working directory — SHA256 cache + raw output, rebuildable.
+# Persistent artifacts live in .planning/graphs/ (committed).
+graphify-out/
