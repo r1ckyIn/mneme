@@ -4,7 +4,7 @@
 // fire) so the test framework itself never executes any attacker payload.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { escapeHtml, renderKatex, sanitizeMarkdown } from "../src/lib/sanitize";
+import { escapeHtml, renderKatex, renderKatexInDom, sanitizeMarkdown } from "../src/lib/sanitize";
 
 describe("sanitize XSS battery (REQ-5)", () => {
   let alertSpy: ReturnType<typeof vi.fn>;
@@ -120,5 +120,84 @@ describe("sanitizeMarkdown idempotency", () => {
       const twice = sanitizeMarkdown(once);
       expect(twice).toBe(once);
     }
+  });
+});
+
+// BL-03 regression contract (commit 8f052f6 — 2026-05-14):
+// AssistantMessage.svelte's $effect intentionally skips renderKatexInDom while
+// `streaming === true`. Rationale: the walker's `$...$` and `$$...$$` regex
+// pair are correct on COMPLETE input but ambiguous on partial streaming
+// buffers — a half-arrived `$$x = ` plus a later `$a` chunk can be misread as
+// inline math `$x = $a` (or worse, an unbalanced `$` is treated as the closer
+// of a different opener). These tests pin the corruption surface so any
+// future refactor that re-enables streaming KaTeX without first hardening
+// the walker will break this file (forcing the author to also revisit the
+// AssistantMessage.svelte $effect guard).
+//
+// If you make the walker safe on partial buffers, update the expectations
+// below to assert NO mutation on a half-arrived chunk — then it is safe to
+// remove the `if (streaming) return;` guard in AssistantMessage.svelte.
+describe("renderKatexInDom — partial streaming buffer hazard (BL-03 contract)", () => {
+  it("partial $$math with a single trailing $ is mis-rendered as inline math (proof BL-03 skip is required)", () => {
+    // Simulates a streaming buffer where the user wrote `$$incomplete \frac{a}{b}$$` but
+    // only the first `$$ ... $` portion has arrived. The walker should NOT
+    // declare this complete math, but its regex pair treats the inner span
+    // as inline (one `$` opens, the next `$` closes). On a complete `$$..$$`
+    // chunk the walk is fine — corruption only emerges mid-stream.
+    const sanitized = sanitizeMarkdown("$$incomplete \\frac{a}{b}$ ");
+    const host = document.createElement("div");
+    host.appendChild(
+      document.createRange().createContextualFragment(sanitized)
+    );
+    const before = host.innerHTML;
+    renderKatexInDom(host);
+    const after = host.innerHTML;
+
+    // Document the hazard: the walker DID mutate the partial buffer. The
+    // resulting DOM contains KaTeX output that the user never intended.
+    expect(after).not.toBe(before);
+    expect(after).toContain("katex");
+  });
+
+  it("mid-stream `\\max` tail after a complete $$..$$ leaves an orphan $$ that the walker leaves alone (flicker hazard)", () => {
+    // Multi-chunk scenario: the stream has emitted `$$ r(n)$$ then $$\max`.
+    // The first display chunk is complete, the second is half. On the NEXT
+    // chunk (`\{p\}$$`) the assistant html is re-sanitized from scratch by
+    // ChatPanel.scheduleHtmlRecompute. If the walker runs on this INTERMEDIATE
+    // state, the user sees `$$\max` flicker as plaintext, then complete math,
+    // then plaintext-again as the buffer resets — distracting UX.
+    const sanitized = sanitizeMarkdown("Math: $$ r(n)$$ then $$\\max");
+    const host = document.createElement("div");
+    host.appendChild(
+      document.createRange().createContextualFragment(sanitized)
+    );
+    const before = host.innerHTML;
+    renderKatexInDom(host);
+    const after = host.innerHTML;
+
+    // Document the hazard: walker rendered the FIRST $$..$$ (a known
+    // mutation) but the orphan `$$\max` tail is left as literal text.
+    expect(after).not.toBe(before);
+    expect(after).toContain("katex-display");
+    // The orphan `$$\max` should be present somewhere in the result as
+    // plaintext (the bug surface — what AssistantMessage avoids by
+    // gating with `if (streaming) return`).
+    expect(after).toContain("\\max");
+  });
+
+  it("complete `$$x = 1$$` and `$y$` SHOULD render correctly (positive baseline)", () => {
+    // The walker is correct on COMPLETE input. This test pins the safe path
+    // so a future "harden the walker" refactor doesn't regress the
+    // post-streaming render quality.
+    const sanitized = sanitizeMarkdown("Display $$x = 1$$ and inline $y$ here.");
+    const host = document.createElement("div");
+    host.appendChild(
+      document.createRange().createContextualFragment(sanitized)
+    );
+    renderKatexInDom(host);
+    expect(host.innerHTML).toContain("katex-display");
+    // Two KaTeX renders (one display, one inline) — second confirms inline path.
+    const katexNodes = host.querySelectorAll(".katex");
+    expect(katexNodes.length).toBeGreaterThanOrEqual(2);
   });
 });

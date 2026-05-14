@@ -1,10 +1,11 @@
 ---
 phase: 1
 slug: tauri-shell-foundation-subprocess-hardening
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-05-08
+validated: 2026-05-14
 ---
 
 # Phase 1 — Validation Strategy
@@ -129,4 +130,56 @@ These artifacts do NOT exist in the repo today; Phase 1 brings them all up. Plan
 - [ ] Feedback latency for pre-commit < 5s (warm cache); for full suite < 60s
 - [ ] `nyquist_compliant: true` set in frontmatter once `/gsd-plan-phase 1 --tdd` lands plans + plan-checker passes Dimension 8
 
-**Approval:** pending (becomes `approved YYYY-MM-DD` when plan-checker emits VERIFICATION PASSED)
+**Approval:** approved 2026-05-14 — plan-checker passed; gsd-nyquist-auditor closed all `❌ Wave 0` rows + flagged 2 latent gaps which were filled or fixed in the 2026-05-14 audit below.
+
+---
+
+## Validation Audit 2026-05-14 (Nyquist Adversarial)
+
+**Audit input:** Phase 1 closeout — `/gsd-code-review 1 --fix --auto` iter-2 returned `status: clean, 0 findings` after 14 atomic fix commits (BL-01..BL-03 + WR-01..WR-12). Two latent test-coverage concerns flagged below the BLOCKER/WARNING threshold; routed here for adversarial gap-test generation.
+
+### Gaps audited
+
+| Gap ID | Anchored requirement | Test type | Outcome |
+|--------|----------------------|-----------|---------|
+| BL-03-pin | REQ-5 / REQ-2 — `renderKatexInDom` safety during streaming | unit (regression contract) | FILLED — 3 new cases in `tests/sanitize.test.ts` |
+| WR-05-pin | REQ-1 (SPEC L130) — split positions restored within 1px | unit (component-mount) | FILLED — 5 cases in `tests/splitter-restore.test.ts` (initially escalated; orchestrator applied the documented Splitter.svelte onMount fix, flipped `it.fails` → enforced pass) |
+
+### Tests added
+
+| # | File | Cases | Command |
+|---|------|-------|---------|
+| 1 | `tests/sanitize.test.ts` (extended) | +3 (`describe("renderKatexInDom — partial streaming buffer hazard (BL-03 contract)")`) | `npx vitest run tests/sanitize.test.ts` |
+| 2 | `tests/splitter-restore.test.ts` (new) | 5 (all enforced pass after Splitter fix) | `npx vitest run tests/splitter-restore.test.ts` |
+
+### Implementation changes (orchestrator-applied)
+
+| Commit | File | Closes |
+|--------|------|--------|
+| `2f1d83e` | `src/lib/components/Splitter.svelte` (onMount restore arm routed through `clampAndNormalize`) | WR-05-pin |
+
+### Test infra changes
+
+- `vitest.config.ts` — added `resolve.conditions: ['browser']` so `svelte` resolves to its client entry (which exports `mount`/`unmount`) in jsdom. Required for the Splitter mount test. No regressions across the prior 139-test suite — full suite now 147 / 147 pass across 12 files.
+
+### Manual-only verifications — confirmed still gated by Phase 2 entry
+
+The following remain manual per the existing VALIDATION.md table — not converted by this audit because the requirement is genuinely human-in-the-loop:
+
+- REQ-1 three-pane resizable shell visual (dogfood-checklist)
+- REQ-1 window-min 1024×600 enforcement (OS-level)
+- REQ-3 5-cycle quit loop (`bash tests/manual/lifecycle/run-quit-loop.sh`)
+- REQ-6 hotkey unbinding 10 combos (perceptible only via running app)
+- REQ-6 Stop button partial-text preservation
+- REQ-6 Shift+Enter newline
+
+### Sign-off
+
+- [x] Every gap analyzed with correct test type
+- [x] Tests follow project conventions (vitest + jsdom; co-located `.test.ts` for component-mount; existing `tests/*.test.ts` for pure-function regression)
+- [x] Tests verify behavior, not structure
+- [x] Every test executed (147 / 147 pass)
+- [x] Implementation files only modified where the auditor's escalation justified an orchestrator fix (Splitter.svelte L60-61, 7-line diff matching the auditor's documented recipe)
+- [x] `nyquist_compliant: false → true`
+- [x] `wave_0_complete: false → true`
+- [x] `status: draft → validated`
