@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
-status: unknown
-last_updated: "2026-05-14T03:35:43.138Z"
+status: phase-1-execute-complete
+last_updated: "2026-05-14T05:00:00.000Z"
 progress:
   total_phases: 13
   completed_phases: 2
   total_plans: 24
-  completed_plans: 23
-  percent: 96
+  completed_plans: 24
+  percent: 100
 ---
 
 # mneme Project State
@@ -32,13 +32,13 @@ progress:
 ## Current Position
 
 Phase: 1
-Plan: 01-10 (retroactive, SUMMARY pending)
+Plan: 10/10 execute-complete (SUMMARY written 2026-05-14; awaits verify-work + Tier-3 + ship)
 
 **Phase 01.1 complete (10/10 plans, shipped)** — PR #1 merged (commit `77ebe92`), `/gsd-extract-learnings 01.1` ran (`01.1-LEARNINGS.md` written), `/opsx:archive automate-dev-feedback-loop` ran (spec moved from `openspec/changes/` → `openspec/specs/dev-feedback-loop/`). All ship-track artifacts retired.
 
-**Phase 01 status (9/10 plans executed)** — plan 01-10 is a *retroactive gap-closure* plan (`gap_closure: true`, `retroactive: true`): the window-drag capability fix + `cursor: grab` cleanup were applied via `/gsd-debug` on 2026-05-09–10 and merged ahead of the plan being written. Code is in `main`; only `01-10-SUMMARY.md` is outstanding. Plan 01-11 (CSP `connect-src` missing `ipc:` protocol) is the follow-up dogfood-remainder gap noted in 01-10-PLAN.md.
+**Phase 01 status (10/10 plans executed)** — plan 01-10 retroactive SUMMARY written inline on 2026-05-14 (code already merged in commit `fcd939a` 2026-05-10; SUMMARY captures the H1→H4 capability fix narrative + 4-line cleanup + retroactive-plan-pattern lessons). Plan 01-11 (CSP `connect-src` missing `ipc:` protocol) still tracked as separate dogfood-remainder gap noted in 01-10-PLAN.md `<out of scope>`.
 
-**Next action**: `/gsd-execute-phase 1` (executor will detect retroactive flag and write 01-10-SUMMARY without re-applying changes, then route to plan 01-11 CSP fix). Alt: hand-write `01-10-SUMMARY.md` + `/gsd-plan-phase 1 --gaps-only` for plan 01-11.
+**Next action**: `/gsd-verify-work 1` (per user 2026-05-14 — produces 4-bucket review HTML `visual/window/motion/perf`, user supplies visual modifications before close-out) → Tier-3 closeout per Phase 1 type (likely `/gsd-validate-phase 1` since Phase 1 was `--tdd`, optionally `/gsd-secure-phase 1` for Tauri capability surface) → `/gsd-extract-learnings 1`. Ship (PR + merge) deferred to next session.
 
 **Stale handoff cleared 2026-05-14**: `.planning/HANDOFF.json` and `.continue-here.md` (both stamped 2026-05-11 paused_for_exploration) deleted — the `/gsd-explore test-automation` they pointed to has long since completed, and Phase 01.1 was the actual follow-up that shipped. Their persistence was caused by Phase 01.1 plan/execute bypassing `/gsd-resume-work` (which would have deleted them post-resumption per workflow).
 
@@ -217,7 +217,11 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ## Session Continuity
 
-**Last GSD command**: `/gsd-pause-work` (2026-05-11 19:48 — paused for `/gsd-explore test-automation` Socratic session). Earlier pause 2026-05-09 ~22:50 (window-drag blocker) was resolved via plan 01-10 H4 capability fix (commit `fcd939a`); the Last action description below is from that earlier pause and is **historical** (preserved for the window-drag debugging trail). For the current 2026-05-11 pause state see `.planning/HANDOFF.json` and `.planning/phases/01-.../.continue-here.md`. For why STATE.md was 3 days stale see `.planning/forensics/report-20260512-102126.md`.
+**Last GSD command**: `/gsd-resume-work` (2026-05-14 — user 回归后路由到 Phase 01 收尾)。User 自述：上次停在 47-row dogfood checklist HTML 后去做了 Phase 01.1，已 ship 完整 10/10 + extract-learnings + opsx archive；现在回 Phase 01 把 retroactive 收尾 + 01-11 CSP gap 走完。
+**Stopped at**: `/gsd-execute-phase 1` inline 路径完成 — 01-10-SUMMARY 写入并 commit；user mid-session 中断追加要求：(a) 收尾前再跑 `/gsd-verify-work 1` 生成 4-bucket 测试清单 HTML（`visual/window/motion/perf` 硬约束）；(b) 视觉修改建议本 phase 内解决；(c) 按 Phase 1 类别跑 Tier-3 + closeout GSD 命令。Next: 启动 `/gsd-verify-work 1`。
+**Resume file**: 无 — HANDOFF.json + .continue-here 均在 commit `0d3fd1f` 清理过；本次 resume 不重生成。
+
+**Prior pause context (历史保留)**: `/gsd-pause-work` (2026-05-11 19:48 — paused for `/gsd-explore test-automation` Socratic session). Earlier pause 2026-05-09 ~22:50 (window-drag blocker) was resolved via plan 01-10 H4 capability fix (commit `fcd939a`); the Last action description below is from that earlier pause and is **historical** (preserved for the window-drag debugging trail). For why STATE.md was 3 days stale see `.planning/forensics/report-20260512-102126.md`.
 **Last action**: Phase 1 paused mid-debug. 8 of 9 plans done (01-01..06 + 01-08 + 01-09); 01-07 dogfood checkpoint blocked. After plan 01-09 (UI pixel-level recreation + streaming render fix) merged successfully, dogfood walkthrough surfaced two Tauri-specific bugs: (1) traffic-light ghost halo from prototype's fake `.tl` DOM colliding with real macOS overlay traffic-lights — FIXED via commit `d84c1ad` (removed fake DOM, added 70px `.titlebar-spacer`). (2) Window not draggable from any edge ("钉死在屏幕上") — UNRESOLVED. Four fix attempts tried in this session: added `data-tauri-drag-region` on `.titlebar` (Tauri 2 syntax, replacing prototype's Electron-only `-webkit-app-region: drag`); added explicit JS fallback in `+page.svelte` onMount that imports `@tauri-apps/api/window` getCurrentWindow() and binds a global mousedown listener calling `startDragging()`; marked `.stage` as drag-region true and `.window` as drag-region "false" so matte bezel + titlebar resolve as drag targets while inner content opts out; added `cursor: grab/grabbing` for visual feedback. None solved the bug — user reports drag still fails on all edges. Hypotheses for next session in `.continue-here.md` (H1 Tauri JS bridge missing in dev webview / H2 HMR de-armed listener / H3 decorations:true+Overlay flaky on Tauri 2 macOS / H4 missing core:window:allow-start-dragging permission). User's MacBook 13" hits the `@media (max-width: 1340px)` fallback so `.stage` matte bezel is invisible (window 100vw × 100vh) — only the 36px titlebar is theoretically draggable, and even that doesn't work.
 
 **Earlier context (preserved for completeness)**: Phase 1 cross-AI plan review converged at HIGH=0 after cycle 2 (Codex, commit `f74c6e0`). 5 MEDIUMs + 1 LOW from cycle 1 carried forward and were absorbed during execution (PGID test mismatch in 01-04, A-10 connection state non-reactive in 01-05, ChatPanel try/catch in 01-06, ToolUseGroup state leak in 01-03+01-06, A-09 "Total" semantics LOW in 01-06). Plans 01-08 (CSP nonce) and 01-09 (UI pixel recreation + streaming render) added as gap closures during execution. T-1-46/47/48 closed; T-1-49 (window drag) NEW — to be opened when root-caused next session.
