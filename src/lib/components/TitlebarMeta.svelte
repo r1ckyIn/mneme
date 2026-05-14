@@ -21,11 +21,15 @@
 
   // A-10: vault path read from localStorage (default "~/Mneme/usyd-2026s1" for the
   // user's USYD S1 2026 vault). Phase 2 wires this through the settings UI.
+  // WR-07 fix (2026-05-14): surface read failures via console.warn so a
+  // misconfigured localStorage (or webview throwing under privacy mode) is
+  // visible during development. User-perceived behavior unchanged.
   let vaultPath = $state("~/Mneme/usyd-2026s1");
   onMount(() => {
     try {
       vaultPath = localStorage.getItem("mneme.vault.path") ?? "~/Mneme/usyd-2026s1";
-    } catch {
+    } catch (err) {
+      console.warn("[titlebar-meta] failed to read vault.path from localStorage", err);
       // localStorage unavailable — keep the default
     }
   });

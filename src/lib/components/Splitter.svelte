@@ -46,8 +46,11 @@
   let middleRatio = $state(0.40);
   let dragging = $state<"left" | "right" | null>(null);
 
-  // Restore on mount — try/catch swallows JSON.parse errors and falls back
-  // to the 30/40/30 defaults declared above.
+  // Restore on mount — try/catch tolerates JSON.parse errors and falls back
+  // to the 30/40/30 defaults declared above. WR-07 fix (2026-05-14): surface
+  // the parse error via console.warn so a corrupted localStorage entry that
+  // silently reverts the layout every session is visible during development.
+  // User-perceived behavior unchanged (defaults still apply).
   onMount(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -58,8 +61,9 @@
           middleRatio = clamp(parsed.middleRatio, RATIO_MIN, RATIO_MAX);
         }
       }
-    } catch {
-      // Default values stand — no surfacing, this is a best-effort restore.
+    } catch (err) {
+      console.warn("[splitter] failed to restore layout from localStorage", err);
+      // Default values stand — best-effort restore.
     }
   });
 
