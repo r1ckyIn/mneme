@@ -14,7 +14,7 @@ Status legend:
 ### Foundation
 
 - [ ] **REQ-02 · Tauri 2 shell spawns local `claude` CLI subprocess**
-  Acceptance: app shell can spawn / pause / kill `claude --print --permission-mode bypassPermissions --output-format stream-json --include-partial-messages --verbose <prompt>`; JSONL output is buffered, parsed, and dispatched by `type`; `result` event closes session cleanly with cost/duration shown. (Spike-002 validated; productionize in P1.)
+  Acceptance: app shell can spawn / pause / kill `claude --print --permission-mode bypassPermissions --output-format stream-json --include-partial-messages --verbose <prompt>`; JSONL output is buffered, parsed, and dispatched by `type`; `result` event closes session cleanly with cost/duration shown. (Spike-002 validated; productionize in P1.) Multi-turn continuity within a single app launch: prompts 2+ pass `--resume <session_id>` (id captured from the first `system/init` event) so Claude retains memory of prior turns; the connection-state indicator stays "connected" across per-prompt subprocess close events and only flips to "disconnected" on app close (onDestroy / Cmd+Q PGID kill) or spawn-or-register error. plan 01-12 commit `4e46e81` closes this acceptance gap (see `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-AMENDMENT-2026-05-14.md` A-16); full `--system-prompt` replacement (per-course rule injection) is Phase 9 REQ-17 scope.
 
 ### UI Shell
 
