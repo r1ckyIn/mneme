@@ -614,22 +614,19 @@
     background: var(--color-cream);
   }
 
+  /* Composer input shell — Mneme.html L870-1022. User feedback 2026-05-14:
+     keep the resting border + soft shadow; ONLY remove the orange focus-ring
+     glow (was: border-color shift + 3px rgba(217,119,87,0.08) outer-glow on
+     :focus-within). Resting border-soft + shadow-1 stay so the input still
+     reads as a discrete surface; the focus state inherits the resting frame
+     unchanged. */
   .input-shell {
     position: relative;
     background: var(--color-cream);
     border: 1px solid var(--border-soft);
     border-radius: 16px;
-    transition:
-      border-color var(--duration-base) var(--ease-out),
-      box-shadow var(--duration-base) var(--ease-out);
     box-shadow: var(--shadow-1);
     padding: 4px 4px 6px;
-  }
-  .input-shell:focus-within {
-    border-color: rgba(217, 119, 87, 0.45);
-    box-shadow:
-      0 0 0 3px rgba(217, 119, 87, 0.08),
-      var(--shadow-1);
   }
 
   textarea {

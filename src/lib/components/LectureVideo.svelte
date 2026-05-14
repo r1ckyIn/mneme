@@ -11,11 +11,10 @@
 </script>
 
 <section class="preview-slot" data-slot="video">
+  <!-- User feedback 2026-05-14: drop the breadcrumb ancestors; only show the
+       leaf filename. Parent course/term context is already implied by the
+       FileArea pane on the left + the active course in the titlebar. -->
   <span class="slot-path">
-    <span>~/Mneme/usyd-2026s1</span>
-    <span class="sep">/</span>
-    <span>COMP3027</span>
-    <span class="sep">/</span>
     <span class="leaf">L06 — Dynamic Programming.mp4</span>
   </span>
   <DragHandle />
@@ -64,7 +63,6 @@
     text-overflow: ellipsis;
     user-select: text;
   }
-  .slot-path .sep { color: var(--color-warm-dark-mute); opacity: 0.55; }
   .slot-path .leaf { color: var(--color-warm-dark); }
 
   .preview-placeholder {

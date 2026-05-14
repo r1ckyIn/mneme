@@ -33,7 +33,7 @@
     { name: "transcripts", kind: "folder", size: "—", type: "Folder", mtime: "2026-05-07 22:10" },
     { name: "notes.md", kind: "md", size: "12 KB", type: "MD file", mtime: "2026-05-08 16:51" },
     { name: "tutorial-06.pdf", kind: "pdf", size: "1.2 MB", type: "PDF file", mtime: "2026-05-06 13:45" },
-    { name: "L06 — Dynamic Programming.mp4", kind: "video", size: "610 MB", type: "MP4 file", mtime: "2026-05-06 11:02", active: true },
+    { name: "L06 — Dynamic Programming.mp4", kind: "video", size: "610 MB", type: "MP4 file", mtime: "2026-05-06 11:02" },
     { name: "L05 — Greedy Algorithms.mp4", kind: "video", size: "482 MB", type: "MP4 file", mtime: "2026-04-29 09:14" },
   ];
 
