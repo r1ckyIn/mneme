@@ -37,9 +37,16 @@ POLL_INTERVAL_MS=100         # 25 polls × 100ms = 2.5s window
 CUMULATIVE_ORPHANS=0
 CUMULATIVE_QUIT_DEADLINE_MISSES=0
 
+# WR-12 fix (2026-05-14): the orphan grep used to also match `[m]cp[ -]`,
+# `[r]g[ -]`, and `[r]ipgrep` — patterns that fire on ANY rg/ripgrep/mcp
+# process in `ps aux`, including the developer's IDE searching the project
+# or a separate Claude Code session in another terminal. Scope the count to
+# `claude --print` only (the Phase 1 subprocess of interest). MCP / rg /
+# ripgrep orphans are a Phase 1.x concern (when MCP integration ships) and
+# can be added back as a separate, narrower selector at that point.
 orphan_count() {
   ps aux \
-    | grep -E "[c]laude --print|[m]cp[ -]|[r]g[ -]|[r]ipgrep" \
+    | grep -E "[c]laude --print" \
     | grep -v "grep -E" \
     | wc -l \
     | tr -d ' '
@@ -58,7 +65,7 @@ cleanup_existing_orphans() {
   if [[ "$pre_count" != "0" ]]; then
     echo "[lifecycle] WARNING: $pre_count pre-existing orphan(s) detected before harness starts."
     echo "[lifecycle] Listing for manual review:"
-    ps aux | grep -E "[c]laude --print|[m]cp[ -]|[r]g[ -]|[r]ipgrep" | grep -v "grep -E"
+    ps aux | grep -E "[c]laude --print" | grep -v "grep -E"
     echo "[lifecycle] Run 'pkill -f \"claude --print\"' to clean these up, or proceed with awareness."
     read -r -p "Proceed anyway? (y/N) " ans
     if [[ "$ans" != "y" && "$ans" != "Y" ]]; then
@@ -173,7 +180,7 @@ run_one_cycle() {
   echo "[lifecycle]   orphan count after cycle $n: $orphans"
   if [[ "$orphans" != "0" ]]; then
     echo "[lifecycle]   ORPHAN DETAIL:"
-    ps aux | grep -E "[c]laude --print|[m]cp[ -]|[r]g[ -]|[r]ipgrep" | grep -v "grep -E" || true
+    ps aux | grep -E "[c]laude --print" | grep -v "grep -E" || true
     CUMULATIVE_ORPHANS=$((CUMULATIVE_ORPHANS + orphans))
   fi
 
