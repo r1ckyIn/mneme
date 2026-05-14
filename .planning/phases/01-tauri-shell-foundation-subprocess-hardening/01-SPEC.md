@@ -5,6 +5,13 @@
 **Requirements:** 6 locked
 **Amendment:** 2026-05-09 — Round 5 prototype handoff alignment (12 deltas A-04 through A-15) — see [`01-AMENDMENT-2026-05-09.md`](./01-AMENDMENT-2026-05-09.md). Where this SPEC.md conflicts with the amendment, **the amendment wins** until next milestone re-sync.
 
+**Amendment:** 2026-05-14 — Plan 01-12 dogfood gap closure (3 deltas A-16 / A-17 / A-18) — see [`01-AMENDMENT-2026-05-14.md`](./01-AMENDMENT-2026-05-14.md). The numbered patch list below extends the 4-entry list originally drafted in `01-CONTEXT.md` L36-42 ("SPEC.md amendments required by this discussion — plan-phase to apply as a SPEC patch") with items 5 + 6, propagating the AMENDMENT-2026-05-14 contract changes (A-16 + A-17 + A-18) into the authoritative SPEC layer per plan 01-13 (wave 10, pure-docs follow-on to plan 01-12).
+
+**SPEC.md amendments required by this discussion** — plan-phase to apply as a SPEC patch (items 1-4 sourced from `01-CONTEXT.md` L36-42; items 5 + 6 added by plan 01-13 referencing plan 01-12 commit `4e46e81`):
+
+5. **REQ-2 spawn-args (2026-05-14 plan 01-12 commit `4e46e81`)**: add `--resume <session_id>` (optional, present on prompts 2+ within a single app launch) and `--append-system-prompt <CHAT_RENDERING_HINTS>` (always present on every prompt). See `01-AMENDMENT-2026-05-14.md` A-16 + A-17. Full `--system-prompt` replacement remains BANNED at audit checks 4b + 9 — Phase 9 REQ-17 per-course rules scope.
+6. **REQ-5 sanitize (2026-05-14 plan 01-12 commit `4e46e81`)**: dogfood-checklist expectation — Claude reply to math prompt MUST contain rendered KaTeX only, no ASCII-fallback line; heading hierarchy h1/h2/h3 must render at ≥2px scale step apart; `<hr>` renders as a 1px soft-border separator. See `01-AMENDMENT-2026-05-14.md` A-17 + A-18.
+
 ## Goal
 
 Bootstrap a from-scratch production Tauri 2 app at the repo root (lifting only the locked patterns from spike-002), wired with a single-session Claude chat that satisfies REQ-01 (three-pane resizable shell), REQ-02 (Claude CLI subprocess), and REQ-10 (agentic search default with `--add-dir` scope), while closing the three CRITICAL pitfalls relevant to Phase 1 (zombies / capability wildcards / streaming XSS). Delivery threshold is `npm run tauri dev` runnable — no `.app` packaging, no codesign, no notarization in this phase.
