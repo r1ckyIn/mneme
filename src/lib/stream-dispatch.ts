@@ -18,7 +18,10 @@
 //     (collapsed). Header text is computed by the render layer from
 //     .toolUses[] via gerundHeader / pastTenseHeader (exported below).
 
-import type { ClaudeEvent as VendorClaudeEvent } from "../../vendor/claude-code-parser/src/types/protocol";
+import type {
+  ClaudeEvent as VendorClaudeEvent,
+  ClaudeContent,
+} from "../../vendor/claude-code-parser/src/types/protocol";
 
 // Re-export for downstream consumers (plan 01-06 imports ClaudeEvent from
 // $lib/stream-dispatch directly so it does not have to know the vendor path).
@@ -56,6 +59,13 @@ export type DispatchState = {
   totalCostUsd?: number;
   totalInputTokens: number;     // A-09 accumulator for usage meter
   toolUseGroup: ToolUseGroup;   // A-14 collapsible state machine
+  // WR-03 fix (2026-05-14): the message-ID counter MUST live on the state
+  // object, not at module scope. Module-scope state would be shared across
+  // every freshState() instance in the same JS context, contradicting the
+  // "no-state-leak" contract pinned by tests/tool-use-collapsible.test.ts:140.
+  // Phase 3 multi-session dispatch (N concurrent streams sharing the module)
+  // would otherwise see monotonically-merged IDs.
+  _uidCounter: number;
 };
 
 export function freshState(): DispatchState {
@@ -65,6 +75,7 @@ export function freshState(): DispatchState {
     resultReceived: false,
     totalInputTokens: 0,
     toolUseGroup: { open: false, toolUses: [] },
+    _uidCounter: 0,
   };
 }
 
@@ -80,43 +91,83 @@ function escapeHtmlMin(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-let msgCounter = 0;
-function uid(): string {
-  return `m_${Date.now()}_${msgCounter++}`;
+// WR-03 fix: caller-provided counter via state. No module-level mutation.
+function uid(state: DispatchState): string {
+  return `m_${Date.now()}_${state._uidCounter++}`;
 }
 
 function findOrCreateStreamingAssistant(state: DispatchState): Msg {
   const last = state.messages[state.messages.length - 1];
   if (last && last.role === "assistant" && last.streaming) return last;
-  const fresh: Msg = { id: uid(), role: "assistant", text: "", streaming: true };
+  const fresh: Msg = { id: uid(state), role: "assistant", text: "", streaming: true };
   state.messages.push(fresh);
   return fresh;
+}
+
+// WR-02 fix (2026-05-14): NDJSON arriving from the `claude` subprocess is the
+// untrusted-input attack surface. The vendor `ClaudeEvent` type already
+// declares the structural fields we read (`subtype`, `session_id`, `model`,
+// `message`, `total_cost_usd`, `duration_ms`, `usage`) so we use the vendor
+// type directly inside each case arm. The few extension fields the vendor
+// does NOT model (e.g. `event.delta.text` on stream_event, `block.input` on
+// tool_use, `block.tool_use_id` on tool_result) get narrowed locally with
+// `typeof` / `in` checks at the parse boundary. No `as any` survives.
+//
+// `cwd` is the one field the vendor doesn't model on system/init; we read it
+// off the event via an `in` check rather than casting to any.
+function readString(obj: unknown, key: string): string | undefined {
+  if (typeof obj === "object" && obj !== null && key in obj) {
+    const v = (obj as Record<string, unknown>)[key];
+    if (typeof v === "string") return v;
+  }
+  return undefined;
 }
 
 export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
   switch (evt.type) {
     case "system": {
-      const e = evt as any;
-      if (e.subtype === "init") {
+      // vendor ClaudeEvent already types subtype/model/session_id; cwd is a
+      // system/init-only field the vendor doesn't model — read via readString.
+      if (evt.subtype === "init") {
         // D-18 telemetry — UI dot only; dev console for model + session
-        console.log(`[claude:init] model=${e.model} session=${e.session_id} cwd=${e.cwd}`);
-      } else if (e.subtype === "error") {
+        console.log(
+          `[claude:init] model=${evt.model ?? "?"} session=${evt.session_id ?? "?"} cwd=${readString(evt, "cwd") ?? "?"}`,
+        );
+      } else if (evt.subtype === "error") {
         // SPEC L93: surface raw subprocess error message in chat (HTML-escaped).
         // UI-SPEC §"System bubble — error variant" handles the visual.
-        const text = escapeHtmlMin(String(e.message ?? "unknown error"));
-        state.messages.push({ id: uid(), role: "system", text, streaming: false });
+        // The system/error event carries `.message` at the EVENT root (not
+        // .message.content[]). vendor types .message as ClaudeMessage which
+        // would not match a raw string — accept either shape defensively.
+        const rawMessage = readString(evt, "message");
+        const text = escapeHtmlMin(rawMessage ?? "unknown error");
+        state.messages.push({ id: uid(state), role: "system", text, streaming: false });
       } else {
-        console.log(`[claude:system] ${JSON.stringify(e).slice(0, 200)}`);
+        console.log(`[claude:system] ${JSON.stringify(evt).slice(0, 200)}`);
       }
       return;
     }
 
     case "stream_event": {
-      const e = evt as any;
-      const delta = e.event?.delta;
-      if (delta?.type === "text_delta" && typeof delta.text === "string") {
-        const cur = findOrCreateStreamingAssistant(state);
-        cur.text += delta.text;
+      // vendor ClaudeEvent does NOT model the `event.delta.text` path —
+      // narrow via property checks at the parse boundary. Defensive against
+      // an adversarial NDJSON line like `{"event":{"delta":{"type":"text_delta","text":["a","b"]}}}`
+      // (array instead of string) — the typeof guard rejects it.
+      const eventField = (evt as { event?: unknown }).event;
+      if (typeof eventField === "object" && eventField !== null && "delta" in eventField) {
+        const delta = (eventField as { delta?: unknown }).delta;
+        if (
+          typeof delta === "object" &&
+          delta !== null &&
+          "type" in delta &&
+          (delta as { type?: unknown }).type === "text_delta" &&
+          "text" in delta &&
+          typeof (delta as { text?: unknown }).text === "string"
+        ) {
+          const text = (delta as { text: string }).text;
+          const cur = findOrCreateStreamingAssistant(state);
+          cur.text += text;
+        }
       }
       // Other delta types (input_json_delta) are tool-use streaming — ignored
       // for chat display; reflected by the consolidated assistant event.
@@ -124,34 +175,37 @@ export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
     }
 
     case "assistant": {
-      const e = evt as any;
-      const blocks: any[] = e.message?.content ?? [];
+      // vendor types: evt.message?.content is ClaudeContent[] | undefined
+      const blocks: ClaudeContent[] = evt.message?.content ?? [];
       for (const block of blocks) {
-        switch (block?.type) {
+        switch (block.type) {
           case "text":
             // SKIP — already streamed via stream_event (spike landmine #7).
             break;
           case "tool_use": {
+            // block.input is unknown per vendor type — JSON.stringify accepts it.
             const inputStr = JSON.stringify(block.input ?? {});
             const truncatedInput = inputStr.length > 200 ? inputStr.slice(0, 197) + "..." : inputStr;
-            const preview = `${block.name}: ${truncatedInput}`;
-            const toolUseId = String(block.id ?? uid());
+            // block.name is optional string per vendor type
+            const toolName = block.name ?? "tool";
+            const preview = `${toolName}: ${truncatedInput}`;
+            const toolUseId = String(block.id ?? uid(state));
             // A-14: open the collapsible group on first tool_use of this turn,
             // and append an entry. Subsequent tool_uses in the same turn append
             // without re-opening (already open).
             state.toolUseGroup.open = true;
             state.toolUseGroup.toolUses.push({
               id: toolUseId,
-              name: block.name,
+              name: toolName,
               inputPreview: truncatedInput,
               completed: false,
             });
             state.messages.push({
-              id: uid(),
+              id: uid(state),
               role: "tool",
               text: preview,
               streaming: false,
-              toolName: block.name,
+              toolName,
               toolInputPreview: preview.slice(0, 200),
               toolGroupId: toolUseId,
             });
@@ -173,10 +227,13 @@ export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
     }
 
     case "user": {
-      const e = evt as any;
-      const blocks: any[] = e.message?.content ?? [];
+      // vendor types: evt.message?.content is ClaudeContent[] | undefined.
+      // block.tool_use_id and block.content are typed in ClaudeContent.
+      const blocks: ClaudeContent[] = evt.message?.content ?? [];
       for (const block of blocks) {
-        if (block?.type === "tool_result") {
+        if (block.type === "tool_result") {
+          // block.content is unknown per vendor type (polymorphic) — extract
+          // string defensively. typeof guard rejects array/object payloads.
           const content = typeof block.content === "string"
             ? block.content
             : JSON.stringify(block.content ?? "").slice(0, 200);
@@ -187,7 +244,7 @@ export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
             if (entry) entry.completed = true;
           }
           state.messages.push({
-            id: uid(),
+            id: uid(state),
             role: "tool",
             text: `tool_result: ${content.length > 200 ? content.slice(0, 197) + "..." : content}`,
             streaming: false,
@@ -203,18 +260,20 @@ export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
       return;
 
     case "result": {
-      const e = evt as any;
+      // vendor ClaudeEvent already types total_cost_usd / duration_ms / usage.
       state.resultReceived = true;
-      if (typeof e.total_cost_usd === "number") {
-        state.totalCostUsd = e.total_cost_usd;
+      if (typeof evt.total_cost_usd === "number") {
+        state.totalCostUsd = evt.total_cost_usd;
       }
       // A-09 accumulator for usage meter (01-06 reads state.totalInputTokens).
       // The vendor protocol types `usage` as `unknown` because the upstream
-      // shape is loose — we extract input_tokens defensively.
-      const usage = e.usage as { input_tokens?: number } | undefined;
-      const inputTokens = usage?.input_tokens;
-      if (typeof inputTokens === "number") {
-        state.totalInputTokens += inputTokens;
+      // shape is loose — narrow with a property check rather than casting.
+      const usage = evt.usage;
+      if (typeof usage === "object" && usage !== null && "input_tokens" in usage) {
+        const inputTokens = (usage as { input_tokens?: unknown }).input_tokens;
+        if (typeof inputTokens === "number") {
+          state.totalInputTokens += inputTokens;
+        }
       }
       // A-14: collapse the tool-use group on result. Render layer (01-06)
       // re-emits <details> without `open`. The .toolUses[] array is preserved
@@ -226,8 +285,8 @@ export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
         if (m.role === "assistant" && m.streaming) m.streaming = false;
       }
       console.log(
-        `[claude:result] cost=$${e.total_cost_usd ?? "?"} ` +
-          `duration=${e.duration_ms ?? "?"}ms usage=${JSON.stringify(e.usage ?? {})}`,
+        `[claude:result] cost=$${evt.total_cost_usd ?? "?"} ` +
+          `duration=${evt.duration_ms ?? "?"}ms usage=${JSON.stringify(evt.usage ?? {})}`,
       );
       return;
     }
