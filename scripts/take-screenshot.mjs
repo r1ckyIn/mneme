@@ -1,4 +1,19 @@
+// WR-10 fix (2026-05-14): paths now resolve relative to this script's own
+// location. Previously the script wrote screenshots to a relative path off
+// process.cwd() AND used `file://${process.cwd()}/...` for the prototype URL,
+// both of which silently produced wrong-state output when the script was run
+// from any directory other than the repo root.
+
 import { chromium } from 'playwright';
+import { fileURLToPath } from 'node:url';
+import { resolve, dirname } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(__dirname, '..');
+const SCREENSHOT_DIR = resolve(
+  REPO_ROOT,
+  '.planning/phases/01-tauri-shell-foundation-subprocess-hardening/design/screenshots',
+);
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -36,14 +51,17 @@ import { chromium } from 'playwright';
   console.log("counts:", { titleEl, dragHandles, fileArea, grid, middleStack, bottomRow, settings });
 
   await page.screenshot({
-    path: '.planning/phases/01-tauri-shell-foundation-subprocess-hardening/design/screenshots/01-05-implementation.png',
+    path: resolve(SCREENSHOT_DIR, '01-05-implementation.png'),
     fullPage: false,
   });
   console.log("Implementation screenshot saved (1280x860 viewport)");
 
   // === Prototype baseline — screenshot the inner .window element only ===
   await page.setViewportSize({ width: 1340, height: 920 });
-  const protoPath = `file://${process.cwd()}/.planning/handoff/2026-05-09-mneme-prototype/mneme/project/Mneme.html`;
+  const protoPath = `file://${resolve(
+    REPO_ROOT,
+    '.planning/handoff/2026-05-09-mneme-prototype/mneme/project/Mneme.html',
+  )}`;
   console.log("Loading prototype:", protoPath);
   await page.goto(protoPath, { waitUntil: 'networkidle', timeout: 20000 });
   await page.waitForTimeout(2500);
@@ -54,13 +72,13 @@ import { chromium } from 'playwright';
   console.log("prototype .window count:", exists);
   if (exists > 0) {
     await windowEl.screenshot({
-      path: '.planning/phases/01-tauri-shell-foundation-subprocess-hardening/design/screenshots/prototype-baseline.png',
+      path: resolve(SCREENSHOT_DIR, 'prototype-baseline.png'),
     });
     console.log("Prototype .window-only screenshot saved (1280x860 box)");
   } else {
     // Fallback to full-page if .window not found
     await page.screenshot({
-      path: '.planning/phases/01-tauri-shell-foundation-subprocess-hardening/design/screenshots/prototype-baseline.png',
+      path: resolve(SCREENSHOT_DIR, 'prototype-baseline.png'),
       fullPage: false,
     });
   }

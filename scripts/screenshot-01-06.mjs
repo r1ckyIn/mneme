@@ -1,16 +1,29 @@
 #!/usr/bin/env node
 // Playwright screenshot harness for plan 01-06 visual verification.
 // Captures prototype + dev impl at 1280x860 (Tauri initial window size per D-05).
+//
+// WR-10 fix (2026-05-14): paths now resolve relative to this script's own
+// location, NOT the deleted .claude/worktrees/agent-aeff29bb776aaf470/ path.
+// The prior hard-coded path pointed at a per-session worktree that no longer
+// exists; running the script would either error out or write into a directory
+// unrelated to the current planning state.
 
 import { chromium } from "playwright";
-import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { resolve, dirname } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(__dirname, "..");
 
 const SCREENSHOT_DIR = resolve(
-  "/Users/qinyuan/claude/r1ckyIn_GitHub/mneme/.claude/worktrees/agent-aeff29bb776aaf470/.planning/phases/01-tauri-shell-foundation-subprocess-hardening/design/screenshots"
+  REPO_ROOT,
+  ".planning/phases/01-tauri-shell-foundation-subprocess-hardening/design/screenshots",
 );
 
-const PROTOTYPE_PATH =
-  "file:///Users/qinyuan/claude/r1ckyIn_GitHub/mneme/.claude/worktrees/agent-aeff29bb776aaf470/.planning/handoff/2026-05-09-mneme-prototype/mneme/project/Mneme.html";
+const PROTOTYPE_PATH = `file://${resolve(
+  REPO_ROOT,
+  ".planning/handoff/2026-05-09-mneme-prototype/mneme/project/Mneme.html",
+)}`;
 const DEV_URL = "http://localhost:5173/";
 const PREVIEW_URL = "http://localhost:4173/";
 
