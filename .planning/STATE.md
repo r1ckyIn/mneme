@@ -177,7 +177,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ### Pending Todos
 
-14 pending — captured during sessions, surface at appropriate phase:
+15 pending — captured during sessions, surface at appropriate phase:
 
 - **Evaluate thea for question generation** (research, 2026-05-07, **product REJECTED · algorithm-layer worth a Phase 10 spike**) — thea.study (closed cloud SaaS, K-12) fails KP-01/KP-02/KD-06/form-factor as a dependency. Separately, the *algorithm* — AI takes source material → produces good concept-review items — is a real engineering problem mneme also has to solve in Phase 10 (REQ-09 concept review, not flashcard). Recommended path: when approaching Phase 10, promote to `/gsd-spike concept-review-item-generation` (½–1 day timebox; black-box probe of thea + Claude API prompt-pipeline experiment against a real USYD lecture). File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before `/gsd-discuss-phase 10`.
 
@@ -206,6 +206,8 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - **抽 fsrs-review spec（FSRS-6 概念页复习）** (algorithm / review, 2026-05-14, **seed**) — OpenSpec v0.3 工作台 user 选 seed。算法（FSRS-6）+ 库（ts-fsrs）+ 单元（概念页非卡片）已锁，但 **AI 出题算法**是开放问题 — 跟同期 `2026-05-07-evaluate-thea-for-question-generation` todo 联动。抽 spec 前应跑 `/gsd-spike concept-review-item-generation`，决策出题策略后写入 spec。File: `.planning/todos/pending/2026-05-14-spec-fsrs-review-concept-page.md`. Surface trigger: thea spike 跑完 + memory-engine ship 后 + `/gsd-plan-phase 10` 启动前。
 
 - **抽 caption-bilingual spec（Echo360 VTT → Claude 翻译 → 双语 VTT）** (video / i18n, 2026-05-14, **note**) — OpenSpec v0.3 工作台 user 选 note（内容稳定等触发顺手做，不是早期想法）。spec 实质内容已在 STACK.md §9 写完，5-10 分钟抽出，但**完全依赖 echo360-video spike 结果**。spike 通过即抽，spike 失败 spec 重设计（降回 seed）。File: `.planning/todos/pending/2026-05-14-spec-caption-bilingual-vtt.md`. Surface trigger: Phase 5 echo360-video spike 通过 + `/gsd-plan-phase 6` 启动前。
+
+- **抽 voice-input spec（REQ-19 — OSS 本地 STT）** (ux / input, 2026-05-14, **seed**) — Stage-3 mapping audit 补遗漏 — OpenSpec v0.3 决策工作台当初没把 voice-input 列进按钮（_INDEX 标"暂不切等 spike"），其他所有 v1/v1.x REQ 都有 spec 或 capture，voice-input 是唯一遗漏。REQ-19 在 2026-05-07 从 OOS-09 lifted 上来。phase 未定 + 3 候选未选（whisper.cpp / distil-whisper / Vosk）+ Intel Mac CPU 推理延迟未实测。File: `.planning/todos/pending/2026-05-14-spec-voice-input-oss-stt.md`. Surface trigger: `/gsd-spike voice-input-intel-mac-stt-latency` 跑完。
 
 ---
 

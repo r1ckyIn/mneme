@@ -97,7 +97,7 @@
 | **REQ-09 + REQ-15** | FSRS-6 concept review + focus mode | seed → `.planning/todos/pending/2026-05-14-spec-fsrs-review-concept-page.md`（等 thea spike） |
 | **REQ-17** | Per-course system prompts | `openspec/specs/per-course-rules.md` |
 | **REQ-18** | Document → markdown（PDF MinerU + Office markitdown） | `openspec/specs/document-ingestion.md` |
-| **REQ-19** | Voice input via OSS STT | 暂未抽 — 等 Intel Mac CPU latency spike |
+| **REQ-19** | Voice input via OSS STT | seed → `.planning/todos/pending/2026-05-14-spec-voice-input-oss-stt.md`（等 Intel Mac CPU STT latency spike） |
 
 ---
 
@@ -138,18 +138,18 @@
 
 | KD | Decision | spec / 位置 |
 |----|----------|-------------|
-| **KD-01** | Stack: Tauri 2 + SvelteKit + adapter-static + tauri-plugin-shell | `specs/claude-subprocess.md` |
-| **KD-02** | Frontend: marked + KaTeX + DOMPurify + Svelte 5 runes | `specs/claude-subprocess.md` + `specs/editor.md` |
-| **KD-03** | Rust ≥ 1.88（pinned `rust-toolchain.toml`） | `specs/claude-subprocess.md` |
-| **KD-04** | Echo360 via Tauri webview + persistent USYD SSO cookie | `specs/echo360-video.md` |
-| **KD-05** | Citations API for anchored mode | `specs/anchored-mode.md` |
-| **KD-06** | FSRS-6 via ts-fsrs（open-spaced-repetition org，MIT） | seed → fsrs-review |
-| **KD-07** | No vector DB by default；agentic search replaces RAG | `specs/agentic-search.md` |
-| **KD-08** | Cytoscape mind-map + Excalidraw whiteboard + KG always-on | `specs/mindmap-viz.md` + seed → whiteboard |
-| **KD-09** | Tiptap block editor；markdown as storage | `specs/editor.md` |
-| **KD-10** | Three-tier memory architecture — **library DEFERRED until Phase 5.5** | `specs/memory-engine.md`（BLOCKED） |
-| **KD-11** | Phase entry gate — Echo360 spike must pass before Phase 6 | `specs/echo360-video.md` |
-| **KD-12** | `claude-code-parser` (MIT) vendored，NOT npm dep | `specs/claude-subprocess.md` |
+| **KD-01** | Stack: Tauri 2 + SvelteKit + adapter-static + tauri-plugin-shell | `openspec/specs/claude-subprocess.md` |
+| **KD-02** | Frontend: marked + KaTeX + DOMPurify + Svelte 5 runes | `openspec/specs/claude-subprocess.md` + `openspec/specs/editor.md` |
+| **KD-03** | Rust ≥ 1.88（pinned `rust-toolchain.toml`） | `openspec/specs/claude-subprocess.md` |
+| **KD-04** | Echo360 via Tauri webview + persistent USYD SSO cookie | `openspec/specs/echo360-video.md` |
+| **KD-05** | Citations API for anchored mode | `openspec/specs/anchored-mode.md` |
+| **KD-06** | FSRS-6 via ts-fsrs（open-spaced-repetition org，MIT） | seed → `.planning/todos/pending/2026-05-14-spec-fsrs-review-concept-page.md` |
+| **KD-07** | No vector DB by default；agentic search replaces RAG | `openspec/specs/agentic-search.md` |
+| **KD-08** | Cytoscape mind-map + Excalidraw whiteboard + KG always-on | `openspec/specs/mindmap-viz.md` + seed → `.planning/todos/pending/2026-05-14-spec-whiteboard-excalidraw-canvas.md` |
+| **KD-09** | Tiptap block editor；markdown as storage | `openspec/specs/editor.md` |
+| **KD-10** | Three-tier memory architecture — **library DEFERRED until Phase 5.5** | `openspec/specs/memory-engine.md`（BLOCKED） |
+| **KD-11** | Phase entry gate — Echo360 spike must pass before Phase 6 | `openspec/specs/echo360-video.md` |
+| **KD-12** | `claude-code-parser` (MIT) vendored，NOT npm dep | `openspec/specs/claude-subprocess.md` |
 | **KD-13** | Visual aesthetic system locked to Anthropic/Claude（per KP-09） | `.planning/threads/visual-design-system.md`（thread 而非 spec — 持续演化的工作流契约 + 美学锁 quick reference） |
 
 ---
@@ -158,10 +158,10 @@
 
 | RQ | Question | Status | Gate / 触发 |
 |----|----------|--------|------------|
-| **RQ-01** | Memory project survey（Mem0 / Cognee / Zep+Graphiti / agentmemory） | **BLOCKING** | Phase 7 entry — 4-project dogfood report；详 `specs/memory-engine.md` |
-| **RQ-02** | PDF → markdown library | ✓ **resolved** | → REQ-18 + `specs/document-ingestion.md`（MinerU 主选，2026-05-11 user 翻转 STACK 原推荐 Marker） |
+| **RQ-01** | Memory project survey（Mem0 / Cognee / Zep+Graphiti / agentmemory） | **BLOCKING** | Phase 7 entry — 4-project dogfood report；详 `openspec/specs/memory-engine.md` |
+| **RQ-02** | PDF → markdown library | ✓ **resolved** | → REQ-18 + `openspec/specs/document-ingestion.md`（MinerU 主选，2026-05-11 user 翻转 STACK 原推荐 Marker） |
 | **RQ-03** | Claude Code subprocess GUI wrapper community impls | ✓ **resolved** | Absorbed into Phase 1（TOKENICODE pattern study + claude-code-parser vendored per KD-12） |
-| **RQ-04** | GSD `graphify` skill reuse decision | Open | Resolved 在 `specs/memory-engine.md` Phase 7 design 时 |
+| **RQ-04** | GSD `graphify` skill reuse decision | Open | Resolved 在 `openspec/specs/memory-engine.md` Phase 7 design 时 |
 | **RQ-05** | Learning-method epistemic humility | **Open, non-blocking** | Ongoing throughout v1 ship + 3-month dogfood；findings → new REQ / OOS / KP candidates |
 
 ---
