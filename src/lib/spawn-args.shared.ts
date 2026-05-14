@@ -29,7 +29,16 @@
 //   account default which IS Opus 4.7 for this user)
 // - NO --system-prompt / --append-system-prompt in Phase 1 (Phase 9 introduces)
 
-export const SCRATCH_DIR_REGEX = `^/Users/[^/]+/\\.mneme/scratch$`;
+// WR-04 fix (2026-05-14): tighten the username body from `[^/]+` to
+// `[A-Za-z0-9_.\-]+`. The original `[^/]+` admitted POSIX-illegal-looking
+// shapes like `/Users/ /. mneme/scratch` (space-only username) which were
+// inconsistent with the docstring's "standard /Users/<name> home" claim.
+// The narrower set matches the POSIX portable-name character class used by
+// macOS Open Directory + Linux useradd. This is defensive narrowness for a
+// defense-in-depth check — the real authorization happens in the capability
+// JSON, but the SSOT regex is what gen-capabilities.ts copies into both
+// shell:allow-spawn and shell:allow-execute validators. Keep them aligned.
+export const SCRATCH_DIR_REGEX = `^/Users/[A-Za-z0-9_.\\-]+/\\.mneme/scratch$`;
 export const MAX_TURNS = "30";
 
 export function buildClaudeArgs(promptText: string, scratchDir: string): string[] {

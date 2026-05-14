@@ -85,6 +85,20 @@ describe("buildClaudeArgs SSOT (shared, browser-safe)", () => {
     expect(re.test("/Users/qinyuan/.mneme/scratch")).toBe(true);
   });
 
+  it("SCRATCH_DIR_REGEX rejects non-portable username shapes (WR-04)", () => {
+    // The tightened regex uses [A-Za-z0-9_.\-]+ — POSIX portable-name class.
+    const re = new RegExp(SCRATCH_DIR_REGEX);
+    // Space-only username is rejected (was admitted by the prior [^/]+ body).
+    expect(re.test("/Users/ /.mneme/scratch")).toBe(false);
+    // Username containing a space is rejected.
+    expect(re.test("/Users/qin yuan/.mneme/scratch")).toBe(false);
+    // Common valid macOS usernames pass.
+    expect(re.test("/Users/qinyuan/.mneme/scratch")).toBe(true);
+    expect(re.test("/Users/test.user/.mneme/scratch")).toBe(true);
+    expect(re.test("/Users/test-user/.mneme/scratch")).toBe(true);
+    expect(re.test("/Users/test_user/.mneme/scratch")).toBe(true);
+  });
+
   it("REJECTS scratchDir that does not match SCRATCH_DIR_REGEX (defense-in-depth)", () => {
     expect(() => buildClaudeArgs("hello", "/etc/hosts")).toThrow(/scratchDir/i);
     expect(() => buildClaudeArgs("hello", "/Users/qinyuan/.ssh")).toThrow(/scratchDir/i);
