@@ -58,10 +58,12 @@ export function renderKatex(src: string, displayMode = false): string {
       throwOnError: false, // never throw mid-render — surface error inline + escapeHtml
       displayMode,
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    // WR-11 fix (2026-05-14): narrow caught errors with `instanceof Error`
+    // per the project rule "Avoid `any`; use `unknown` and narrow safely".
     // throwOnError:false should already prevent throws; defense-in-depth.
-    const escapedMsg = escapeHtml(typeof e?.message === "string" ? e.message : String(e));
-    return `<span class="katex-error">[KaTeX error: ${escapedMsg}]</span>`;
+    const msg = e instanceof Error ? e.message : String(e);
+    return `<span class="katex-error">[KaTeX error: ${escapeHtml(msg)}]</span>`;
   }
   // KaTeX HTML output goes through DOMPurify with the SAME FORBID set + the hook —
   // KaTeX produces MathML/SVG which the default DOMPurify ALLOWED list mostly
