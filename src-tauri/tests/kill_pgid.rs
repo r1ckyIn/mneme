@@ -43,9 +43,13 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
-const PARENT_PID_FILE: &str = "/tmp/mneme_test_parent.pid";
-const CHILD1_PID_FILE: &str = "/tmp/mneme_test_child1.pid";
-const CHILD2_PID_FILE: &str = "/tmp/mneme_test_child2.pid";
+use tempfile::TempDir;
+
+// WR-09 fix (2026-05-14): swap hard-coded /tmp/mneme_test_*.pid paths for a
+// tempfile::TempDir so concurrent `cargo test` runs (or a future Phase 3
+// multi-session test using the same Python+setsid wrapper) cannot alias each
+// other's PID files. tempfile is already a dev-dep at src-tauri/Cargo.toml.
+// The TempDir handle is RAII — directory and files are removed on drop.
 
 /// Liveness probe via signal 0 (no syscall side effect on the target).
 /// Returns true if the PID exists and we have permission to signal it.
@@ -57,45 +61,49 @@ fn pid_alive(pid: u32) -> bool {
     kill(Pid::from_raw(pid as i32), None).is_ok()
 }
 
-/// Drop-with-best-effort cleanup of the temp PID files; tolerate prior-run residue.
-fn cleanup_pid_files() {
-    let _ = std::fs::remove_file(PARENT_PID_FILE);
-    let _ = std::fs::remove_file(CHILD1_PID_FILE);
-    let _ = std::fs::remove_file(CHILD2_PID_FILE);
-}
-
 #[test]
 fn kill_pgid_eradicates_whole_process_group() {
-    cleanup_pid_files();
+    // WR-09: per-test TempDir — auto-cleanup on drop, no collisions across
+    // concurrent test runs.
+    let tmp = TempDir::new().expect("tempdir");
+    let parent_pid_file = tmp.path().join("parent.pid");
+    let child1_pid_file = tmp.path().join("child1.pid");
+    let child2_pid_file = tmp.path().join("child2.pid");
 
     // Python wrapper:
     //   - os.setsid() → become PG leader (PGID = python_pid)
     //   - fork TWO `sleep 30` children (both inherit the PG)
-    //   - write all three PIDs to /tmp files (so Rust can probe each one)
+    //   - write all three PIDs to the per-test TempDir files (so Rust can
+    //     probe each one — paths are injected via format!)
     //   - wait forever (until killed)
     //
     // The whole point of forking TWO children is to assert in the test that
     // BOTH grandchildren die — closing the cycle-1 MEDIUM "test only checks
     // the leader, not the whole group" concern.
-    let script = r#"
+    let script = format!(
+        r#"
 import os, subprocess, time
 os.setsid()
 parent_pid = os.getpid()
-with open("/tmp/mneme_test_parent.pid", "w") as f:
+with open(r"{parent_pid_file}", "w") as f:
     f.write(str(parent_pid))
 c1 = subprocess.Popen(["sleep", "30"])
 c2 = subprocess.Popen(["sleep", "30"])
-with open("/tmp/mneme_test_child1.pid", "w") as f:
+with open(r"{child1_pid_file}", "w") as f:
     f.write(str(c1.pid))
-with open("/tmp/mneme_test_child2.pid", "w") as f:
+with open(r"{child2_pid_file}", "w") as f:
     f.write(str(c2.pid))
 # Block the parent so it stays alive until SIGTERM/SIGKILL arrives.
 # We sleep instead of wait() so SIGTERM interrupts cleanly.
 time.sleep(60)
-"#;
+"#,
+        parent_pid_file = parent_pid_file.display(),
+        child1_pid_file = child1_pid_file.display(),
+        child2_pid_file = child2_pid_file.display(),
+    );
 
     let mut parent = Command::new("python3")
-        .args(["-c", script])
+        .args(["-c", &script])
         .spawn()
         .expect("failed to spawn python3 test wrapper (is python3 on PATH?)");
     let observed_parent_pid = parent.id();
@@ -103,17 +111,17 @@ time.sleep(60)
     // Give python time to call setsid + fork both children + write the PID files.
     thread::sleep(Duration::from_millis(800));
 
-    let parent_pid: u32 = std::fs::read_to_string(PARENT_PID_FILE)
+    let parent_pid: u32 = std::fs::read_to_string(&parent_pid_file)
         .expect("parent PID file not written")
         .trim()
         .parse()
         .expect("parent PID file content not numeric");
-    let child1_pid: u32 = std::fs::read_to_string(CHILD1_PID_FILE)
+    let child1_pid: u32 = std::fs::read_to_string(&child1_pid_file)
         .expect("child1 PID file not written")
         .trim()
         .parse()
         .expect("child1 PID file content not numeric");
-    let child2_pid: u32 = std::fs::read_to_string(CHILD2_PID_FILE)
+    let child2_pid: u32 = std::fs::read_to_string(&child2_pid_file)
         .expect("child2 PID file not written")
         .trim()
         .parse()
@@ -190,7 +198,9 @@ time.sleep(60)
         child2_pid
     );
 
-    cleanup_pid_files();
+    // WR-09: TempDir RAII drops here — removes the per-test PID files
+    // automatically. No explicit cleanup helper needed.
+    drop(tmp);
 }
 
 #[test]
