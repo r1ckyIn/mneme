@@ -1,0 +1,66 @@
+schema: spec-driven
+
+context: |
+  # mneme
+
+  Personal desktop learning app — single-user (USYD CS S1 2026 coursework).
+  Wraps local Claude Code CLI as a subprocess inside a Tauri 2 + SvelteKit + Rust shell.
+  Three-pane UI: course files (left) · video + course material preview (middle) · Claude chat (right). Live mind-map top bar.
+
+  ## Identity (5-dimension composite — losing any one is identity death)
+
+  1. **Philosophy (9 Key Principles, KP-01..09)** — local-first; 50% OSS-driven; AI-native data model (embeddings + graph + confidence + provenance + timestamps as first-class); compliant Claude CLI subprocess (user's own subscription, no token theft); Claude-Design-drives-UI prompt-to-prototype workflow; fork-and-extend over write-from-scratch; proactive contextual recall ("懂我"); OSS dependency tracking + upstream monitoring; inherit Anthropic/Claude visual identity.
+
+  2. **Experience commitments (5 promises)** — proactive AI memory + KG; one learning loop (learn → AI teaches → notes auto-captured → FSRS review); dual-mode toggle (free Claude vs. anchored citations); cohesive single-product feel; keyboard-first power-user UX.
+
+  3. **Architecture (13 locked Key Decisions, KD-01..13)** — Tauri 2 + SvelteKit + Rust ≥1.88; agentic search REPLACES vector DB in v1; dual-layer data (KG for AI + Excalidraw whiteboard for humans); three-tier memory (working/episodic/long-term); MCP is for EXTERNAL services only (Canvas/Ed/Echo360) — vault read/write uses filesystem + Claude Code's native `--add-dir` agentic search; Echo360 via Tauri webview + persistent SSO cookie; anchored mode via Anthropic Citations API; FSRS-6 via ts-fsrs; KD-13 visual aesthetic locked to Anthropic/Claude family (4 color anchors: `#d97757` orange / `#faf9f5` cream / `#141413` text / `#2b2a27` warm dark; serif body, NO Arial/Inter; ease curve `cubic-bezier(0.165, 0.85, 0.45, 1)`; soft 8% borders; multi-layer soft shadows).
+
+  4. **Boundaries (8 deliberate exclusions, OOS-01..08)** — no multi-user / commercialization (OSS portfolio release OK); no mobile; no vector DB in v1; no audio overview; no manual flashcards; no manual mind-map drawing; no plugin API (Claude Code skills serve this); no multi-LLM-provider.
+
+  5. **Landing context** — USYD CS S1 2026, 4 math+programming-heavy courses, MacBook Pro 2019 Intel / macOS Ventura 13.4. REQ-sample-size epistemic humility: the 18 v1+v1.x requirements derive from n=2 (user + partner); higher-achieving students plausibly use methods this sample is blind to. Foundation MUST stay agnostic to which feature set wins.
+
+  ## Planning system relationship
+
+  This project uses **two complementary spec systems**:
+
+  - **`.planning/`** (GSD workflow, milestone-level SSOT) — owns PROJECT.md, ROADMAP.md, STATE.md, per-phase CONTEXT/PLAN/SUMMARY/UAT/VERIFICATION. Authoritative for milestone scope, phase order, locked decisions (KP/KD/REQ/OOS/RQ), and execution history.
+  - **`openspec/`** (this system, change-level SSOT) — owns proposal/specs/design/tasks artifacts per individual change. Maps roughly to "the spec contract for one ROADMAP phase or one cross-cutting amendment."
+
+  Never duplicate locked decisions into proposals — reference KP-NN / KD-NN / REQ-NN / OOS-NN by ID. When `.planning/PROJECT.md` and an openspec artifact disagree, **`.planning/` wins** until a deliberate sync.
+
+  ## Critical conventions
+
+  - All comments in code MUST be English. Technical discussion in chat is Chinese. CLAUDE.md files MUST stay Chinese.
+  - Solo-dev: one phase = one feature branch = one PR. Hook `guard-branch.sh` enforces.
+  - npm prefix MUST be `~/.npm-global` (not `/usr/local`). Pre-flight check before any global install.
+  - `claude-code-parser` (MIT) is vendored at `vendor/claude-code-parser/`, NOT `npm install`ed (upstream unmaintained).
+  - Excalidraw v0.18.1 (MIT) is the locked whiteboard — tldraw v4.x REJECTED (proprietary watermark license violates KP-02).
+  - Phase 5 and Phase 5.5 are BLOCKING gates: spike `echo360-webview-auth` before Phase 6; RQ-01 KG/memory project survey + 1-week dogfood before Phase 7.
+
+  ## Authoritative file index
+
+  - `.planning/PROJECT.md` — full 5-dimension Core Value, KP/KD/REQ/OOS/RQ definitions
+  - `.planning/REQUIREMENTS.md` — REQ-01..19 + OOS-01..08 detail + traceability
+  - `.planning/ROADMAP.md` — 12-phase ordering + layer architecture overlay (Foundation / Application / Replacement)
+  - `.planning/STATE.md` — current phase, paused state, locked decisions index
+  - `.planning/dependencies.md` — KP-08 OSS dependency registry (10 groups)
+  - `.planning/references/design/` — KP-09 + KD-13 visual aesthetic SSOT
+  - `CLAUDE.md` (project root) — operating instructions for Claude Code, references everything above
+
+rules:
+  proposal:
+    - "Reference locked decisions by ID (KP-NN / KD-NN / REQ-NN / OOS-NN) — do NOT redefine or quote their full text. The reader has access to `.planning/PROJECT.md`."
+    - "If the change touches a locked decision (KP/KD), explicitly state which decision and whether the change reaffirms, narrows, or proposes amending it. Amending a KP/KD requires a separate `.planning/` decision-revision flow, not an openspec proposal."
+    - "Map the proposal to its target ROADMAP phase (or label as cross-cutting if it spans phases). Use the phase number from `.planning/ROADMAP.md`, not invented numbers."
+  specs:
+    - "Capability names MUST be kebab-case and align with the conceptual surface area in `.planning/PROJECT.md` (e.g. `vault-sync`, `agent-memory`, `mind-map-view`). Avoid implementation-detail names like `sqlite-schema-v2`."
+    - "Scenarios MUST use exactly 4 hashtags (`#### Scenario:`). 3 hashtags or bullets fail silently."
+    - "Every requirement MUST have at least one scenario."
+  design:
+    - "If the design picks a library, the library MUST appear in `.planning/dependencies.md` OR the design MUST explicitly add it to that registry as part of the change (per KP-08)."
+    - "If the design adds UI, it MUST inherit KD-13 tokens (`#d97757` / `#faf9f5` / `#141413` / `#2b2a27`; serif body; cubic-bezier ease curve). No Arial/Inter, no flat shadows, no Material/Tailwind-default look."
+    - "If the design proposes a vector DB, embedding store, or non-agentic search path, FLAG IT — this conflicts with KD-07 and likely belongs as a `.planning/` decision-revision, not an openspec change."
+  tasks:
+    - "Tasks MUST be commitable in <2-hour units. Tasks that say 'implement feature X' without sub-steps will be rejected at apply time."
+    - "Tasks that touch `src-tauri/capabilities/` MUST go through the SSOT path (`scripts/gen-capabilities.ts` → regenerate `default.json` → audit pass). Direct edits to `default.json` will fail the SSOT-drift audit."
+    - "Tasks that add CSP directives MUST go through `svelte.config.js` (`kit.csp` — locked by Phase 1 plan 01-08), NOT through `src/app.html` meta tags."

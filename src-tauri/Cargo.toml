@@ -1,0 +1,45 @@
+[package]
+name = "mneme"
+version = "0.1.0"
+description = "Personal desktop learning app — Tauri 2 shell wrapping Claude Code CLI"
+authors = ["r1ckyIn"]
+edition = "2021"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri-plugin-shell = "2.3.5"
+nix = { version = "0.31", features = ["signal", "process"] }
+home = "0.5"
+# Phase 01.1 — dev-only Tauri runtime extensions (D-SF-03 mpsc writer task)
+tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread", "macros", "process", "time", "fs", "io-util"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Phase 01.1 — CGWindowID resolution for `screencapture -l <id>` (E1 errata + R2)
+# `windowNumber` on NSWindow returns the CGWindowID NSInteger; resolved via
+# WebviewWindow::ns_window() (Tauri 2 returns *mut c_void on macOS).
+objc2 = "0.6"
+objc2-app-kit = "0.3"
+
+[features]
+default = []
+# Phase 01.1 — gates the dev-invoke CLI binary (E2 errata). Release builds
+# never opt into this feature, so target/release never includes dev_invoke.
+dev-invoke = []
+
+[[bin]]
+name = "dev-invoke"
+path = "src/bin/dev_invoke.rs"
+required-features = ["dev-invoke"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["test-util", "macros", "rt", "sync", "time", "fs"] }
+tempfile = "3"

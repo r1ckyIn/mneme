@@ -99,11 +99,49 @@ Plans:
   1. Three-pane resizable shell renders (left: file tree placeholder, middle: PDF preview placeholder, right: Claude chat); split positions persist across restarts.
   2. Single Claude session streams correctly: chunky text during stream → finalized markdown + KaTeX + DOMPurify-sanitized HTML on `result` event (spike 002 pattern locked).
   3. Subprocess lifecycle is clean: Cmd+Q kills child processes within 2s (SIGTERM → 2s → SIGKILL); `ps aux | grep claude` shows zero orphans after 5 quit cycles.
-  4. Cost meter visible in chat header (current session $ + cumulative today $); hard daily cap (default $10) blocks new subprocesses when exceeded; `--max-turns 30` passed to every claude invocation.
+  4. **Loop guard via `--max-turns 30`** passed to every `claude` invocation (the only structural ceiling under OAuth subscription mode — no per-call billing exists; `result.total_cost_usd` is theoretical-API-equivalent, not a real charge). Chat input shows **Ctx % + Total tokens + Session duration** (no `$` figures, no daily cap, no `~/.mneme/usage.jsonl`) — per Round 5 amendment A-04 + A-09 in `phases/01-tauri-shell-foundation-subprocess-hardening/01-AMENDMENT-2026-05-09.md`. Propagates SPEC Round 4 (cost meter already out of scope L100/L123).
   5. Capability hardening: explicit window names (no `"*"`), shell `args` per-arg validators (no `args: true` reaching production), KaTeX ≥ 0.16.21 pinned, DOMPurify allowlist explicit.
 **OSS adoption note (KP-02)**: Tauri 2 + SvelteKit + adapter-static + tauri-plugin-shell (KD-01, spike 002 validated); marked + KaTeX + DOMPurify (KD-02); `claude-code-parser` (MIT) **vendored** in `vendor/claude-code-parser/` per KD-12 (no npm dep).
-**Plans**: TBD
+**Plans:** 7 plans
+Plans:
+**Wave 1**
+- [x] 01-01-PLAN.md — Wave 1 bootstrap: Tauri 2 + SvelteKit + Phase 0 identity transition + vendored claude-code-parser + test harness scaffold
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [x] 01-02-PLAN.md — Wave 2 (TDD): spawn-args SSOT + capability hardening + audit script (T-1-03/04/05/07)
+- [x] 01-03-PLAN.md — Wave 2 (TDD): sanitize.ts (DOMPurify Option-A hook + KaTeX trust:false) + 6-arm stream-dispatch.ts (T-1-02 + T-1-06)
+- [x] 01-04-PLAN.md — Wave 2 (TDD): Rust state machine (SessionRegistry + kill_pgid + hook union) (T-1-01)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [x] 01-05-PLAN.md — Wave 3: tokens.css + Splitter.svelte three-pane + bottom row + window chrome (KP-09 + KD-13)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [x] 01-06-PLAN.md — Wave 4: ChatPanel.svelte E2E wiring (Command spawn + dispatch + sanitize + IPC + Stop button + hotkey unbinding)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 01-07-PLAN.md — Wave 5: Husky pre-commit + 5-cycle lifecycle harness + 73-row dogfood checklist + VALIDATION.md sign-off (CHECKPOINT — tasks 1-3 done, tasks 4-5 await user dogfood signoff after 01-09 UI lands)
+- [x] 01-08-PLAN.md — Wave 6 (gap closure): SvelteKit kit.csp nonce mode (T-1-46 dev-mode white-screen fix; unblocks 01-07 dogfood)
+- [x] 01-09-PLAN.md — Wave 7 (gap closure): UI pixel-level recreation of Mneme.html prototype + ChatPanel streaming render fix (T-1-47 / T-1-48)
 **UI hint**: yes
+
+### Phase 01.1: dev-feedback-loop-infrastructure (INSERTED)
+
+**Goal:** Land the cross-repo dev feedback loop that eliminates Claude asking the user for terminal output / console logs / screenshots / DOM state during UI work. Two halves ship together: mneme-side capability (full-spectrum Svelte forwarder + 5 dev-only Tauri Rust commands + npm-script bridge + `.dev-logs/` scaffold) AND GSD upstream rule layer (3 patches to `workflows/verify-work.md` + 8 new `verify.*` SDK handlers + 1 shared `templates/visual-review.html`). `/gsd-verify-work 01.1` self-validates against its own patched workflow as the bootstrapping dogfood.
+**Requirements**: cross-cutting workflow infrastructure (no v1+v1.x REQ-NN ID; traceability via OpenSpec change `automate-dev-feedback-loop` → future `openspec/specs/dev-feedback-loop/spec.md` after `/opsx:archive`)
+**Depends on:** Phase 1 (extends `scripts/gen-capabilities.ts` SSOT from Phase 1 D-14)
+**Plans:** 10/10 plans complete
+
+Plans:
+- [x] 01.1-01-PLAN.md — `.dev-logs/` scaffold + `.gitignore` (wave 1)
+- [x] 01.1-02-PLAN.md — GSD upstream `verify-work.md` 3 patches (wave 2)
+- [x] 01.1-03-PLAN.md — GSD upstream `templates/visual-review.html` (wave 2)
+- [x] 01.1-04-PLAN.md — GSD SDK 8 `verify.*` handlers (TS package + CJS shim; wave 3, TDD)
+- [x] 01.1-05-PLAN.md — mneme Svelte forwarder + snapshot selectors (wave 4, TDD)
+- [x] 01.1-06-PLAN.md — mneme Tauri Rust dev commands + `dev_invoke` bin (wave 4, TDD)
+- [x] 01.1-07-PLAN.md — mneme `gsd-dev-*` npm-script bridge (wave 5, TDD)
+- [x] 01.1-08-PLAN.md — deps registry + `CLAUDE.md` pointer (wave 1, parallel-safe)
+- [x] 01.1-09-PLAN.md — dogfood self-test (wave 6, blocking checkpoint)
+- [x] 01.1-10-PLAN.md — wrap-up: openspec validate + `tasks.md` sync + STATE.md (wave 7, blocking checkpoint)
 
 ### Phase 2: Vault + Canvas/Ed Sync + Onboarding
 **Goal**: Local-first markdown vault with PARA + course-root structure is the user's source of truth; Canvas + Ed pull real coursework into `_source/` on first run; sync status is always visible; settings UI and first-run wizard make setup deterministic for future-self.
@@ -265,7 +303,7 @@ These items are deferred from REQUIREMENTS.md v2+ section. They get phase mappin
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Identity & Branding Lock | 4/4 | Complete    | 2026-05-07 |
-| 1. Tauri Shell Foundation + Subprocess Hardening | 0/0 | Not started | - |
+| 1. Tauri Shell Foundation + Subprocess Hardening | 0/7 | Not started | - |
 | 2. Vault + Canvas/Ed Sync + Onboarding | 0/0 | Not started | - |
 | 3. Multi-Session + Command Palette + Editor | 0/0 | Not started | - |
 | 4. Document Ingestion (PDF + Office → markdown) | 0/0 | Not started | - |

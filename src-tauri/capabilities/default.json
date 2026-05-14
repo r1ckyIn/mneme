@@ -1,0 +1,113 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "shell:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "claude-bin",
+          "cmd": "claude",
+          "args": [
+            {
+              "validator": "^--print$"
+            },
+            {
+              "validator": "^--permission-mode$"
+            },
+            {
+              "validator": "^bypassPermissions$"
+            },
+            {
+              "validator": "^--output-format$"
+            },
+            {
+              "validator": "^stream-json$"
+            },
+            {
+              "validator": "^--include-partial-messages$"
+            },
+            {
+              "validator": "^--verbose$"
+            },
+            {
+              "validator": "^--max-turns$"
+            },
+            {
+              "validator": "^30$"
+            },
+            {
+              "validator": "^--add-dir$"
+            },
+            {
+              "validator": "^/Users/[^/]+/\\.mneme/scratch$"
+            },
+            {
+              "validator": "^--exclude-dynamic-system-prompt-sections$"
+            },
+            {
+              "validator": ".+"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "claude-bin",
+          "cmd": "claude",
+          "args": [
+            {
+              "validator": "^--print$"
+            },
+            {
+              "validator": "^--permission-mode$"
+            },
+            {
+              "validator": "^bypassPermissions$"
+            },
+            {
+              "validator": "^--output-format$"
+            },
+            {
+              "validator": "^stream-json$"
+            },
+            {
+              "validator": "^--include-partial-messages$"
+            },
+            {
+              "validator": "^--verbose$"
+            },
+            {
+              "validator": "^--max-turns$"
+            },
+            {
+              "validator": "^30$"
+            },
+            {
+              "validator": "^--add-dir$"
+            },
+            {
+              "validator": "^/Users/[^/]+/\\.mneme/scratch$"
+            },
+            {
+              "validator": "^--exclude-dynamic-system-prompt-sections$"
+            },
+            {
+              "validator": ".+"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

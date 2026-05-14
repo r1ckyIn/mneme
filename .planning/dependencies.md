@@ -177,6 +177,44 @@ Recommended OSS implementations of the Claude aesthetic; all replaceable per ROA
 
 ---
 
+## Group 11 — External dev tools (MCP servers + macOS CLIs)
+
+Introduced by Phase 01.1 (`automate-dev-feedback-loop` OpenSpec change). These
+are **environment-provided** tools the verify-work workflow + GSD SDK `verify.*`
+handlers depend on during `/gsd-verify-work`. None are runtime dependencies of
+the mneme binary itself; all are dev-only. Listed here so that future-self
+running on a fresh machine can install / verify presence before exercising the
+dev feedback loop. Per CONTEXT D-DEP-01 the group name is canonical and the row
+set is fixed at five entries.
+
+| Tool | Source | Required version | License | Anchors | Purpose | Monitor | Last-checked |
+|---|---|---|---|---|---|---|---|
+| `chrome-devtools-mcp` | MCP server (environment-provided, see `~/.claude/settings.json` MCP block) | latest stable | (per-server license) | Phase 01.1, D-SR-02 | Chromium-surface signals: `list_console_messages`, `list_network_requests`, `take_screenshot`. Consumed by `verify.scan-signals` / `verify.capture-screenshot --surface chromium` per OpenSpec D-UP-03 | release-only | 2026-05-12 |
+| `playwright` MCP | MCP server (environment-provided) | latest stable | Apache-2.0 (Microsoft) | Phase 01.1, D-SR-02 | Accessibility-tree snapshots + before/after visual diff when the phase warrants. Consumed by `automated_ui_verification` Playwright branch per OpenSpec D-UP-01 patch 1 | release-only | 2026-05-12 |
+| `screencapture` | macOS system tool (`/usr/sbin/screencapture`) | macOS 10.2+ (Ventura 13.4 target) | Apple proprietary (OS-bundled) | Phase 01.1, D-TR-02 | Tauri-shell window capture via `screencapture -l <CGWindowID>` or `-R x,y,w,h`. Primary path per design.md v3.1 errata E1 (Tauri 2 has no `WebviewWindow::capture()`). Consumed by `dev_capture_screenshot` Rust command + `gsd-dev-screenshot` npm bridge | n/a (OS) | 2026-05-12 |
+| `lsof` | macOS system tool (`/usr/sbin/lsof`) | Ventura 13.4 built-in | BSD-style (OS-bundled) | Phase 01.1, errata E4 | Port-collision probe in `verify.start-dev-loop` (`lsof -i :5173` per v3.1 errata E4). Vite strict-port fail-loud requires presence check before spawn | n/a (OS) | 2026-05-12 |
+| `tee` | POSIX standard (`/usr/bin/tee`) | Ventura 13.4 built-in | (POSIX, OS-bundled) | Phase 01.1, D-LG-02 | `npm run dev 2>&1 \| tee .dev-logs/tauri.log` pattern for surfacing Tauri runtime output to the log scanner. Consumed by `verify.scan-signals` indirectly via the `.dev-logs/tauri.log` artifact | n/a (POSIX) | 2026-05-12 |
+
+**Minimum platform**: macOS Ventura 13.4 Intel (mneme target per PROJECT.md user
+profile). Apple Silicon supported by all five tools but **not** the validated
+baseline — re-verify when the project migrates to Apple Silicon hardware.
+
+**Cross-reference**: `openspec/changes/automate-dev-feedback-loop/` is the
+authoritative spec for tool selection. Key decisions: design.md D-DEP-01
+(this group name) + D-DEP-02 (CLAUDE.md pointer) + v3.1 errata E1 (no
+`WebviewWindow::capture()`, hence `screencapture -l`) + errata E4 (strict-port
+not fallback, hence `lsof` probe). After the OpenSpec change archives via
+`/opsx:archive`, the canonical capability spec moves to
+`openspec/specs/dev-feedback-loop/spec.md`.
+
+**Maintenance note**: rows in this group have `Monitor: n/a (OS)` because
+macOS / POSIX-bundled tools track the OS upgrade cadence, not their own
+release stream. `chrome-devtools-mcp` and `playwright` MCP are environment-
+provided (`~/.claude/settings.json`) — not in `package.json` — so they update
+when Claude Code itself updates. No active mneme-side action required.
+
+---
+
 ## Maintenance log
 
 | Date | Action |

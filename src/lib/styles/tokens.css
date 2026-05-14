@@ -1,0 +1,215 @@
+/* tokens.css — KP-09 + KD-13 Anthropic/Claude family palette + UI-SPEC §"Token Module" verbatim.
+ *
+ * Plan 01-09 SSOT: /Users/qinyuan/Downloads/mneme/project/Mneme.html (1840 LOC,
+ * locked 2026-05-09 by user as the visual contract for Phase 1 — see
+ * .planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-09-PLAN.md
+ * threats_closed: T-1-48). The :root block in lines 7-76 of that file is the
+ * canonical token registry. Tokens defined by plans 01-05 / 01-06 are kept where
+ * they do not conflict; tokens introduced here are a superset. Any future drift
+ * from Mneme.html should be reconciled by re-running the prototype-vs-impl
+ * screenshot loop.
+ */
+
+:root {
+  /* === COLOR — Mneme.html L9-21 === */
+  --color-orange: #d97757;
+  --color-orange-soft: rgba(217, 119, 87, 0.12);
+  --color-cream: #faf9f5;
+  --color-cream-deep: #f3f1ea;          /* user bubble — slightly warmer than bg */
+  --color-cream-edge: #ede9de;          /* hairline-equivalent shade */
+  --color-warm-dark: #141413;
+  --color-warm-dark-soft: #4a4843;
+  --color-warm-dark-mute: #7a766d;
+  --color-warm-surface: #2b2a27;        /* tool-use card */
+  --color-warm-surface-edge: #3a3835;
+  --color-error: #c15f3c;
+
+  /* === ALPHA BORDERS — 8% soft (Mneme.html L23-25) === */
+  --border-soft: rgba(20, 20, 19, 0.08);
+  --border-softer: rgba(20, 20, 19, 0.05);
+  --border-on-dark: rgba(250, 249, 245, 0.08);
+
+  /* === TYPE — Mneme.html L27-37 (transitional serif Latin + neutral CJK fallback) === */
+  --font-serif: "Tiempos Text", "Source Serif Pro", "Source Serif 4",
+                "Charter", "Iowan Old Style", "Palatino Linotype",
+                Palatino, "Book Antiqua", Georgia,
+                "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                "Source Han Sans SC", "Noto Sans CJK SC", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC",
+               "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "IBM Plex Mono", "Menlo",
+               "Consolas", "Liberation Mono", monospace;
+
+  /* === SPACING — Mneme.html L39-47 === */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* === RADII — Mneme.html L49-53 === */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  /* === MOTION — Mneme.html L55-59 === */
+  --duration-fast: 160ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+
+  /* === SHADOWS — Mneme.html L61-71 (multi-layer soft, alpha < 8%) === */
+  --shadow-1:
+    0 1px 1px rgba(20, 20, 19, 0.04),
+    0 2px 4px rgba(20, 20, 19, 0.04);
+  --shadow-2:
+    0 1px 1px rgba(20, 20, 19, 0.04),
+    0 2px 6px rgba(20, 20, 19, 0.05),
+    0 6px 8px rgba(20, 20, 19, 0.03);
+  --shadow-inset-top:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* === GEOMETRY — Mneme.html L73-75 === */
+  --titlebar-height: 36px;
+  --bottom-bar-height: 120px;
+  --splitter: 4px;
+
+  /* ============================================================
+   * LEGACY COMPAT TOKENS — kept for components written against the
+   * 01-05 / 01-06 token names. New components MUST use the Mneme.html
+   * native tokens above; these are bridges so the gap-closure rewrite
+   * does not need to retrofit every prior plan in one sweep.
+   * ============================================================
+   */
+
+  /* === SURFACE — 60 / 30 / 10 split === */
+  --bg: #faf9f5;                              /* alias of --color-cream */
+  --bg-soft: var(--color-cream-deep);          /* alias */
+  --bg-deep: #e8e6dc;                          /* legacy bottom-row bg (kept; close to cream-edge) */
+  --paper: #ffffff;                            /* legacy chat paper bg */
+
+  /* === INK === */
+  --ink: var(--color-warm-dark);
+  --ink-soft: var(--color-warm-dark-soft);
+  --ink-mute: var(--color-warm-dark-mute);
+  --muted: #b0aea5;                            /* legacy metadata mono */
+
+  /* === ACCENT === */
+  --orange: var(--color-orange);
+  --orange-deep: #ae5630;                      /* link hover / active state */
+  --orange-soft: var(--color-orange-soft);
+  --orange-tint: #fbeee4;                      /* lightest orange wash */
+  --orange-ring: rgba(217, 119, 87, 0.15);     /* 3px focus ring outer */
+
+  /* === SEMANTIC === */
+  --error: var(--color-error);
+
+  /* === MESSAGE BUBBLES === */
+  --bubble-user: var(--color-cream-deep);
+
+  /* === BORDERS === */
+  --border: var(--border-soft);
+  --border-strong: rgba(20, 20, 19, 0.14);     /* drag-handle hover + drag-active */
+
+  /* === SHADOWS legacy aliases === */
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+
+  /* === RADIUS LADDER (legacy) === */
+  --r-xs: 4px;                                 /* drag-handle inner highlight */
+  --r-sm: 6px;                                 /* tool-use card */
+  --r-md: 8px;                                 /* input box, code block, settings modal */
+  --r-lg: 12px;                                /* user bubble */
+  --r-pill: 9999px;                            /* streaming dot, send button */
+
+  /* === SPACING (legacy 8-point scale) === */
+  --s-xs: 4px;
+  --s-sm: 8px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 32px;
+  --s-2xl: 48px;
+  --s-3xl: 64px;
+
+  /* === TYPOGRAPHY (legacy) === */
+  --font-body: var(--font-serif);
+  --fs-meta: 14px;                             /* tool-use card name */
+  --fs-body: 16px;                             /* chat body, input */
+  --fs-h: 20px;                                /* placeholder copy */
+  --fs-display: 28px;                          /* Phase 2 reserved */
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --lh-body: 1.5;
+  --lh-heading: 1.2;
+
+  /* === MOTION (legacy aliases) === */
+  --ease: var(--ease-out);
+  --d-fast: var(--duration-fast);
+  --d-base: var(--duration-base);
+  --d-slow: var(--duration-slow);
+  --d-cap: 400ms;                              /* hard upper bound for any animation */
+  --pulse-period: 1.2s;                        /* streaming dot pulse */
+
+  /* === GEOMETRY (legacy named constants) === */
+  --btn-send: 28px;                            /* Mneme.html L985 — Send/Stop diameter (was 44px in old SPEC) */
+  --bottom-row-h: var(--bottom-bar-height);
+  --pane-min-w: 200px;
+}
+
+/* Dark mode tokens defined but UI toggle deferred to Phase 2 REQ-14 */
+[data-theme="dark"] {
+  --bg: #2b2a27;
+  --bg-soft: #232220;
+  --bg-deep: #1f1e1b;
+  --paper: #2f2e2b;
+  --ink: #faf9f5;
+  --ink-soft: #d8c4b3;
+  --ink-mute: #8e8b82;
+  --bubble-user: #3d3a35;
+  --border: rgba(250, 249, 245, 0.08);
+  --border-strong: rgba(250, 249, 245, 0.14);
+}
+
+/* Reduced-motion fallback — KD-13 motion philosophy + WCAG 2.1 AA */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 0ms;
+    --d-base: 0ms;
+    --d-slow: 0ms;
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+    --pulse-period: 99s;                       /* effectively static */
+  }
+}
+
+/* Body baseline — applied to every page via the root layout. */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #1f1e1c;                         /* Mneme.html L84 — matte stage so the window reads as a desktop window */
+  color: var(--color-warm-dark);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: var(--fw-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+/* Banned fonts hard-fail safeguard: if a third-party stylesheet smuggles
+   font-family:Inter or font-family:Arial, this rule overrides on the body
+   surface. Per KP-09 deep-dive Section 2 — Anthropic internal guidance flags
+   Arial + Inter as producing "cheap AI feel". */
+body[style*="Arial"], body[style*="Inter"] {
+  font-family: var(--font-serif) !important;
+}

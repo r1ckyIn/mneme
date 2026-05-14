@@ -759,7 +759,7 @@ This decision **locks the minimum mandatory rules**. The complete specification 
 
 3. **Motion**:
    - Standard ease curve: `cubic-bezier(0.165, 0.85, 0.45, 1)` (modified ease-out — organic feel)
-   - Button press feedback: `active:scale-[0.98]` micro-shrink
+   - Button press feedback: `active:scale-[0.96]` micro-shrink (Phase 1 UI-SPEC ratification 2026-05-08; project-wide adjustment from Anthropic's 0.98 baseline for clearer chat-input button feedback)
    - Animation philosophy: subtle and purposeful, never flashy
 
 4. **Soft separation** (no hard lines, no harsh shadows):
