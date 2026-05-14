@@ -67,6 +67,31 @@
     return Math.max(lo, Math.min(hi, x));
   }
 
+  // WR-05 fix (2026-05-14): clamp-and-normalize so leftRatio + middleRatio +
+  // rightRatio sum to EXACTLY 1 after every drag-induced mutation. The prior
+  // logic used `1 - RATIO_MIN - RATIO_MIN = 0.60` as the left ceiling but
+  // RATIO_MAX = 0.50 for middle / right — the asymmetric ceilings combined
+  // with the `Math.max` floor on the derived rightRatio could yield a frame
+  // where left=0.60, middle=0.21, right=Math.max(0.20, 0.19)=0.20, summing
+  // to 1.01fr. CSS grid would then over-allocate ~1% (~12px at 1280px).
+  // The normalize function guarantees the invariant on every mutation by
+  // returning the rightRatio as exactly `1 - left - middle`.
+  function clampAndNormalize(
+    leftDesired: number,
+    middleDesired: number
+  ): { leftRatio: number; middleRatio: number; rightRatio: number } {
+    // Left can grow up to `1 - 2*RATIO_MIN` (both other panes hit their floor).
+    const l = clamp(leftDesired, RATIO_MIN, 1 - RATIO_MIN * 2);
+    // Middle is bounded below by RATIO_MIN, above by whatever is left after
+    // honoring left + right's RATIO_MIN floor. Cap at RATIO_MAX so middle
+    // never eats more than half the window.
+    const mMax = Math.min(RATIO_MAX, 1 - l - RATIO_MIN);
+    const m = clamp(middleDesired, RATIO_MIN, mMax);
+    // rightRatio derived so all three sum to exactly 1 — never use Math.max
+    // here because that would re-introduce the overshoot bug above.
+    return { leftRatio: l, middleRatio: m, rightRatio: 1 - l - m };
+  }
+
   function startDrag(which: "left" | "right", e: PointerEvent) {
     dragging = which;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -79,16 +104,18 @@
     if (totalWidth <= 0) return;
     const xRatio = e.clientX / totalWidth;
     if (dragging === "left") {
-      const newLeft = clamp(xRatio, RATIO_MIN, 1 - RATIO_MIN - RATIO_MIN);
-      if (newLeft + middleRatio + RATIO_MIN <= 1) {
-        leftRatio = newLeft;
-      } else {
-        leftRatio = newLeft;
-        middleRatio = clamp(1 - newLeft - RATIO_MIN, RATIO_MIN, RATIO_MAX);
-      }
+      // Treat xRatio as the desired left-edge of the middle pane (i.e. left
+      // ratio). Middle keeps its current ratio; normalize will pull it down
+      // if leftDesired + middleRatio > 1 - RATIO_MIN.
+      const next = clampAndNormalize(xRatio, middleRatio);
+      leftRatio = next.leftRatio;
+      middleRatio = next.middleRatio;
     } else if (dragging === "right") {
-      const newMiddle = clamp(xRatio - leftRatio, RATIO_MIN, RATIO_MAX);
-      middleRatio = newMiddle;
+      // xRatio is the desired left-edge of the right pane (i.e. left + middle).
+      // We hold leftRatio fixed and derive middle from (xRatio - leftRatio).
+      const next = clampAndNormalize(leftRatio, xRatio - leftRatio);
+      leftRatio = next.leftRatio;
+      middleRatio = next.middleRatio;
     }
   }
 
@@ -99,14 +126,18 @@
         STORAGE_KEY,
         JSON.stringify({ leftRatio, middleRatio })
       );
-    } catch {
-      // localStorage unavailable — best-effort persist.
+    } catch (err) {
+      console.warn("[splitter] failed to persist layout to localStorage", err);
+      // Default values stand — best-effort persist.
     }
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     dragging = null;
   }
 
-  let rightRatio = $derived(Math.max(RATIO_MIN, 1 - leftRatio - middleRatio));
+  // WR-05: rightRatio is now derived from the normalize invariant. The
+  // Math.max floor is no longer needed because clampAndNormalize already
+  // refuses to push left + middle past `1 - RATIO_MIN`.
+  let rightRatio = $derived(1 - leftRatio - middleRatio);
 </script>
 
 <div
