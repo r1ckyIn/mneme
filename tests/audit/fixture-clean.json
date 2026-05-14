@@ -7,6 +7,7 @@
   ],
   "permissions": [
     "core:default",
+    "core:window:allow-start-dragging",
     "shell:default",
     {
       "identifier": "shell:allow-spawn",
@@ -46,7 +47,7 @@
               "validator": "^--add-dir$"
             },
             {
-              "validator": "^/Users/[^/]+/\\.mneme/scratch$"
+              "validator": "^/Users/[A-Za-z0-9_.\\-]+/\\.mneme/scratch$"
             },
             {
               "validator": "^--exclude-dynamic-system-prompt-sections$"
@@ -96,7 +97,7 @@
               "validator": "^--add-dir$"
             },
             {
-              "validator": "^/Users/[^/]+/\\.mneme/scratch$"
+              "validator": "^/Users/[A-Za-z0-9_.\\-]+/\\.mneme/scratch$"
             },
             {
               "validator": "^--exclude-dynamic-system-prompt-sections$"

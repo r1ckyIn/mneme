@@ -79,12 +79,18 @@ fi
 #     Cycle-2 HIGH-1: ChatPanel.svelte (plan 01-06) imports buildClaudeArgs from
 #     spawn-args.shared. If .shared imports `os`/`fs`/`path`, Vite/SvelteKit fails
 #     to bundle (or runtime-fails in WebView).
-if grep -qE 'from\s+"(node:)?(os|fs|path)"' src/lib/spawn-args.shared.ts; then
+#
+# WR-06 fix (2026-05-14): use POSIX ERE `[[:space:]]+` instead of `\s+`. BSD
+# grep (macOS default) does NOT recognize `\s` as the whitespace class in
+# ERE — it treats it as a literal `s`. The check accidentally worked because
+# the import line contains `from ` with a space, but it would silently miss
+# tab characters and break on Linux GNU grep CI runners.
+if grep -qE 'from[[:space:]]+"(node:)?(os|fs|path)"' src/lib/spawn-args.shared.ts; then
   echo "[audit] FAIL: spawn-args.shared.ts contains Node import — breaks WebView bundle (Cycle-2 HIGH-1)" >&2
   echo "[audit]       Move Node-only logic to spawn-args.node.ts; keep .shared browser-safe." >&2
   FAIL=1
 fi
-if grep -qE "from\s+'(node:)?(os|fs|path)'" src/lib/spawn-args.shared.ts; then
+if grep -qE "from[[:space:]]+'(node:)?(os|fs|path)'" src/lib/spawn-args.shared.ts; then
   echo "[audit] FAIL: spawn-args.shared.ts contains Node import (single-quoted) — breaks WebView bundle (Cycle-2 HIGH-1)" >&2
   FAIL=1
 fi
@@ -92,7 +98,7 @@ fi
 # 7b. SvelteKit pages and Svelte components must NOT import from spawn-args.node.
 #     The .node module is for scripts/gen-capabilities.ts only. Browser-context
 #     imports of .node would re-introduce the Cycle-1 HIGH-1 bundling failure.
-NODE_LEAK=$({ grep -rlE "from\s+[\"']\\\$lib/spawn-args\\.node|from\s+[\"']\\.\\./.*spawn-args\\.node" src/ 2>/dev/null || true; })
+NODE_LEAK=$({ grep -rlE "from[[:space:]]+[\"']\\\$lib/spawn-args\\.node|from[[:space:]]+[\"']\\.\\./.*spawn-args\\.node" src/ 2>/dev/null || true; })
 if [[ -n "$NODE_LEAK" ]]; then
   echo "[audit] FAIL: spawn-args.node.ts is browser-imported by:" >&2
   echo "$NODE_LEAK" >&2
