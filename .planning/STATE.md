@@ -177,7 +177,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 
 ### Pending Todos
 
-9 pending — captured during sessions, surface at appropriate phase:
+14 pending — captured during sessions, surface at appropriate phase:
 
 - **Evaluate thea for question generation** (research, 2026-05-07, **product REJECTED · algorithm-layer worth a Phase 10 spike**) — thea.study (closed cloud SaaS, K-12) fails KP-01/KP-02/KD-06/form-factor as a dependency. Separately, the *algorithm* — AI takes source material → produces good concept-review items — is a real engineering problem mneme also has to solve in Phase 10 (REQ-09 concept review, not flashcard). Recommended path: when approaching Phase 10, promote to `/gsd-spike concept-review-item-generation` (½–1 day timebox; black-box probe of thea + Claude API prompt-pipeline experiment against a real USYD lecture). File: `.planning/todos/pending/2026-05-07-evaluate-thea-for-question-generation.md`. Surface trigger: before `/gsd-discuss-phase 10`.
 
@@ -196,6 +196,16 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 - **Decide AgentShield runtime monitor enablement** (infrastructure / workflow-upgrade, 2026-05-11, **defer to post-phase-01 ship + first OpenSpec lifecycle dry-run**) — 2026-05-11 三层工作流升级（GSD + OpenSpec + ECC）安装了 `ecc-agentshield@1.5.0` CLI 但故意**没装** runtime monitor（PreToolUse hook）。原因：GSD 自己已有多个 PreToolUse 相关 hooks（`gsd-prompt-guard.js` / `gsd-read-guard.js` / `gsd-workflow-guard.js` / `gsd-validate-commit.sh`）；再加一个不同 owner 的 PreToolUse hook 与 GSD 协同行为未测。Decision input：phase-01 dogfood 期间是否真撞上 secret leak / wildcard permission / 恶意 skill 等 AgentShield 会拦的事故。三选一：(1) 装 runtime 接受协同风险；(2) 保持 CLI-only + 周期性 `agentshield scan --path ~/.claude`；(3) hybrid（`ECC_HOOK_PROFILE=minimal` 或 `ECC_DISABLED_HOOKS=...` 选择性 gate）。Recommended default: (2) 除非 phase-01 出现 specific incident。Baseline scan 已存档：`~/.claude/ecc/agentshield-baseline.json`。File: `.planning/todos/pending/2026-05-11-post-phase-01-agentshield-runtime-decision.md`. Surface trigger: phase-01 ship 完成 + 第一次 `/opsx:propose → /opsx:apply → /opsx:archive` 跑通后。
 
 - **Trigger workflow sync to all r1ckyIn projects** (infrastructure / workflow-upgrade / cross-project, 2026-05-11, **gates on Mneme phase 2-3 ship + AgentShield runtime decision**) — 2026-05-11 三层工作流升级以 Mneme 为试点，其他 r1ckyIn 项目（UniBoard / borealis-fabrics / new-sight / ClaudePulse）暂未同步。当 Mneme dogfood 至少 2-3 phase 且 `/context` 占用稳定 < 15%、AgentShield runtime 决策已定后，启动全量同步。完整策略 + per-project checklist + rollback plan + 风险笔记见 `~/claude/r1ckyIn_GitHub/WORKFLOW-SYNC-STRATEGY.md`。配套 audit report 见 `~/claude/r1ckyIn_GitHub/CLAUDE-MD-SYNC-AUDIT-2026-05-11.md`。Sync 顺序：Tier 0 (L2 SSOT 更新) → Tier 1 (ClaudePulse → UniBoard → borealis → new-sight) → Tier 2 (optional)。总耗时预估 ≈ 3 小时跨 2-3 个 session。File: `.planning/todos/pending/2026-05-11-trigger-workflow-sync-to-all-projects.md`. Surface trigger: Mneme 第 2-3 个 phase ship 完成后。
+
+- **抽 external-import spec（自成生态：手动 import + UniBoard 桥）** (infrastructure / cross-project, 2026-05-14, **seed**) — OpenSpec v0.3 决策工作台 user 选 seed（不抽 spec）。走自成生态决定已定，但 UniBoard 桥 4 个核心问题（移交单元 / 传输协议 / 链接兼容 / 离线可用）没答前 spec 写不出。File: `.planning/todos/pending/2026-05-14-spec-external-import-self-ecosystem.md`. Surface trigger: UniBoard 移交单元定义明确后 / `/gsd-discuss-phase 2` 启动前。**取代** 2026-05-09 cross-project handoff todo（同主题更新版）。
+
+- **抽 onboarding spec（首次启动向导）** (ux, 2026-05-14, **seed**) — OpenSpec v0.3 工作台 user 选 seed。6 步流程清楚但第 4-5 步（import 入口 / 课程选择）依赖 external-import 路径未定。第 1-3+6 步可独立设计但拆开 UX 断裂，不如等 external-import 升级后一起抽。File: `.planning/todos/pending/2026-05-14-spec-onboarding-first-run-wizard.md`. Surface trigger: external-import seed 升级 / `/gsd-plan-phase 2` 启动。
+
+- **抽 whiteboard spec（Excalidraw 自由画布）** (ui / visualization, 2026-05-14, **seed**) — OpenSpec v0.3 工作台 user 选 seed。KD-08 已锁 Excalidraw v0.18.1 MIT，但 v1.x 后置 + 是否真用需 user 实测决定。Phase 8 mindmap-viz 跑稳 ≥ 4 周后 user 主动提"需要白板"才升级抽 spec。4 周无需求 → 可收成 reject/OOS 候选。File: `.planning/todos/pending/2026-05-14-spec-whiteboard-excalidraw-canvas.md`. Surface trigger: Phase 8 mindmap-viz ship 后 user 实测 ≥ 4 周。
+
+- **抽 fsrs-review spec（FSRS-6 概念页复习）** (algorithm / review, 2026-05-14, **seed**) — OpenSpec v0.3 工作台 user 选 seed。算法（FSRS-6）+ 库（ts-fsrs）+ 单元（概念页非卡片）已锁，但 **AI 出题算法**是开放问题 — 跟同期 `2026-05-07-evaluate-thea-for-question-generation` todo 联动。抽 spec 前应跑 `/gsd-spike concept-review-item-generation`，决策出题策略后写入 spec。File: `.planning/todos/pending/2026-05-14-spec-fsrs-review-concept-page.md`. Surface trigger: thea spike 跑完 + memory-engine ship 后 + `/gsd-plan-phase 10` 启动前。
+
+- **抽 caption-bilingual spec（Echo360 VTT → Claude 翻译 → 双语 VTT）** (video / i18n, 2026-05-14, **note**) — OpenSpec v0.3 工作台 user 选 note（内容稳定等触发顺手做，不是早期想法）。spec 实质内容已在 STACK.md §9 写完，5-10 分钟抽出，但**完全依赖 echo360-video spike 结果**。spike 通过即抽，spike 失败 spec 重设计（降回 seed）。File: `.planning/todos/pending/2026-05-14-spec-caption-bilingual-vtt.md`. Surface trigger: Phase 5 echo360-video spike 通过 + `/gsd-plan-phase 6` 启动前。
 
 ---
 
