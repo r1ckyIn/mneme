@@ -9,7 +9,7 @@
 // first call, so the second hook invocation is a safe no-op (idempotent).
 
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 
 pub type SessionId = u32;
 
@@ -30,18 +30,31 @@ impl SessionRegistry {
         }
     }
 
+    // WR-01 fix (2026-05-14): tolerate a poisoned Mutex so kill_all() still
+    // drains spawned subprocesses even if a prior `.lock()` call panicked
+    // mid-mutation. A poisoned mutex would otherwise propagate `unwrap()`
+    // panics into the WindowEvent::CloseRequested handler and leak every
+    // spawned `claude` subprocess (REQ-3 regression). Per the project's
+    // recover-and-log pattern: we log to stderr and pull the inner data via
+    // `into_inner()`. Logging stays in stderr (no logging crate per
+    // PATTERNS.md — println!/eprintln! is the established convention).
+    fn locked(&self) -> MutexGuard<'_, HashMap<SessionId, ChildHandle>> {
+        self.inner.lock().unwrap_or_else(|poisoned| {
+            eprintln!("[session] mutex poisoned — recovering inner state");
+            poisoned.into_inner()
+        })
+    }
+
     pub fn register(&self, id: SessionId, handle: ChildHandle) {
-        self.inner.lock().unwrap().insert(id, handle);
+        self.locked().insert(id, handle);
     }
 
     pub fn drain_one(&self, id: SessionId) -> Option<ChildHandle> {
-        self.inner.lock().unwrap().remove(&id)
+        self.locked().remove(&id)
     }
 
     pub fn drain_all(&self) -> Vec<ChildHandle> {
-        std::mem::take(&mut *self.inner.lock().unwrap())
-            .into_values()
-            .collect()
+        std::mem::take(&mut *self.locked()).into_values().collect()
     }
 
     pub fn kill_all(&self) {
