@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spec 01 · claude-subprocess</title>
+<style>
+  :root {
+    --orange: #d97757;
+    --orange-soft: #e89c80;
+    --orange-deep: #b85a3e;
+    --bg: #faf9f5;
+    --bg-card: #fefdf9;
+    --bg-card-warm: #f5f1e8;
+    --ink: #141413;
+    --ink-soft: #2b2a27;
+    --ink-muted: #6b6a64;
+    --olive: #788c5d;
+    --blue: #6a9bcc;
+    --red-soft: #c15f3c;
+    --border: rgba(20, 20, 19, 0.08);
+    --border-strong: rgba(20, 20, 19, 0.16);
+    --shadow-soft: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.035);
+    --shadow-card: 0 0.5rem 2rem rgba(0, 0, 0, 0.05);
+    --ease: cubic-bezier(0.165, 0.85, 0.45, 1);
+    --serif: 'Iowan Old Style', 'Apple Garamond', 'Georgia', 'Songti SC', 'Source Han Serif SC', serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--serif); background: var(--bg); color: var(--ink);
+    line-height: 1.7; font-size: 17px;
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 4rem 2rem 6rem; }
+
+  /* sticky nav */
+  nav.toc {
+    position: sticky; top: 0;
+    background: rgba(250, 249, 245, 0.92);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); z-index: 10;
+    padding: 0.85rem 0;
+  }
+  nav.toc-inner {
+    max-width: 1080px; margin: 0 auto; padding: 0 2rem;
+    display: flex; gap: 1.25rem; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 0.78rem;
+  }
+  nav.toc a { color: var(--ink-muted); text-decoration: none; transition: color 0.2s var(--ease); }
+  nav.toc a:hover { color: var(--orange); }
+  nav.toc a.warm { color: var(--orange); }
+
+  /* Hero */
+  .hero {
+    margin-bottom: 4rem; padding-bottom: 3rem; border-bottom: 1px solid var(--border);
+  }
+  .hero-tag {
+    display: inline-block; font-family: var(--mono); font-size: 0.75rem;
+    letter-spacing: 0.12em; color: var(--orange); text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .spec-id {
+    display: inline-block; font-family: var(--mono); font-size: 0.8rem;
+    color: var(--ink-muted); padding: 0.2rem 0.55rem;
+    background: var(--bg-card-warm); border-radius: 4px;
+    margin-right: 0.85rem; vertical-align: middle;
+  }
+  h1 {
+    font-size: clamp(2rem, 1.2rem + 3vw, 3rem); line-height: 1.15;
+    margin: 0 0 1.5rem; letter-spacing: -0.02em; font-weight: 500;
+  }
+  h1 .name { font-family: var(--mono); color: var(--orange-deep); font-weight: 600; }
+  .lede { font-size: 1.125rem; color: var(--ink-soft); max-width: 42rem; margin: 0; }
+  .lede strong { color: var(--ink); }
+
+  .meta-grid {
+    margin-top: 2rem; display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+    font-family: var(--mono); font-size: 0.85rem;
+  }
+  .meta-card {
+    padding: 0.85rem 1rem; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .meta-card .label {
+    font-size: 0.68rem; color: var(--ink-muted); text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 0.3rem;
+  }
+  .meta-card .value { color: var(--ink); font-weight: 500; }
+  .meta-card .value.warm { color: var(--orange-deep); }
+  .meta-card .value.olive { color: var(--olive); }
+
+  /* Section */
+  section { margin: 3.5rem 0; scroll-margin-top: 4rem; }
+  h2 {
+    font-size: 1.6rem; font-weight: 500; margin: 0 0 1rem;
+    letter-spacing: -0.015em; line-height: 1.3;
+  }
+  h2 .h-num {
+    color: var(--orange); font-family: var(--mono); font-size: 0.8rem;
+    margin-right: 0.65rem; letter-spacing: 0;
+  }
+  h3 {
+    font-family: var(--mono); font-size: 1rem; font-weight: 600;
+    margin: 0 0 0.75rem; color: var(--orange-deep);
+    letter-spacing: -0.005em;
+  }
+  .section-sub { color: var(--ink-muted); font-size: 0.95rem; margin: 0 0 1.5rem; }
+
+  /* Coverage chips */
+  .coverage {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    margin: 1rem 0;
+  }
+  .cov {
+    font-family: var(--mono); font-size: 0.78rem;
+    padding: 0.25rem 0.65rem;
+    background: var(--bg-card-warm); border: 1px solid var(--border);
+    border-radius: 999px; color: var(--ink-soft);
+  }
+  .cov.warm { background: rgba(217, 119, 87, 0.12); color: var(--orange-deep); border-color: rgba(217, 119, 87, 0.3); }
+
+  /* Tables */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 1rem 0; font-size: 0.9rem;
+  }
+  table th {
+    text-align: left; padding: 0.7rem 0.85rem;
+    background: var(--bg-card-warm);
+    border-bottom: 1px solid var(--border-strong);
+    font-family: var(--mono); font-size: 0.72rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 500;
+  }
+  table td {
+    padding: 0.75rem 0.85rem; border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.55;
+  }
+  table tr:hover td { background: rgba(217, 119, 87, 0.03); }
+  table code {
+    font-family: var(--mono); font-size: 0.82em;
+    background: rgba(20, 20, 19, 0.04); padding: 0.1em 0.4em;
+    border-radius: 3px;
+  }
+  .badge-yes { color: var(--olive); font-weight: 600; }
+  .badge-no { color: var(--red-soft); font-weight: 600; }
+  .badge-mid { color: var(--ink-muted); }
+
+  /* Reject reasons */
+  .reject-list {
+    list-style: none; padding: 0; margin: 0;
+  }
+  .reject-list li {
+    padding: 0.85rem 1rem; margin-bottom: 0.5rem;
+    background: var(--bg-card); border-left: 3px solid var(--red-soft);
+    border-radius: 0 6px 6px 0; font-size: 0.95rem; color: var(--ink-soft);
+  }
+  .reject-list li strong { color: var(--ink); font-weight: 600; }
+
+  /* Constraint cards (numbered) */
+  .constraints {
+    display: grid; gap: 1.25rem;
+  }
+  .constraint {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem 1.75rem;
+    box-shadow: var(--shadow-soft);
+    transition: box-shadow 0.4s var(--ease);
+  }
+  .constraint:hover { box-shadow: var(--shadow-card); }
+  .constraint.spotlight {
+    border-left: 4px solid var(--orange);
+    background: linear-gradient(180deg, rgba(217, 119, 87, 0.05) 0%, var(--bg-card) 30%);
+  }
+  .constraint-head {
+    display: flex; align-items: baseline; gap: 0.85rem;
+    flex-wrap: wrap; margin-bottom: 0.85rem;
+    padding-bottom: 0.65rem; border-bottom: 1px dashed var(--border);
+  }
+  .constraint-num {
+    font-family: var(--mono); font-size: 1.15rem;
+    color: var(--orange); font-weight: 600;
+  }
+  .constraint-title {
+    font-family: var(--mono); font-size: 1.02rem;
+    font-weight: 600; color: var(--ink); letter-spacing: -0.005em;
+  }
+  .constraint-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    padding: 0.15rem 0.5rem; border-radius: 4px;
+    background: rgba(20, 20, 19, 0.06); color: var(--ink-muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .constraint-tag.warm { background: var(--orange); color: white; }
+  .constraint-body { color: var(--ink-soft); font-size: 0.95rem; }
+  .constraint-body p { margin: 0.5rem 0; }
+  .constraint-body ul {
+    margin: 0.5rem 0; padding-left: 1.3rem;
+  }
+  .constraint-body li {
+    margin-bottom: 0.35rem; line-height: 1.6;
+  }
+  .constraint-body code {
+    font-family: var(--mono); font-size: 0.86em;
+    background: var(--bg-card-warm); padding: 0.1em 0.4em;
+    border-radius: 4px; color: var(--ink);
+  }
+  .constraint-body strong { color: var(--ink); font-weight: 600; }
+
+  /* Code block (multi-line) */
+  .codeblock {
+    margin: 1rem 0; padding: 1rem 1.25rem;
+    background: #1c1b18; color: #e8e3d7;
+    border-radius: 8px;
+    font-family: var(--mono); font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .codeblock .flag { color: var(--orange-soft); }
+  .codeblock .comment { color: #888; font-style: italic; }
+
+  /* Callout */
+  .callout {
+    margin: 1rem 0; padding: 1rem 1.25rem;
+    background: var(--bg-card-warm); border-left: 3px solid var(--orange);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.92rem; color: var(--ink-soft);
+  }
+  .callout strong { color: var(--ink); font-weight: 600; }
+  .callout.olive { border-left-color: var(--olive); background: rgba(120, 140, 93, 0.06); }
+  .callout.red { border-left-color: var(--red-soft); background: rgba(193, 95, 60, 0.06); }
+
+  /* Boundary list (spec contracts) */
+  .boundaries {
+    display: grid; gap: 0.6rem;
+  }
+  .boundary {
+    padding: 0.75rem 1rem;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.92rem;
+  }
+  .boundary strong {
+    font-family: var(--mono); color: var(--orange-deep);
+    font-weight: 600; font-size: 0.88rem;
+  }
+
+  /* Doc links */
+  .docs {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.75rem 2rem;
+    box-shadow: var(--shadow-soft);
+  }
+  .docs h3 { margin-top: 0; }
+  .docs h3:not(:first-child) { margin-top: 1.5rem; }
+  .docs ul { margin: 0; padding-left: 1.2rem; }
+  .docs li { margin-bottom: 0.35rem; font-size: 0.92rem; color: var(--ink-soft); }
+  .docs code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-card-warm); padding: 0.1em 0.4em; border-radius: 3px; }
+
+  /* Footer */
+  footer {
+    margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--border);
+    color: var(--ink-muted); font-size: 0.85rem; font-family: var(--mono);
+  }
+
+  @media (max-width: 720px) {
+    .container { padding: 2rem 1.25rem 4rem; }
+    .constraint { padding: 1.1rem 1.25rem; }
+    table { font-size: 0.78rem; }
+    table td, table th { padding: 0.5rem 0.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#hero">概览</a>
+    <a href="#status">现状</a>
+    <a href="#alts">评估过的备选</a>
+    <a href="#reject">否决理由</a>
+    <a href="#constraints">实施约束</a>
+    <a href="#constraint-6" class="warm">⚡ 预热约束</a>
+    <a href="#boundaries">spec 边界</a>
+    <a href="#revisit">重评触发</a>
+    <a href="#docs">关联文档</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- ─── HERO ─── -->
+  <header class="hero" id="hero">
+    <span class="hero-tag">OpenSpec · 阶段 2 抽出 · 1/7</span>
+    <h1><span class="spec-id">#01</span><span class="name">claude-subprocess</span></h1>
+    <p class="lede">Tauri 2 壳通过 <code style="font-family: var(--mono); background: var(--bg-card-warm); padding: 0.1em 0.4em; border-radius: 3px;">tauri-plugin-shell</code> 启动本机 <code style="font-family: var(--mono); background: var(--bg-card-warm); padding: 0.1em 0.4em; border-radius: 3px;">claude</code> CLI 子进程，stream-json 解析、tool-use roundtrip、subprocess 生命周期管理。<strong>整个项目的命脉</strong> — 没有它就没有 agent capabilities / MCP / tool use。</p>
+
+    <div class="meta-grid">
+      <div class="meta-card">
+        <div class="label">阶段</div>
+        <div class="value olive">v1 · MVP 必备</div>
+      </div>
+      <div class="meta-card">
+        <div class="label">Phase</div>
+        <div class="value">Phase 1 EXECUTING</div>
+      </div>
+      <div class="meta-card">
+        <div class="label">实现状态</div>
+        <div class="value warm">partial · spike 002 ✓</div>
+      </div>
+      <div class="meta-card">
+        <div class="label">Plans</div>
+        <div class="value">8 / 9 完成</div>
+      </div>
+      <div class="meta-card">
+        <div class="label">License</div>
+        <div class="value olive">自研 · MIT 兼容</div>
+      </div>
+      <div class="meta-card">
+        <div class="label">最大风险</div>
+        <div class="value warm">Anthropic ToS 变</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── 现状 ─── -->
+  <section id="status">
+    <h2><span class="h-num">§</span>现状</h2>
+    <p>spike 002 已验证端到端 demo（Tauri 2 + SvelteKit + claude subprocess + 流式 chat + markdown + KaTeX + tool-use roundtrip）。Phase 1 productionize 中，8/9 plans 完成 — 01-07 dogfood checkpoint 因 window-drag blocker 暂停。</p>
+
+    <h3>覆盖的 PROJECT.md 锚点</h3>
+    <div class="coverage">
+      <span class="cov">REQ-02 · subprocess 行为契约</span>
+      <span class="cov">KD-01 · Tauri 2 + SvelteKit + tauri-plugin-shell</span>
+      <span class="cov">KD-02 · marked + KaTeX + DOMPurify + Svelte 5 runes</span>
+      <span class="cov">KD-03 · Rust ≥1.88</span>
+      <span class="cov">KP-04 · 合规套壳</span>
+      <span class="cov">KD-12 · claude-code-parser vendored</span>
+    </div>
+
+    <div class="callout">
+      <strong>⚡ Phase 1 finding（2026-05-11，本次新发现）：</strong>app 启动后 claude 子进程<strong>不预热</strong> → 用户首条消息冷启动慢（spawn + claude CLI 启动 + 首次 model API call 串联）。新增预热约束见下方 <a href="#constraint-6" style="color: var(--orange-deep); text-decoration: none;">§6</a>。
+    </div>
+  </section>
+
+  <!-- ─── 评估过的备选 ─── -->
+  <section id="alts">
+    <h2><span class="h-num">§</span>评估过的备选</h2>
+    <p class="section-sub">9 个候选 — 包含我们选的、否决的、和保留为参考的。</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 22%;">候选</th>
+          <th style="width: 12%;">License</th>
+          <th>主要属性</th>
+          <th style="width: 16%;">决定</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: rgba(120, 140, 93, 0.06);">
+          <td><strong>当前方案</strong><br><span style="font-family: var(--mono); font-size: 0.82em; color: var(--ink-muted);">subprocess + stream-json</span></td>
+          <td><span class="badge-yes">n/a</span></td>
+          <td>Tauri 2 + tauri-plugin-shell + claude CLI · spawn → JSONL 行解析 → 按 type 分派</td>
+          <td><span class="badge-yes">✓ 采用</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">spike 002 validated</span></td>
+        </tr>
+        <tr>
+          <td><strong>opcode</strong><br><span style="font-family: var(--mono); font-size: 0.82em; color: var(--ink-muted);">getAsterisk/opcode</span></td>
+          <td><span class="badge-no">AGPL-3.0</span></td>
+          <td>Tauri 2 + React 19 + Rust · 同款架构最强参考（21.7k stars）</td>
+          <td><span class="badge-no">⛔ AGPL 污染</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">只读参考</span></td>
+        </tr>
+        <tr>
+          <td><strong>TOKENICODE</strong><br><span style="font-family: var(--mono); font-size: 0.82em; color: var(--ink-muted);">yiliqi78/TOKENICODE</span></td>
+          <td><span class="badge-yes">Apache-2.0</span></td>
+          <td>Tauri 2 + React 19 + TS 5.8 + Zustand 5 · spawn + NDJSON streaming + thinking/writing/tool 阶段</td>
+          <td><span class="badge-yes">✓ 强参考</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">借鉴 finalizeOnce + control_request</span></td>
+        </tr>
+        <tr>
+          <td><strong>claude-code-gui</strong><br><span style="font-family: var(--mono); font-size: 0.82em; color: var(--ink-muted);">markes76</span></td>
+          <td><span class="badge-yes">MIT</span></td>
+          <td>Electron 31 + React 18 · <strong>不 spawn subprocess</strong> — tail <code>~/.claude/projects/*.jsonl</code> 文件</td>
+          <td><span class="badge-mid">📝 mental fallback</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">失去 --add-dir 等参数</span></td>
+        </tr>
+        <tr>
+          <td><strong>claude-code-parser</strong><br><span style="font-family: var(--mono); font-size: 0.82em; color: var(--ink-muted);">udhaykumarbala</span></td>
+          <td><span class="badge-yes">MIT</span></td>
+          <td>Pure TS, zero deps, 9KB · 标准 stream-json NDJSON parser</td>
+          <td><span class="badge-mid">📝 vendored</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">不 npm install · KD-12</span></td>
+        </tr>
+        <tr>
+          <td><strong>claude-code-sdk-ts</strong><br><span style="font-family: var(--mono); font-size: 0.82em; color: var(--ink-muted);">instantlyeasy</span></td>
+          <td><span class="badge-yes">MIT</span></td>
+          <td>TS SDK · 链式 API · <strong>不 spawn subprocess</strong>，仅委托 CLI 认证</td>
+          <td><span class="badge-no">✗ 不适用</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">方向相反</span></td>
+        </tr>
+        <tr>
+          <td><strong>siteboon/claudecodeui</strong></td>
+          <td><span class="badge-no">AGPL-3.0</span></td>
+          <td>Web (Node + React + Vite) · web 架构非 desktop</td>
+          <td><span class="badge-no">⛔ AGPL + 错误方向</span></td>
+        </tr>
+        <tr>
+          <td><strong>CodePilot</strong><br><span style="font-family: var(--mono); font-size: 0.82em; color: var(--ink-muted);">op7418</span></td>
+          <td><span style="color: var(--orange-deep); font-weight: 600;">BSL-1.1</span></td>
+          <td>Electron + Next.js · 多模型 agent</td>
+          <td><span class="badge-mid">⚠ 只读参考</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">个人免费商用付费</span></td>
+        </tr>
+        <tr>
+          <td><strong>Electron 整体替代</strong></td>
+          <td><span class="badge-mid">n/a</span></td>
+          <td>Electron + 任意前端 · 同 opcode 但用 Electron</td>
+          <td><span class="badge-no">✗ 否决</span><br><span style="font-size: 0.78em; color: var(--ink-muted);">Intel Mac 2019 不稳定</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ─── 否决理由 ─── -->
+  <section id="reject">
+    <h2><span class="h-num">§</span>否决理由</h2>
+    <ul class="reject-list">
+      <li><strong>opcode / claudecodeui (AGPL)</strong> — AGPL-3.0 是二进制分发污染源。即使个人使用 OK，但 PROJECT.md OOS-01 允许未来 OSS portfolio release，AGPL 会污染整个 mneme。读不抄。</li>
+      <li><strong>claude-code-gui 文件 tail 模式</strong> — 失去 <code style="font-family: var(--mono); background: var(--bg-card-warm); padding: 0.1em 0.4em; border-radius: 3px;">--add-dir &lt;vault&gt;</code> / <code style="font-family: var(--mono); background: var(--bg-card-warm); padding: 0.1em 0.4em; border-radius: 3px;">--append-system-prompt</code> / <code style="font-family: var(--mono); background: var(--bg-card-warm); padding: 0.1em 0.4em; border-radius: 3px;">--resume</code> 等参数控制。这些是 vault scope / per-course rules / multi-session 的实现基础，不能放弃。</li>
+      <li><strong>claude-code-sdk-ts</strong> — 它不 spawn subprocess，依赖 CLI 已有认证。和"自己 spawn 控制生命周期"目标方向相反。</li>
+      <li><strong>Electron</strong> — Intel Mac 2019 不稳定（已存 memory <code style="font-family: var(--mono); background: var(--bg-card-warm); padding: 0.1em 0.4em; border-radius: 3px;">feedback_electron_avoid</code>）；binary 体积 15× Tauri；默认 Chromium 渲染违和 KP-09 美学家族。</li>
+      <li><strong>HLS 抓流 / OAuth token 提取</strong> — 违反 Anthropic 2026.02 ToS / KP-04。OpenClaw 式方案已被 Anthropic 明确 ban。</li>
+    </ul>
+  </section>
+
+  <!-- ─── 实施约束 ─── -->
+  <section id="constraints">
+    <h2><span class="h-num">§</span>实施约束</h2>
+    <p class="section-sub">8 节 — 第 6 节是 v0.3 新增的预热约束（橙色高亮）。</p>
+
+    <div class="constraints">
+
+      <!-- 1 命令行参数 -->
+      <div class="constraint" id="constraint-1">
+        <div class="constraint-head">
+          <span class="constraint-num">1</span>
+          <span class="constraint-title">命令行参数</span>
+          <span class="constraint-tag">locked by spike 002</span>
+        </div>
+        <div class="constraint-body">
+          <div class="codeblock">claude <span class="flag">--print</span> \
+       <span class="flag">--permission-mode</span> bypassPermissions \
+       <span class="flag">--output-format</span> stream-json \
+       <span class="flag">--include-partial-messages</span> \
+       <span class="flag">--verbose</span> \
+       &lt;prompt&gt;</div>
+          <ul>
+            <li><code>--print</code> 非交互，子进程发完即退</li>
+            <li><code>--permission-mode bypassPermissions</code> 默认放开（settings 可改 + 显式 user warning）</li>
+            <li><code>--output-format stream-json</code> NDJSON 流式</li>
+            <li><code>--include-partial-messages</code> token 级流式</li>
+            <li><code>--verbose</code> 含 system events（必需，否则收不到 cost 等元数据）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2 生命周期 -->
+      <div class="constraint" id="constraint-2">
+        <div class="constraint-head">
+          <span class="constraint-num">2</span>
+          <span class="constraint-title">子进程生命周期</span>
+          <span class="constraint-tag">locked by plans 01-01..01-04</span>
+        </div>
+        <div class="constraint-body">
+          <p>完整 Rust 状态机：</p>
+          <ul>
+            <li><strong>spawn</strong> · <code>tokio::process::Command</code> + stdin/stdout pipe</li>
+            <li><strong>pause</strong> · UI 侧 stop 按钮（D-21）→ Rust 发 SIGSTOP 或丢弃 stdin</li>
+            <li><strong>kill</strong> · <code>libc::killpg(pgid, SIGTERM)</code> → 2.5s drain → <code>SIGKILL</code> 兜底</li>
+            <li><strong>PGID kill</strong> · subprocess + 衍生 tool 进程都拿到（防 zombie，<strong>Pitfall 1</strong>）</li>
+            <li><strong>Cmd+Q drain</strong> · <code>CloseRequested</code> + <code>ExitRequested</code> 双 hook 并集 → AppleScript-driven 测试守门（Phase 1 cycle-2 HIGH-2 fix）</li>
+            <li><strong>2.5s 内 PID drain 到 0</strong> · lifecycle harness 守门</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3 stream-json 解析 -->
+      <div class="constraint" id="constraint-3">
+        <div class="constraint-head">
+          <span class="constraint-num">3</span>
+          <span class="constraint-title">Stream-json 解析</span>
+          <span class="constraint-tag">locked by spike 002 + D-21</span>
+        </div>
+        <div class="constraint-body">
+          <ul>
+            <li>NDJSON 一行一事件，按 <code>type</code> dispatch：<code>system_init</code> / <code>user</code> / <code>assistant</code> / <code>tool_use</code> / <code>tool_result</code> / <code>result</code> / <code>control_request</code></li>
+            <li><code>result</code> 事件 = session 结束（含 cost + duration + usage）</li>
+            <li><strong><code>finalizeOnce</code> 守门</strong> 防 <code>result</code> 后误处理 lingering 事件（D-21，借自 TOKENICODE）</li>
+            <li>解析层：vendored <code>claude-code-parser</code>（<code>vendor/claude-code-parser/</code>）— copy source + LICENSE + VENDOR.md（A2 决定，drop tests）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 4 前端渲染 -->
+      <div class="constraint" id="constraint-4">
+        <div class="constraint-head">
+          <span class="constraint-num">4</span>
+          <span class="constraint-title">前端渲染</span>
+          <span class="constraint-tag">locked by KD-02 + spike 002</span>
+        </div>
+        <div class="constraint-body">
+          <ul>
+            <li>流式 text 增量 append 到 Svelte 5 <code>$state</code> runes</li>
+            <li>markdown 渲染：<code>marked</code> 在 <code>result</code> 后整体重渲染（不是每 token）</li>
+            <li>数学：KaTeX <code>renderToString</code> paint-time，<strong>不</strong>做 first-class block</li>
+            <li>HTML 注入安全：DOMPurify 强制（<strong>Pitfall 4</strong> — markdown XSS via streaming sanitization gap）</li>
+            <li>UI 流式信号：仅 streaming dot + dev <code>console.log</code> TTFT/event count/duration（D-21，不做生产 telemetry）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5 capability 边界 -->
+      <div class="constraint" id="constraint-5">
+        <div class="constraint-head">
+          <span class="constraint-num">5</span>
+          <span class="constraint-title">Capability 边界</span>
+          <span class="constraint-tag">locked by Phase 1 cycle-2</span>
+        </div>
+        <div class="constraint-body">
+          <ul>
+            <li><strong>spawn-args SSOT</strong> · <code>spawn-args.ts</code> 输出 <code>.shared</code> 和 <code>.node</code> 分版（cycle-2 HIGH-1 fix）→ Vitest 加 browser-safety grep-guards</li>
+            <li><strong>prebuild gen-capabilities.ts</strong> · 生成 Tauri <code>capabilities/*.json</code> + diff audit (B2)</li>
+            <li><strong>CSP nonce</strong> · 每次响应 random nonce（plan 01-08）</li>
+            <li><strong>wildcard 禁用</strong> · capability 不允许 <code>*</code> 通配 path（<strong>Pitfall 2</strong>）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 6 ⚡ 预热约束 -->
+      <div class="constraint spotlight" id="constraint-6">
+        <div class="constraint-head">
+          <span class="constraint-num">6</span>
+          <span class="constraint-title">预热约束</span>
+          <span class="constraint-tag warm">⚡ v0.3 新增 · 2026-05-11</span>
+        </div>
+        <div class="constraint-body">
+          <div class="callout red">
+            <strong>问题：</strong>实测 app 启动后 claude 子进程<strong>懒加载</strong> — 用户没发消息前不 spawn。首条消息发出时才 spawn → 用户感知冷启动慢（spawn + claude CLI 启动 + 首次 model API call 串联）。
+          </div>
+          <p><strong>新增契约：</strong></p>
+          <ul>
+            <li>app 启动时即 spawn <strong>一个 idle subprocess</strong>（<strong>不阻塞 UI 渲染</strong> — 主线程之外）</li>
+            <li><strong>idle 状态</strong> · subprocess 待命，stdin 不写内容；不消耗 API token（只是 CLI 已加载）</li>
+            <li><strong>首次发送 attach</strong> · 用户第一条 prompt 到达时直接写入已有 idle subprocess stdin，省去 spawn 延迟</li>
+            <li><strong>资源边界</strong> · idle subprocess 内存占用待 Phase 1 / Phase 2 实测（如 &gt;100MB 考虑改 warm pool 触发条件）</li>
+          </ul>
+          <p><strong>未确定的实现细节（plan-phase 决定）：</strong></p>
+          <ul>
+            <li>1:1 default session 预热 vs warm pool（先准备 1-2 个 spare）？</li>
+            <li>multi-session 每个新 session 是否走预热？默认 yes，但首个 session 后预热可延迟到 idle 时段</li>
+            <li>预热失败 fallback：lazy spawn + 显式 loading state</li>
+          </ul>
+          <div class="callout olive">
+            <strong>落地位置：</strong>Phase 1 收尾（如 dogfood 痛点排第一）或 Phase 2 plan（如 vault setup 优先）
+          </div>
+        </div>
+      </div>
+
+      <!-- 7 成本控制 -->
+      <div class="constraint" id="constraint-7">
+        <div class="constraint-head">
+          <span class="constraint-num">7</span>
+          <span class="constraint-title">成本控制</span>
+          <span class="constraint-tag">Pitfall 3 — API cost runaway</span>
+        </div>
+        <div class="constraint-body">
+          <ul>
+            <li><strong>cost meter</strong> · UI 显示当前 session cumulative cost（<code>result</code> 事件的 <code>total_cost_usd</code>）</li>
+            <li><strong>cost cap kill switch</strong> · settings 可设单 session 上限（默认 $5）；超过自动 kill subprocess + 通知 user</li>
+            <li><strong>agent loop guard</strong> · 单 turn 超过 N tool_use（默认 50）警告，超过 2N 自动停（防 infinite loop）</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 8 spec 边界 -->
+      <div class="constraint" id="boundaries">
+        <div class="constraint-head">
+          <span class="constraint-num">8</span>
+          <span class="constraint-title">与其他 spec 的契约边界</span>
+          <span class="constraint-tag">cross-spec contracts</span>
+        </div>
+        <div class="constraint-body">
+          <div class="boundaries">
+            <div class="boundary"><strong>multi-session (#09)</strong> · 每 session 一 subprocess；<code>--resume &lt;session-id&gt;</code> 恢复；预热契约延伸到新 session 创建</div>
+            <div class="boundary"><strong>agentic-search (#02)</strong> · <code>--add-dir &lt;vault&gt;</code> 授权 vault 读权限</div>
+            <div class="boundary"><strong>per-course-rules (#18)</strong> · <code>--append-system-prompt &lt;concat&gt;</code> 注入 per-course rules</div>
+            <div class="boundary"><strong>anchored-mode (#17)</strong> · <strong>不走 subprocess</strong> — 直接调 Citations API（KD-05 路径独立于 KD-01）</div>
+            <div class="boundary"><strong>interaction-paradigm（横切 C）</strong> · Cmd+Q 是唯一全局快捷键，必须正确触发 subprocess drain</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── 重评触发 ─── -->
+  <section id="revisit">
+    <h2><span class="h-num">§</span>重新评估的触发条件</h2>
+    <p class="section-sub">什么样的外部变化会让我们重开这个 spec 的讨论。</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 60%;">触发</th>
+          <th>重评范围</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Anthropic 发布官方 stream-json SDK</td>
+          <td>KD-12 整体重评；vendored 路径退役</td>
+        </tr>
+        <tr>
+          <td>Claude Code 子进程协议大变（<code>--output-format</code> 改名 / stream-json 字段重排）</td>
+          <td>解析层重写；调研是否切到 stable schema</td>
+        </tr>
+        <tr>
+          <td>Tauri 2 致命架构缺陷</td>
+          <td>KD-01 整体推翻；考虑 Tauri 3 / 其他壳</td>
+        </tr>
+        <tr>
+          <td>预热反而拖慢启动（idle subprocess 跟主进程抢资源）</td>
+          <td>改 lazy spawn + 显式 loading UI</td>
+        </tr>
+        <tr>
+          <td>单 session 内存 &gt;500MB / cost &gt;$20 频繁触发</td>
+          <td>改 stateless 单次调用 + 自管会话状态</td>
+        </tr>
+        <tr style="background: rgba(193, 95, 60, 0.04);">
+          <td><strong style="color: var(--red-soft);">Anthropic ToS 改变</strong>（如禁止 <code>claude --print</code> 在非交互场景）</td>
+          <td><strong>KP-04 路径重评（最大风险）</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ─── 关联文档 ─── -->
+  <section id="docs">
+    <h2><span class="h-num">§</span>关联 phase 与文档</h2>
+
+    <div class="docs">
+      <h3>当前实施 phase</h3>
+      <ul>
+        <li>Phase 1 — Tauri Shell Foundation + Subprocess Hardening</li>
+        <li>计划目录：<code>.planning/phases/01-tauri-shell-foundation-subprocess-hardening/</code></li>
+        <li>5-piece contract：SPEC + CONTEXT + AI-SPEC + UI-SPEC + AMENDMENT-2026-05-09</li>
+        <li>8/9 plans 完成（01-07 dogfood paused）</li>
+      </ul>
+
+      <h3>关键文档</h3>
+      <ul>
+        <li>spike 002 <code>app/src/routes/+page.svelte</code> — 端到端 demo</li>
+        <li><code>spike-findings-mneme</code> skill — <code>references/{claude-subprocess,tauri-shell-ui}.md</code></li>
+        <li>Phase 1 CONTEXT.md <code>D-01..D-21</code> — 21 个 implementation decisions</li>
+        <li>REVIEWS.md cycle 1+2 (codex) — cross-AI plan review converged HIGH=0</li>
+        <li><code>.continue-here.md</code> — window-drag blocker + 4 hypotheses 续上下文</li>
+      </ul>
+
+      <h3>关联 OSS 依赖</h3>
+      <ul>
+        <li><code>.planning/dependencies.md</code> Group 1（frontend）+ Group 3（Rust backend）+ Group 5（vendored claude-code-parser）</li>
+      </ul>
+
+      <h3>关联横切 spec</h3>
+      <ul>
+        <li><strong>visual-design-system</strong> — UI 流式渲染遵守 KP-09 + KD-13 美学</li>
+        <li><strong>interaction-paradigm</strong> — Cmd+Q 唯一全局热键 + 鼠标优先</li>
+        <li><strong>proactive-recall</strong>（如保持独立）— 多会话开始事件触发主动召回的 hook 点</li>
+      </ul>
+
+      <h3>后续 phase 关联</h3>
+      <ul>
+        <li>Phase 2（vault + onboarding）— <code>--add-dir &lt;vault&gt;</code> 路径</li>
+        <li>Phase 3（multi-session + editor）— <code>--resume</code> + 多 subprocess</li>
+        <li>Phase 5.5 + 7（memory-engine）— subprocess 输出 feed 给 memory pipeline</li>
+        <li>Phase 8（per-course-rules）— <code>--append-system-prompt</code></li>
+        <li>Phase 9（anchored-mode）— Citations API 分支（不走 subprocess）</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>Mneme OpenSpec · Spec 01 · claude-subprocess</p>
+    <p>source: <code>openspec/specs/claude-subprocess.md</code> · 抽出于 2026-05-11 · v0.3 切分确认后</p>
+    <p>OpenSpec 阶段 2 · 第 1 / 7 个 spec</p>
+  </footer>
+
+</div>
+
+</body>
+</html>

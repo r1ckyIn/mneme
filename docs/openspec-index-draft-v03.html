@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mneme OpenSpec 切分草案 v0.3</title>
+<style>
+  :root {
+    --orange: #d97757;
+    --orange-soft: #e89c80;
+    --orange-deep: #b85a3e;
+    --bg: #faf9f5;
+    --bg-card: #fefdf9;
+    --bg-card-warm: #f5f1e8;
+    --ink: #141413;
+    --ink-soft: #2b2a27;
+    --ink-muted: #6b6a64;
+    --olive: #788c5d;
+    --blue: #6a9bcc;
+    --border: rgba(20, 20, 19, 0.08);
+    --border-strong: rgba(20, 20, 19, 0.16);
+    --shadow-soft: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.035);
+    --shadow-card: 0 0.5rem 2rem rgba(0, 0, 0, 0.05), 0 0.125rem 0.5rem rgba(0, 0, 0, 0.025);
+    --ease: cubic-bezier(0.165, 0.85, 0.45, 1);
+    --serif: 'Iowan Old Style', 'Apple Garamond', 'Georgia', 'Songti SC', 'Source Han Serif SC', serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--serif); background: var(--bg); color: var(--ink);
+    line-height: 1.7; font-size: 17px;
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 4rem 2rem 6rem; }
+
+  .hero { margin-bottom: 4rem; padding-bottom: 3rem; border-bottom: 1px solid var(--border); }
+  .hero-tag {
+    display: inline-block; font-family: var(--mono); font-size: 0.75rem;
+    letter-spacing: 0.12em; color: var(--orange); text-transform: uppercase; margin-bottom: 1rem;
+  }
+  h1 {
+    font-size: clamp(2rem, 1.2rem + 3vw, 3.25rem); line-height: 1.15;
+    margin: 0 0 1.5rem; letter-spacing: -0.02em; font-weight: 500;
+  }
+  .lede { font-size: 1.125rem; color: var(--ink-soft); max-width: 38rem; margin: 0; }
+  .lede + .lede { margin-top: 0.75rem; }
+  .meta-bar {
+    margin-top: 2rem; display: flex; gap: 2rem; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 0.85rem; color: var(--ink-muted);
+  }
+  .meta-bar span strong { color: var(--ink); font-weight: 500; }
+
+  /* version banner */
+  .version-banner {
+    background: linear-gradient(180deg, rgba(217, 119, 87, 0.08) 0%, rgba(217, 119, 87, 0.02) 100%);
+    border-left: 3px solid var(--orange);
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+  }
+  .version-banner strong { color: var(--orange-deep); font-weight: 600; }
+  .version-banner .changes {
+    margin-top: 0.5rem;
+    display: grid;
+    gap: 0.35rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+  .version-banner .changes span { padding-left: 1rem; position: relative; }
+  .version-banner .changes span::before { content: '→'; position: absolute; left: 0; color: var(--orange); }
+
+  section { margin: 4rem 0; scroll-margin-top: 2rem; }
+  h2 {
+    font-size: 1.75rem; letter-spacing: -0.015em; font-weight: 500;
+    margin: 0 0 0.5rem; line-height: 1.25;
+  }
+  h2 .num {
+    color: var(--orange); font-family: var(--mono); font-size: 0.875rem;
+    margin-right: 0.75rem; letter-spacing: 0; vertical-align: middle;
+  }
+  .section-sub { color: var(--ink-muted); font-size: 0.95rem; margin: 0 0 2rem; }
+  h3 { font-size: 1.15rem; font-weight: 500; margin: 0 0 0.75rem; letter-spacing: -0.01em; }
+
+  .overview-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.9rem; }
+  .overview-table th {
+    text-align: left; padding: 0.75rem 1rem; background: var(--bg-card-warm);
+    border-bottom: 1px solid var(--border-strong); font-family: var(--mono);
+    font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 500;
+  }
+  .overview-table td {
+    padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  .overview-table tr:hover td { background: rgba(217, 119, 87, 0.04); }
+  .overview-table .spec-num { font-family: var(--mono); color: var(--ink-muted); width: 2rem; }
+  .overview-table .spec-name {
+    font-weight: 500; font-family: var(--mono); color: var(--orange-deep);
+  }
+  .overview-table .spec-name.changed::after {
+    content: '⚡'; margin-left: 0.4em; color: var(--orange); font-size: 0.85em;
+  }
+  .overview-table .covers {
+    font-family: var(--mono); font-size: 0.78rem; color: var(--ink-muted); line-height: 1.55;
+  }
+
+  .cards { display: grid; gap: 1.5rem; }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.75rem 2rem; box-shadow: var(--shadow-soft);
+    transition: box-shadow 0.4s var(--ease), transform 0.4s var(--ease);
+  }
+  .card:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
+  .card.cross { background: var(--bg-card-warm); border-left: 3px solid var(--olive); }
+  .card.changed { border-left: 3px solid var(--orange); }
+  .card-head {
+    display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px dashed var(--border);
+  }
+  .card-num { font-family: var(--mono); font-size: 0.85rem; color: var(--ink-muted); }
+  .card-name {
+    font-family: var(--mono); font-size: 1.05rem; font-weight: 600;
+    color: var(--orange-deep); letter-spacing: -0.005em;
+  }
+  .card.cross .card-name { color: var(--olive); }
+  .change-tag {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-family: var(--mono); font-size: 0.7rem;
+    padding: 0.2rem 0.55rem; border-radius: 4px;
+    background: var(--orange); color: white;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  .badge {
+    display: inline-block; font-family: var(--mono); font-size: 0.7rem;
+    padding: 0.15rem 0.55rem; border-radius: 999px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .badge.v1 { background: rgba(120, 140, 93, 0.15); color: var(--olive); }
+  .badge.v1x { background: rgba(106, 155, 204, 0.15); color: var(--blue); }
+  .badge.phase { background: rgba(20, 20, 19, 0.06); color: var(--ink-soft); }
+  .badge.status-partial { background: rgba(217, 119, 87, 0.15); color: var(--orange-deep); }
+  .badge.status-blocked { background: rgba(184, 90, 62, 0.15); color: var(--orange-deep); font-weight: 600; }
+  .badge.status-hyp { background: rgba(20, 20, 19, 0.04); color: var(--ink-muted); }
+  .badge.cross-tag { background: rgba(120, 140, 93, 0.18); color: var(--olive); }
+
+  .card-summary { color: var(--ink-soft); margin: 0 0 1.25rem; font-size: 1.02rem; }
+  .field { margin: 1rem 0; }
+  .field-label {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em;
+    color: var(--ink-muted); text-transform: uppercase; margin-bottom: 0.4rem;
+  }
+  .field-body { color: var(--ink-soft); font-size: 0.95rem; line-height: 1.65; }
+  .field-body code {
+    font-family: var(--mono); background: var(--bg-card-warm);
+    padding: 0.1em 0.4em; border-radius: 4px; font-size: 0.85em; color: var(--ink);
+  }
+  .field-body .reject { color: var(--orange-deep); font-weight: 500; }
+  .field-body .ok { color: var(--olive); font-weight: 500; }
+  .field-body del { color: var(--ink-muted); text-decoration: line-through; }
+
+  .covers-list { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem; }
+  .cov {
+    font-family: var(--mono); font-size: 0.76rem; padding: 0.15rem 0.5rem;
+    background: var(--bg-card-warm); border: 1px solid var(--border);
+    border-radius: 4px; color: var(--ink-soft);
+  }
+  .cov.changed { background: rgba(217, 119, 87, 0.12); color: var(--orange-deep); border-color: rgba(217, 119, 87, 0.3); }
+
+  .callout {
+    margin: 1rem 0; padding: 1rem 1.25rem; background: var(--bg-card-warm);
+    border-left: 3px solid var(--orange); border-radius: 0 8px 8px 0;
+    font-size: 0.92rem; color: var(--ink-soft);
+  }
+  .callout strong { color: var(--ink); font-weight: 600; }
+  .callout.olive { border-left-color: var(--olive); }
+  .callout.olive strong { color: var(--olive); }
+
+  .defer-list {
+    display: grid; gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .defer-item {
+    padding: 1.25rem; border: 1px dashed var(--border-strong);
+    border-radius: 8px; background: rgba(20, 20, 19, 0.015);
+  }
+  .defer-item h4 { margin: 0 0 0.5rem; font-family: var(--mono); font-size: 0.9rem; color: var(--ink-soft); }
+  .defer-item p { margin: 0; font-size: 0.88rem; color: var(--ink-muted); line-height: 1.6; }
+
+  .path {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem 2.25rem; box-shadow: var(--shadow-soft);
+  }
+  .path ol { padding-left: 1.5rem; margin: 0 0 1.5rem; }
+  .path li { margin-bottom: 0.65rem; color: var(--ink-soft); }
+  .path li strong { color: var(--ink); font-weight: 600; }
+  .path .phase-block { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed var(--border); }
+  .phase-block h3 {
+    margin: 0 0 0.85rem; font-family: var(--mono); color: var(--orange-deep);
+    font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  .questions {
+    margin-top: 3rem; padding: 2rem;
+    background: linear-gradient(180deg, rgba(217, 119, 87, 0.06) 0%, rgba(217, 119, 87, 0.02) 100%);
+    border-radius: 12px; border: 1px solid rgba(217, 119, 87, 0.18);
+  }
+  .questions h2 { color: var(--orange-deep); margin-top: 0; }
+
+  .recall-explain {
+    margin: 2rem 0; padding: 1.5rem 1.75rem;
+    background: var(--bg-card-warm); border-radius: 12px;
+    border: 1px solid rgba(120, 140, 93, 0.25);
+  }
+  .recall-explain h3 { color: var(--olive); margin: 0 0 0.75rem; }
+  .recall-explain blockquote {
+    margin: 0.75rem 0; padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.5); border-radius: 6px;
+    color: var(--ink-soft); font-style: italic; border-left: 2px solid var(--olive);
+  }
+
+  footer {
+    margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--border);
+    color: var(--ink-muted); font-size: 0.85rem; font-family: var(--mono);
+  }
+
+  nav.toc {
+    position: sticky; top: 0;
+    background: rgba(250, 249, 245, 0.92);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); z-index: 10;
+    padding: 0.85rem 0; margin-bottom: 2rem;
+  }
+  nav.toc-inner {
+    max-width: 1080px; margin: 0 auto; padding: 0 2rem;
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 0.8rem;
+  }
+  nav.toc a { color: var(--ink-muted); text-decoration: none; transition: color 0.2s var(--ease); }
+  nav.toc a:hover { color: var(--orange); }
+
+  @media (max-width: 720px) {
+    .container { padding: 2rem 1.25rem 4rem; }
+    .card { padding: 1.25rem 1.5rem; }
+    .overview-table { font-size: 0.82rem; }
+    .overview-table td, .overview-table th { padding: 0.6rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#hero">概览</a>
+    <a href="#changes">v0.2 改动</a>
+    <a href="#table">切分一览</a>
+    <a href="#features">19 个 Feature Spec</a>
+    <a href="#cross">2 个横切 Spec</a>
+    <a href="#recall">proactive-recall 大白话</a>
+    <a href="#defer">暂不切</a>
+    <a href="#path">下一步</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- ─── HERO ─── -->
+  <header class="hero" id="hero">
+    <span class="hero-tag">OpenSpec · 切分草案 v0.3</span>
+    <h1>v0.2 → v0.3<br>command-palette 砍 · subprocess 加预热</h1>
+    <p class="lede">v0.2 你审阅后又给了 2 条修正：① 除 Cmd+Q 外都用鼠标交互（命令面板砍）② Phase 1 实测发现 app 启动后 subprocess 不预热，首条消息冷启动慢。</p>
+    <p class="lede">v0.3 把这些落进切分。结果：<strong>18 个 feature spec</strong>（#08 retired）+ <strong>3 个横切 spec</strong>（新增 interaction-paradigm）= 21 个文件不变。</p>
+    <div class="meta-bar">
+      <span><strong>v0.3 生成</strong> 2026-05-11</span>
+      <span><strong>状态</strong> 待确认</span>
+      <span><strong>有效 spec</strong> 18 + 3</span>
+      <span><strong>v0.2 总数</strong> 19 + 2</span>
+      <span><strong>剩待决</strong> 1 项 (proactive-recall 归属)</span>
+    </div>
+  </header>
+
+  <!-- ─── 改动概览 ─── -->
+  <section id="changes">
+    <div class="version-banner">
+      <strong>v0.3 相对 v0.2 的具体改动（共 3 处）</strong>
+      <div class="changes">
+        <span><strong>08 command-palette ⛔ RETIRED</strong> · user 反馈"除 Cmd+Q 外都用鼠标"；REQ-11 → 移到 OOS</span>
+        <span><strong>01 claude-subprocess 加预热约束</strong> · Phase 1 finding：app 启动即 spawn idle subprocess 待命，避免首条消息冷启动延迟</span>
+        <span><strong>新增横切 spec C interaction-paradigm</strong> · 鼠标优先 · Cmd+Q 唯一全局热键 · 约束所有 UI spec</span>
+      </div>
+      <p style="margin: 1rem 0 0; font-size: 0.85rem; color: var(--ink-muted);"><strong>v0.2 已落变更（保留参考）：</strong>external-import 自成生态 · document-ingestion 换 MinerU · shell-ux 拆 5 · mindmap-whiteboard 拆 2 · anchored-mode 标 P1 UI 已实装</p>
+    </div>
+  </section>
+
+  <!-- ─── 概览表 ─── -->
+  <section id="table">
+    <h2>切分一览（21 个 = 18 feature + 3 横切）</h2>
+    <p class="section-sub">⚡ = v0.3 改动 / ⛔ = retired。</p>
+
+    <table class="overview-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Spec</th>
+          <th>覆盖项</th>
+          <th>阶段</th>
+          <th>当前 phase</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="spec-num">1</td><td class="spec-name changed">claude-subprocess</td><td class="covers">REQ-02 · KD-01-03 · KP-04 · KD-12 · ⚡加预热</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 1 执行中</span></td><td><span class="badge status-partial">partial</span></td></tr>
+        <tr><td class="spec-num">2</td><td class="spec-name">agentic-search</td><td class="covers">REQ-10 · KD-07</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 1</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">3</td><td class="spec-name">vault-storage</td><td class="covers">REQ-06 · KP-01 · KP-03(data)</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 2</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">4</td><td class="spec-name changed">external-import</td><td class="covers">REQ-03(待改) · REQ-13(待改) · UniBoard handoff todo</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 2</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">5</td><td class="spec-name changed">document-ingestion</td><td class="covers">REQ-18 · KP-02 · MinerU 上位</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 4</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">6</td><td class="spec-name">editor</td><td class="covers">KD-09 · REQ-06(书写侧)</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 3</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">7</td><td class="spec-name changed">layout-shell</td><td class="covers">REQ-01(待改) · 用户自定义可拖拽布局</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 1 实装中</span></td><td><span class="badge status-partial">partial</span></td></tr>
+        <tr style="opacity: 0.55;"><td class="spec-num">8</td><td class="spec-name" style="text-decoration: line-through; color: var(--ink-muted);">command-palette ⛔</td><td class="covers">REQ-11 → 移到 OOS</td><td>—</td><td><span class="badge phase">retired 2026-05-11</span></td><td><span class="badge status-blocked" style="background: rgba(20,20,19,0.08); color: var(--ink-muted);">RETIRED</span></td></tr>
+        <tr><td class="spec-num">9</td><td class="spec-name changed">multi-session</td><td class="covers">REQ-12</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 3</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">10</td><td class="spec-name changed">settings-ui</td><td class="covers">REQ-14</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 2</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">11</td><td class="spec-name changed">onboarding</td><td class="covers">REQ-16</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 2</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">12</td><td class="spec-name">echo360-video</td><td class="covers">REQ-04 · KD-04 · KD-11(gate)</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 5→6</span></td><td><span class="badge status-blocked">gated by spike</span></td></tr>
+        <tr><td class="spec-num">13</td><td class="spec-name">caption-bilingual</td><td class="covers">REQ-05</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 6</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">14</td><td class="spec-name">memory-engine</td><td class="covers">REQ-07 · KD-10 · KP-03 · KP-07(data) · RQ-01</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 5.5→7</span></td><td><span class="badge status-blocked">BLOCKED · RQ-01</span></td></tr>
+        <tr><td class="spec-num">15</td><td class="spec-name changed">mindmap-viz</td><td class="covers">KD-08(mind-map) · REQ-07(视觉)</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 8</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">16</td><td class="spec-name changed">whiteboard</td><td class="covers">KD-08(Excalidraw)</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 8 后置</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">17</td><td class="spec-name changed">anchored-mode</td><td class="covers">REQ-08 · KD-05 · 切换 UI 已 P1</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">P9 后端 · P1 UI ready</span></td><td><span class="badge status-partial">partial — UI ready</span></td></tr>
+        <tr><td class="spec-num">18</td><td class="spec-name">per-course-rules</td><td class="covers">REQ-17</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 8</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">19</td><td class="spec-name">fsrs-review</td><td class="covers">REQ-09 · REQ-15 · KD-06</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 10</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr style="background: rgba(120, 140, 93, 0.06);"><td class="spec-num">A</td><td class="spec-name" style="color: var(--olive);">visual-design-system</td><td class="covers">KP-09 · KD-13</td><td><span class="badge cross-tag">横切·约束</span></td><td><span class="badge phase">所有 UI spec</span></td><td><span class="badge status-hyp">locked</span></td></tr>
+        <tr style="background: rgba(120, 140, 93, 0.06);"><td class="spec-num">B</td><td class="spec-name" style="color: var(--olive);">proactive-recall</td><td class="covers">KP-07</td><td><span class="badge cross-tag">横切·承诺</span></td><td><span class="badge phase">memory + sess + rules</span></td><td><span class="badge status-hyp">⚠ 待决</span></td></tr>
+        <tr style="background: rgba(120, 140, 93, 0.06);"><td class="spec-num">C</td><td class="spec-name changed" style="color: var(--olive);">interaction-paradigm</td><td class="covers">鼠标优先 · Cmd+Q 唯一全局热键</td><td><span class="badge cross-tag">横切·约束</span></td><td><span class="badge phase">所有 UI + Cmd+Q drain</span></td><td><span class="badge status-hyp">locked</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ─── proactive-recall 大白话 ─── -->
+  <section id="recall" class="recall-explain">
+    <h3>先回答你"没看懂的问题 3" — proactive-recall 是啥？</h3>
+    <p>用大白话讲：<strong>AI 不只是"你问 → 它答"，还要主动浮出相关历史</strong>。</p>
+    <p>举例 — 你打开新 chat 问 COMP3221 这周作业，普通 AI 等你说完才答。但 mneme 的 AI 应该这样开口：</p>
+    <blockquote>"上周二你卡在 graph shortest-path tutorial 第 3 题，跟这周 BFS 是关联的。先看那道题再做这周可能更顺。"</blockquote>
+    <p>你没问，它先讲。这就是 KP-07"懂我"的承诺。验收指标：<strong>一周样本中，每会话 ≥3 次主动浮出，相关度 ≥90%</strong>。</p>
+    <p style="margin-top: 1rem;"><strong>它横跨 3 个 spec 协同：</strong></p>
+    <ul style="margin: 0.5rem 0 0; padding-left: 1.5rem; color: var(--ink-soft);">
+      <li><strong>memory-engine</strong> — 提供数据（KG 里要有"上周二卡在第 3 题"这条记忆）</li>
+      <li><strong>multi-session</strong> — 决定何时触发（新 chat 开场 / 用户说"卡住了" / 拐到新话题）</li>
+      <li><strong>per-course-rules</strong> — 决定怎么注入 prompt（COMP3221 的规则说"主动召回历史错误"）</li>
+    </ul>
+    <div class="callout olive" style="margin-top: 1rem;">
+      <strong>⚠ 待你决定：</strong>这个 spec 保持独立横切（v0.2 当前画法），还是合进 memory-engine 里？合进去的话，memory-engine 内部分章节说"触发时机由 multi-session 调用"。<strong>不急定，回头再说。</strong>
+    </div>
+  </section>
+
+  <!-- ─── 改动卡片（重点 5 处）─── -->
+  <section id="features">
+    <h2>v0.3 新改动的卡片（2 处 + 1 retired）</h2>
+    <p class="section-sub">v0.2 已落的 5 处保留在下方"v0.2 改动卡片"小节，方便对照。</p>
+
+    <div class="cards">
+
+      <!-- 01 claude-subprocess ⚡ v0.3 新加预热 -->
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">01</span>
+          <span class="card-name">claude-subprocess</span>
+          <span class="change-tag">v0.3 加预热约束</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 1 执行中</span>
+          <span class="badge status-partial">partial</span>
+        </div>
+        <p class="card-summary">Tauri 2 壳通过 <code>tauri-plugin-shell</code> 启动本机 <code>claude</code> CLI 子进程，stream-json 解析、tool-use roundtrip、subprocess 生命周期。整个项目的命脉。</p>
+        <div class="callout"><strong>Phase 1 finding (2026-05-11)：</strong>实测发现 app 启动后 claude 子进程<strong>不预热</strong> → 用户首条消息冷启动慢（要等 spawn + 模型初始化）。</div>
+        <div class="field"><div class="field-label">新增实施约束</div><div class="field-body">
+          app 启动时即 spawn 一个 idle subprocess（<strong>不阻塞 UI</strong>），处于待命状态；用户首次发送时直接 attach 到已暖好的进程，避免 spawn 延迟。<br>
+          落地位置：<strong>Phase 1 收尾</strong> 或 <strong>Phase 2 plan</strong> 阶段决定（实现细节 — warm pool / default session / pre-spawn 哪个方案待 plan-phase）。
+        </div></div>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-02</span><span class="cov">KD-01</span><span class="cov">KD-02</span><span class="cov">KD-03</span><span class="cov">KP-04</span><span class="cov">KD-12</span><span class="cov changed">⚡ 预热约束</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">opcode (AGPL <span class="reject">⛔</span>) · TOKENICODE (Apache-2.0) · claude-code-gui (MIT, file-tail) · claude-code-sdk-ts · Electron 替代</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Anthropic 发布官方 stream-json SDK / Tauri 2 致命缺陷 / 预热在某种用户行为下反而拖慢 → 改成 lazy spawn</div></div>
+      </article>
+
+      <!-- 08 command-palette ⛔ RETIRED -->
+      <article class="card" style="border-left: 3px solid var(--ink-muted); opacity: 0.92;">
+        <div class="card-head">
+          <span class="card-num">08</span>
+          <span class="card-name" style="text-decoration: line-through; color: var(--ink-muted);">command-palette ⛔</span>
+          <span class="change-tag" style="background: var(--ink-muted);">v0.3 RETIRED</span>
+          <span class="badge phase">2026-05-11</span>
+        </div>
+        <p class="card-summary"><strong>砍。</strong>REQ-11 移到 OOS（Out of Scope）。</p>
+        <div class="callout"><strong>为啥砍：</strong>user 2026-05-11 反馈"<strong>所有交互除 Cmd+Q 以外都用鼠标</strong>"。命令面板 + 多快捷键违背鼠标优先的交互范式。</div>
+        <div class="field"><div class="field-label">替代方案</div><div class="field-body">新增横切 spec C <strong>interaction-paradigm</strong>，明确"鼠标优先 · Cmd+Q 唯一全局快捷键"作为所有 UI spec 必须遵守的约束。看下方 interaction-paradigm 简介。</div></div>
+        <div class="field"><div class="field-label">重新启用触发</div><div class="field-body">用户实测多会话切换 / 长 vault 浏览鼠标低效 → 重开窄场景快捷键讨论（不是立刻重启命令面板）</div></div>
+      </article>
+
+      <!-- 横切 C interaction-paradigm 简介 -->
+      <article class="card cross">
+        <div class="card-head">
+          <span class="card-num">C</span>
+          <span class="card-name">interaction-paradigm</span>
+          <span class="change-tag" style="background: var(--olive);">v0.3 新增横切</span>
+          <span class="badge cross-tag">横切·约束</span>
+          <span class="badge phase">所有 UI + Cmd+Q drain</span>
+        </div>
+        <p class="card-summary">交互范式约束 — <strong>鼠标优先</strong>（点击 / 拖拽 / 滚动 / 右键菜单）；全局快捷键<strong>只启用 Cmd+Q</strong>（subprocess drain 用，KP-04 合规）。其他热键不绑。</p>
+        <div class="field"><div class="field-label">为啥这样</div><div class="field-body">user 2026-05-11 反馈"所有交互除 Cmd+Q 以外都用鼠标"。最小化学习成本，最大化 trackpad 友好度。</div></div>
+        <div class="field"><div class="field-label">约束哪些 spec</div><div class="field-body">layout-shell · editor · mindmap-viz · whiteboard · fsrs-review · anchored-mode · settings-ui · onboarding · external-import · per-course-rules · multi-session · claude-subprocess(Cmd+Q drain) — 所有 UI + subprocess 退出路径</div></div>
+        <div class="field"><div class="field-label">与 voice-input REQ-19 协同</div><div class="field-body">REQ-19 之前约束"与 command-palette 快捷键不冲突"。命令面板砍掉后，REQ-19 改约束"与 Cmd+Q 不冲突"。如果未来 voice-input 落地，重新讨论是否破例启用 <code>Cmd+Shift+V</code>。</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">用户实测鼠标在多会话切换 / 长 vault 浏览 / FSRS review 1/2/3/4 评分等高频窄场景低效 → 启用窄场景快捷键（不是全面回归键盘优先）</div></div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ─── v0.2 改动卡片（保留对照）─── -->
+  <section>
+    <h2>v0.2 改动的卡片（5 处，保留对照）</h2>
+    <p class="section-sub">下面 5 个卡片是 v0.2 已经落的改动 — v0.3 没动它们，保留方便对照。</p>
+
+    <div class="cards">
+
+      <!-- 04 external-import -->
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">04</span>
+          <span class="card-name">external-import</span>
+          <span class="change-tag">改写 · 原 canvas-ed-sync</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 2</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary"><strong>走自成生态</strong> — 不接 Canvas/Ed API、不调外部 MCP。两个入口：</p>
+        <p class="card-summary" style="margin-top: -0.5rem;">① 手动文件导入（拖拽 / 文件选择器 / 文件夹批量）<br>② <strong>UniBoard 桥接</strong> — 从你另一个项目（web 端 FastAPI+Next.js+Supabase+Claude API 的 GPA dashboard）导入文件 / 任务 / 笔记切片</p>
+        <div class="callout"><strong>为啥这样改：</strong>UniBoard 已沉淀内容能复用 · 不被学校 API 改版/切换学校绑死 · 跟 KP-01 local-first 更彻底兼容（Canvas API 必须联网）</div>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov changed">REQ-03 (待改写)</span><span class="cov changed">REQ-13 (待改写)</span><span class="cov">UniBoard handoff todo</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选（含已否决原方案）</div><div class="field-body">
+          <del>Canvas + Ed MCP（7th iteration）</del> — <span class="reject">user 2026-05-11 决定不接外部 API/MCP，走自成生态</span><br>
+          <del>纯 Canvas API 不走 MCP</del> — 同上原因否决<br>
+          纯手动 import — 不够，UniBoard 已有内容需复用
+        </div></div>
+        <div class="field"><div class="field-label">UniBoard 桥需先回答 4 个问题</div><div class="field-body">
+          ① 移交单元（笔记 / AI 对话 / 课程切片）<br>
+          ② 传输协议（deep link / 共享 Supabase / MCP 桥）<br>
+          ③ 链接兼容（<code>[[wiki-link]]</code> 跨项目可解析？）<br>
+          ④ 离线可用（KP-01 — UniBoard 离线时 Mneme 应能用已 import 的快照）
+        </div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">UniBoard 移交单元定义大变 / 用户决定接 Canvas API（不太可能）/ UniBoard 项目废弃</div></div>
+      </article>
+
+      <!-- 05 document-ingestion -->
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">05</span>
+          <span class="card-name">document-ingestion</span>
+          <span class="change-tag">PDF 引擎换 MinerU</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 4</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">手动 / UniBoard 导入的 PDF/Office 文档转 markdown 落 vault。</p>
+        <div class="field"><div class="field-label">主选</div><div class="field-body">
+          <strong class="ok">PDF → MinerU（本地）</strong> — user 2026-05-11 实测判定更准确<br>
+          <strong>Office (docx/xlsx/pptx/html) → markitdown subprocess</strong><br>
+          <code>.md</code> / <code>.txt</code> → 直通
+        </div></div>
+        <div class="field"><div class="field-label">评估过的备选（原主选已下位）</div><div class="field-body">
+          <del>Marker (datalab-to/marker)</del> — STACK.md 原主选，被换下；用户实测 MinerU 在自己课件场景准确率更高。Marker 留作 fallback。<br>
+          PyMuPDF4LLM（AGPL <span class="reject">⛔</span>，数学弱）<br>
+          Docling IBM（输出结构过重）<br>
+          Nougat（abandoned）<br>
+          LlamaParse（cloud-only <span class="reject">⛔</span>）
+        </div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">MinerU 本地推理 Intel Mac CPU 速度待 Phase 4 实测 · subprocess 进程隔离 license 干净 · 转换失败 surface 到 UI</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">MinerU 在实际课件准确率低于预期 → 回退 Marker / markitdown 停更 / Anthropic 发布原生文档摄取 API</div></div>
+      </article>
+
+      <!-- 07 layout-shell -->
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">07</span>
+          <span class="card-name">layout-shell</span>
+          <span class="change-tag">拆 1/5 · 自 shell-ux</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 1 实装中</span>
+          <span class="badge status-partial">partial</span>
+        </div>
+        <p class="card-summary">app 整体布局壳。<strong>用户可自定义</strong> — 不是固定三栏。提供拖动按钮调整各 pane 位置 / 大小 / 显隐。<strong>Phase 1 已重新设计并实装拖动按钮。</strong></p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov changed">REQ-01 (待改写)</span><span class="cov">用户自定义可拖拽布局</span></div></div>
+        <div class="field"><div class="field-label">为啥从 shell-ux 拆出</div><div class="field-body">布局是 app 容器的物理基础，独立演进意义最大（你 Phase 1 已迭代过一次）；多会话 / 命令面板 / 设置是各自独立的功能层，混在一起没必要。</div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">默认布局保留三栏（左课件 / 中视频+预览 / 右 chat）作为初始值，用户可改 · 持久化 <code>localStorage</code> 或 settings · 遵守 visual-design-system 横切约束</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">固定三栏不可调（Phase 1 体验后判定不够灵活）· tab 分页式（违反 NotebookLM 心智模型）· 全屏单页（违反"three-pane 一产品感"）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">用户实测自定义布局太复杂没人用 → 回归固定 / 屏幕尺寸变化触发布局变体</div></div>
+      </article>
+
+      <!-- 08-11 -->
+      <!-- 08 command-palette 已在 v0.3 retired，移到上方 v0.3 区段 -->
+
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">09</span>
+          <span class="card-name">multi-session</span>
+          <span class="change-tag">拆 3/5</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 3</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">多 chat 会话 sidebar — 每会话一个 claude subprocess，独立 system prompt + vault scope；<code>--resume</code> 跨重启恢复。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-12</span></div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">每会话独立 subprocess（资源 budget 待测）· 会话名自动生成可改 · 与 claude-subprocess 生命周期协同</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">tab 分页 · 单会话 + 上下文压缩 · ChatGPT 式 sidebar</div></div>
+      </article>
+
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">10</span>
+          <span class="card-name">settings-ui</span>
+          <span class="change-tag">拆 4/5</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 2</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">设置面板 — General / Vault / Sync / Claude / Privacy / Appearance / Keybindings / Advanced 分类。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-14</span></div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">Cmd+, 入口 · 每项可自解释 · cost cap kill switch · 主题切换（受 visual-design-system 约束）</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">仅 JSON 配置（不够 self-discoverable）· 散落在各 pane（找不到）</div></div>
+      </article>
+
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">11</span>
+          <span class="card-name">onboarding</span>
+          <span class="change-tag">拆 5/5</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 2</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">首次启动向导 — 6 步引导（Welcome → Claude Code auth → Vault path → import 入口 → 课程选择 → 首次 import）。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-16</span></div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">可取消可恢复 (<code>~/.mneme/onboarding-state.json</code>) · 第 4 步入口指向 external-import 的 manual / UniBoard 桥 · 遵守 visual-design-system</div></div>
+      </article>
+
+      <!-- 15-16 mindmap-viz / whiteboard -->
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">15</span>
+          <span class="card-name">mindmap-viz</span>
+          <span class="change-tag">拆 1/2</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 8</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">课程结构默认视图 — Cytoscape.js mind-map，从 memory-engine 的 KG 派生。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">KD-08(mind-map)</span><span class="cov">REQ-07(视觉)</span></div></div>
+        <div class="field"><div class="field-label">为啥从 mindmap-whiteboard 拆出</div><div class="field-body">你 2026-05-11 反馈：mind-map 和 whiteboard 是<strong>不同功能</strong>。mind-map 是 KG 派生的结构化视图（强关联课程概念），whiteboard 是用户自由画布（弱结构）。共享 KG 数据源不等于共享 spec。</div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">Cytoscape.js v3.33.3 · <code>dagre</code> 课程 DAG · <code>cose-bilkent</code> 自由聚类 · KG 派生（与 OOS-06 手画 mind-map 划界）· 实时流入 <code>cy.add()</code> + 增量布局</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">vis-network · Sigma.js · D3-graphviz · React Flow</div></div>
+      </article>
+
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">16</span>
+          <span class="card-name">whiteboard</span>
+          <span class="change-tag">拆 2/2</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 8 后置</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">用户自由画布 — Excalidraw v0.18.1，周末整合 / 跨主题视觉拼接。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">KD-08(Excalidraw)</span></div></div>
+        <div class="field"><div class="field-label">为啥独立</div><div class="field-body">v1.x 后置功能，与 mindmap-viz 完全不同用例 — mindmap 是"AI 给你看 KG"，whiteboard 是"你画给自己看"。</div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">Excalidraw MIT — 拒绝 tldraw v4 proprietary · React-only → Svelte host (<code>svelte-react</code> 或 <code>createRoot()</code> in <code>onMount</code>) · scenes 落 <code>courses/&lt;CODE&gt;/whiteboards/&lt;topic&gt;.excalidraw.json</code> · 字体自宿主</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">tldraw v4 (proprietary <span class="reject">⛔</span>) · Konva/Fabric.js（太底层）· WBO（server-required <span class="reject">⛔</span>）</div></div>
+      </article>
+
+      <!-- 17 anchored-mode -->
+      <article class="card changed">
+        <div class="card-head">
+          <span class="card-num">17</span>
+          <span class="card-name">anchored-mode</span>
+          <span class="change-tag">加注 P1 UI 已实装</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">P9 后端 · P1 UI ready</span>
+          <span class="badge status-partial">partial — UI ready</span>
+        </div>
+        <p class="card-summary">聊天面板 free ↔ anchored 切换。Anchored 走 Anthropic Citations API，回答每句附 <code>[file.md:42]</code> 可点击引用。</p>
+        <div class="callout"><strong>Phase 1 进展：</strong>前端切换按钮已实装（你图里那对 ↘ / 📋 图标就是这俩模式的 toggle）。Phase 9 完成后端 Citations API 接入 + sources panel + 引用点击跳转。</div>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-08</span><span class="cov">KD-05</span><span class="cov changed">P1 UI 已实装</span></div></div>
+        <div class="field"><div class="field-label">关联待办</div><div class="field-body">free 模式 source 展示 + 三源冲突场景化 (todo <code>2026-05-07-spec-claude-free-mode-...</code>) — 进 Phase 9 plan 时细化</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">自建 RAG + vector（违反 KD-07）· 只做 anchored 不做 free（需 free 教师模式）</div></div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ─── 未改动卡片占位说明 ─── -->
+  <section>
+    <h2>未改动的 spec（跟 v0.1 一致）</h2>
+    <p class="section-sub">agentic-search · vault-storage · editor · echo360-video · caption-bilingual · memory-engine · per-course-rules · fsrs-review + visual-design-system / proactive-recall 两个横切。详细看 v0.1 HTML 或 <code>openspec/specs/_INDEX.md</code>。</p>
+  </section>
+
+  <!-- ─── 暂不切 ─── -->
+  <section id="defer">
+    <h2>暂不切的能力</h2>
+    <div class="defer-list">
+      <div class="defer-item">
+        <h4>voice-input (REQ-19)</h4>
+        <p>v1.x 候选，STT 库 / phase 都未定，等 Intel Mac CPU latency spike 跑出来。</p>
+      </div>
+      <div class="defer-item">
+        <h4>oss-dependency-tracking (KP-08)</h4>
+        <p>已有专属 <code>.planning/dependencies.md</code>，ops 流程不是产品能力。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Path forward ─── -->
+  <section id="path">
+    <h2>下一步路径</h2>
+    <div class="path">
+      <p>v0.3 切分如果你 OK，下一步进阶段 2 抽 spec 内容。</p>
+      <div class="phase-block">
+        <h3>阶段 2 — 抽内容（5-7 小时，可拆 session）</h3>
+        <ol>
+          <li>你确认 v0.3 切分（"OK 开始" 即可）+ 可稍后再决定 proactive-recall 归属</li>
+          <li>优先抽 v1 + 当前 phase 关联：<strong>claude-subprocess</strong>（含预热约束）<strong>/ layout-shell / vault-storage / agentic-search / external-import</strong>（改动大，先把 REQ-03/REQ-13 改写定调）<strong>/ document-ingestion / editor</strong></li>
+          <li>后抽 v1.x（memory-engine 等 Phase 5.5）</li>
+          <li>每个 spec 独立 commit，方便回滚</li>
+        </ol>
+      </div>
+      <div class="phase-block">
+        <h3>阶段 3 — PROJECT.md 瘦身（1-2 小时）</h3>
+        <p>保留 5 维度身份 + 编号锚点，38KB → 目标 ~5-8KB。原内容散到 spec 文件。</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Mneme OpenSpec 切分草案 v0.3 · 2026-05-11 · 已纳入 v0.2 用户审阅反馈（command-palette 砍 / subprocess 预热 / 新增 interaction-paradigm 横切）。</p>
+    <p>source: <code>openspec/specs/_INDEX.md</code> · 历史存档 v0.1 / v0.2 见 <code>docs/</code></p>
+  </footer>
+
+</div>
+
+</body>
+</html>

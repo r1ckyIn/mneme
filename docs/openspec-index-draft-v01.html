@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mneme OpenSpec 切分草案 v0.1</title>
+<style>
+  :root {
+    --orange: #d97757;
+    --orange-soft: #e89c80;
+    --orange-deep: #b85a3e;
+    --bg: #faf9f5;
+    --bg-card: #fefdf9;
+    --bg-card-warm: #f5f1e8;
+    --ink: #141413;
+    --ink-soft: #2b2a27;
+    --ink-muted: #6b6a64;
+    --olive: #788c5d;
+    --blue: #6a9bcc;
+    --border: rgba(20, 20, 19, 0.08);
+    --border-strong: rgba(20, 20, 19, 0.16);
+    --shadow-soft: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.035);
+    --shadow-card: 0 0.5rem 2rem rgba(0, 0, 0, 0.05), 0 0.125rem 0.5rem rgba(0, 0, 0, 0.025);
+    --ease: cubic-bezier(0.165, 0.85, 0.45, 1);
+    --serif: 'Iowan Old Style', 'Apple Garamond', 'Georgia', 'Songti SC', 'Source Han Serif SC', serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: var(--serif);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 17px;
+  }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 4rem 2rem 6rem;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    margin-bottom: 4rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--orange);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 1.2rem + 3vw, 3.25rem);
+    line-height: 1.15;
+    margin: 0 0 1.5rem;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+  }
+
+  .lede {
+    font-size: 1.125rem;
+    color: var(--ink-soft);
+    max-width: 38rem;
+    margin: 0;
+  }
+
+  .lede + .lede { margin-top: 0.75rem; }
+
+  .meta-bar {
+    margin-top: 2rem;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+  }
+
+  .meta-bar span strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* ── Section ── */
+  section {
+    margin: 4rem 0;
+    scroll-margin-top: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+    margin: 0 0 0.5rem;
+    line-height: 1.25;
+  }
+
+  h2 .num {
+    color: var(--orange);
+    font-family: var(--mono);
+    font-size: 0.875rem;
+    margin-right: 0.75rem;
+    letter-spacing: 0;
+    vertical-align: middle;
+  }
+
+  .section-sub {
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+    margin: 0 0 2rem;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Overview table ── */
+  .overview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .overview-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card-warm);
+    border-bottom: 1px solid var(--border-strong);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .overview-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .overview-table tr:hover td {
+    background: rgba(217, 119, 87, 0.04);
+  }
+
+  .overview-table .spec-num {
+    font-family: var(--mono);
+    color: var(--ink-muted);
+    width: 2rem;
+  }
+
+  .overview-table .spec-name {
+    font-weight: 500;
+    font-family: var(--mono);
+    color: var(--orange-deep);
+  }
+
+  .overview-table .covers {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    line-height: 1.55;
+  }
+
+  /* ── Cards (spec details) ── */
+  .cards {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    box-shadow: var(--shadow-soft);
+    transition: box-shadow 0.4s var(--ease), transform 0.4s var(--ease);
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-card);
+    transform: translateY(-1px);
+  }
+
+  .card.cross {
+    background: var(--bg-card-warm);
+    border-left: 3px solid var(--olive);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .card-num {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+  }
+
+  .card-name {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--orange-deep);
+    letter-spacing: -0.005em;
+  }
+
+  .card.cross .card-name {
+    color: var(--olive);
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .badge.v1 {
+    background: rgba(120, 140, 93, 0.15);
+    color: var(--olive);
+  }
+  .badge.v1x {
+    background: rgba(106, 155, 204, 0.15);
+    color: var(--blue);
+  }
+  .badge.phase {
+    background: rgba(20, 20, 19, 0.06);
+    color: var(--ink-soft);
+  }
+  .badge.status-partial {
+    background: rgba(217, 119, 87, 0.15);
+    color: var(--orange-deep);
+  }
+  .badge.status-blocked {
+    background: rgba(184, 90, 62, 0.15);
+    color: var(--orange-deep);
+    font-weight: 600;
+  }
+  .badge.status-hyp {
+    background: rgba(20, 20, 19, 0.04);
+    color: var(--ink-muted);
+  }
+  .badge.cross-tag {
+    background: rgba(120, 140, 93, 0.18);
+    color: var(--olive);
+  }
+
+  .card-summary {
+    color: var(--ink-soft);
+    margin: 0 0 1.25rem;
+    font-size: 1.02rem;
+  }
+
+  .field {
+    margin: 1rem 0;
+  }
+
+  .field-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .field-body {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .field-body code {
+    font-family: var(--mono);
+    background: var(--bg-card-warm);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--ink);
+  }
+
+  .field-body .reject {
+    color: var(--orange-deep);
+    font-weight: 500;
+  }
+
+  .field-body .ok {
+    color: var(--olive);
+    font-weight: 500;
+  }
+
+  .covers-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+  }
+
+  .cov {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    padding: 0.15rem 0.5rem;
+    background: var(--bg-card-warm);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--ink-soft);
+  }
+
+  /* ── Decision callouts ── */
+  .callout {
+    margin: 1rem 0;
+    padding: 1rem 1.25rem;
+    background: var(--bg-card-warm);
+    border-left: 3px solid var(--orange);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+
+  .callout strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ── Defer table (暂不切) ── */
+  .defer-list {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .defer-item {
+    padding: 1.25rem;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    background: rgba(20, 20, 19, 0.015);
+  }
+
+  .defer-item h4 {
+    margin: 0 0 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+
+  .defer-item p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+
+  /* ── Path forward ── */
+  .path {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem 2.25rem;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .path ol {
+    padding-left: 1.5rem;
+    margin: 0 0 1.5rem;
+  }
+
+  .path li {
+    margin-bottom: 0.65rem;
+    color: var(--ink-soft);
+  }
+
+  .path li strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .path .phase-block {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--border);
+  }
+
+  .phase-block h3 {
+    margin: 0 0 0.85rem;
+    font-family: var(--mono);
+    color: var(--orange-deep);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Open questions block ── */
+  .questions {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: linear-gradient(180deg, rgba(217, 119, 87, 0.06) 0%, rgba(217, 119, 87, 0.02) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(217, 119, 87, 0.18);
+  }
+
+  .questions h2 {
+    color: var(--orange-deep);
+    margin-top: 0;
+  }
+
+  .questions ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0 0;
+  }
+
+  .questions li {
+    margin-bottom: 1rem;
+    color: var(--ink-soft);
+  }
+
+  .questions li strong {
+    color: var(--ink);
+  }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+    font-family: var(--mono);
+  }
+
+  /* ── Nav (sticky) ── */
+  nav.toc {
+    position: sticky;
+    top: 0;
+    background: rgba(250, 249, 245, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+    padding: 0.85rem 0;
+    margin-bottom: 2rem;
+  }
+
+  nav.toc-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+
+  nav.toc a {
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color 0.2s var(--ease);
+  }
+
+  nav.toc a:hover {
+    color: var(--orange);
+  }
+
+  @media (max-width: 720px) {
+    .container { padding: 2rem 1.25rem 4rem; }
+    .card { padding: 1.25rem 1.5rem; }
+    .overview-table { font-size: 0.82rem; }
+    .overview-table td, .overview-table th { padding: 0.6rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#hero">概览</a>
+    <a href="#table">切分一览</a>
+    <a href="#features">14 个 Feature Spec</a>
+    <a href="#cross">2 个横切 Spec</a>
+    <a href="#defer">暂不切</a>
+    <a href="#path">下一步路径</a>
+    <a href="#questions">等你定调的 4 个点</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- ─── HERO ─── -->
+  <header class="hero" id="hero">
+    <span class="hero-tag">OpenSpec · 切分草案 v0.1</span>
+    <h1>把 PROJECT.md 这本厚手册<br>按"能力"拆成 16 张可独立演进的卡片</h1>
+    <p class="lede">现在的 PROJECT.md 是 38KB 的 5 维度叙事（9 KP + 13 KD + 19 REQ + 8 OOS + 5 RQ），适合定身份、不适合做日常 spec 引用。OpenSpec 把它切成 14 个 feature spec + 2 个横切 spec，每个文件描述<strong>一个能跨 phase 独立演进的能力域</strong>。</p>
+    <p class="lede">这份草案等你审阅。可调整切分（合并/拆分/改名/改 phase 归属）。审阅过后再阶段 2 抽内容。</p>
+    <div class="meta-bar">
+      <span><strong>生成时间</strong> 2026-05-11</span>
+      <span><strong>状态</strong> 待审阅</span>
+      <span><strong>覆盖</strong> 19 REQ · 13 KD · 9 KP · 8 OOS · 5 RQ</span>
+      <span><strong>当前 phase</strong> Phase 1 (1/11)</span>
+    </div>
+  </header>
+
+  <!-- ─── 概览表 ─── -->
+  <section id="table">
+    <h2>切分一览</h2>
+    <p class="section-sub">14 个 feature spec（一个能力一张卡）+ 2 个横切 spec（约束 / 体验承诺）= 16 个文件。PROJECT.md 之后压缩为 ~5-8KB 索引页，保留 5 维度身份 + 编号锚点。</p>
+
+    <table class="overview-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Spec</th>
+          <th>覆盖项</th>
+          <th>阶段</th>
+          <th>当前 phase</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="spec-num">1</td><td class="spec-name">claude-subprocess</td><td class="covers">REQ-02 · KD-01 · KD-02 · KD-03 · KP-04 · KD-12</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 1 执行中</span></td><td><span class="badge status-partial">partial</span></td></tr>
+        <tr><td class="spec-num">2</td><td class="spec-name">agentic-search</td><td class="covers">REQ-10 · KD-07</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 1</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">3</td><td class="spec-name">vault-storage</td><td class="covers">REQ-06 · KP-01 · KP-03(data)</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 2</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">4</td><td class="spec-name">canvas-ed-sync</td><td class="covers">REQ-03 · REQ-13</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 2</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">5</td><td class="spec-name">document-ingestion</td><td class="covers">REQ-18 · KP-02</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 4</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">6</td><td class="spec-name">editor</td><td class="covers">KD-09 · REQ-06(书写侧)</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">Phase 3</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">7</td><td class="spec-name">shell-ux</td><td class="covers">REQ-01 · REQ-11 · REQ-12 · REQ-14 · REQ-16</td><td><span class="badge v1">v1</span></td><td><span class="badge phase">跨 Phase 1/2/3</span></td><td><span class="badge status-partial">partial</span></td></tr>
+        <tr><td class="spec-num">8</td><td class="spec-name">echo360-video</td><td class="covers">REQ-04 · KD-04 · KD-11(gate)</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 5→6</span></td><td><span class="badge status-blocked">gated by spike</span></td></tr>
+        <tr><td class="spec-num">9</td><td class="spec-name">caption-bilingual</td><td class="covers">REQ-05</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 6</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">10</td><td class="spec-name">memory-engine</td><td class="covers">REQ-07 · KD-10 · KP-03 · KP-07(data) · RQ-01</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 5.5→7</span></td><td><span class="badge status-blocked">BLOCKED · RQ-01</span></td></tr>
+        <tr><td class="spec-num">11</td><td class="spec-name">mindmap-whiteboard</td><td class="covers">KD-08 · REQ-07(视觉)</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 8</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">12</td><td class="spec-name">anchored-mode</td><td class="covers">REQ-08 · KD-05</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 9</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">13</td><td class="spec-name">per-course-rules</td><td class="covers">REQ-17</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 8</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr><td class="spec-num">14</td><td class="spec-name">fsrs-review</td><td class="covers">REQ-09 · REQ-15 · KD-06</td><td><span class="badge v1x">v1.x</span></td><td><span class="badge phase">Phase 10</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+        <tr style="background: rgba(120, 140, 93, 0.06);"><td class="spec-num">A</td><td class="spec-name" style="color: var(--olive);">visual-design-system</td><td class="covers">KP-09 · KD-13</td><td><span class="badge cross-tag">横切·约束</span></td><td><span class="badge phase">所有 UI spec</span></td><td><span class="badge status-hyp">locked</span></td></tr>
+        <tr style="background: rgba(120, 140, 93, 0.06);"><td class="spec-num">B</td><td class="spec-name" style="color: var(--olive);">proactive-recall</td><td class="covers">KP-07</td><td><span class="badge cross-tag">横切·承诺</span></td><td><span class="badge phase">memory + shell + rules</span></td><td><span class="badge status-hyp">hypothesis</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ─── 14 个 feature spec 详情 ─── -->
+  <section id="features">
+    <h2>14 个 Feature Spec — 细节</h2>
+    <p class="section-sub">每个 spec 都给出：现状一句话 + 评估过的备选 + 否决理由 + 重评触发条件。</p>
+
+    <div class="cards">
+
+      <!-- Spec 1 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">01</span>
+          <span class="card-name">claude-subprocess</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 1 EXECUTING</span>
+          <span class="badge status-partial">partial — spike 002 validated</span>
+        </div>
+        <p class="card-summary">Tauri 2 壳通过 <code>tauri-plugin-shell</code> 启动本机 <code>claude</code> CLI 子进程，stream-json 解析、tool-use roundtrip、subprocess 生命周期（spawn / pause / kill / PGID kill / Cmd+Q drain）。<strong>整个项目的命脉</strong>。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-02</span><span class="cov">KD-01</span><span class="cov">KD-02</span><span class="cov">KD-03</span><span class="cov">KP-04</span><span class="cov">KD-12</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">opcode (AGPL <span class="reject">⛔</span>) · TOKENICODE (Apache-2.0, 强参考) · claude-code-gui (MIT, file-tail 模式) · claude-code-sdk-ts (不 spawn 子进程) · CodePilot (BSL-1.1 ⚠) · Electron 整体替代</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Anthropic 发布官方 stream-json SDK / Claude Code 子进程协议大变 / Tauri 2 出现致命架构缺陷</div></div>
+      </article>
+
+      <!-- Spec 2 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">02</span>
+          <span class="card-name">agentic-search</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 1</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">默认靠 <code>claude --add-dir &lt;vault&gt;</code> 让模型自己 grep/glob 搜，不上 vector DB。<strong>故意的非架构决策</strong> — 这是个会被未来质疑的判断，独立成 spec 让"重评触发"有归属。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-10</span><span class="cov">KD-07</span></div></div>
+        <div class="field"><div class="field-label">边界</div><div class="field-body">与 OOS-03（自建 vector DB / RAG 基础设施）划界 — vector 只为窄场景实时召回保留。</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">Mem0 vector-first · sqlite-vec + Ollama (本地 vector) · Cognee GraphRAG · pgvector + Postgres</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">某类查询（如"概念间关联推理"）实测 agentic 不达标 / Claude Code 自己改 RAG / 用户实测成本超预算</div></div>
+      </article>
+
+      <!-- Spec 3 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">03</span>
+          <span class="card-name">vault-storage</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 2</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">Markdown + YAML frontmatter 本地 vault，PARA + course-root 结构，<code>_source/</code> 写保护（Sync Controller 唯一 writer），<code>shared/</code> 跨课程概念区。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-06</span><span class="cov">KP-01</span><span class="cov">KP-03(data)</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">Obsidian vault 当目标格式（无 lock-in 价值）· SQLite 单文件（违反 KP-01 markdown 透明度）· 自定义 JSON（违反通用性）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">用户决定迁移到非 markdown 编辑器 / vault 规模 &gt;10K 文件且 grep 性能崩</div></div>
+      </article>
+
+      <!-- Spec 4 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">04</span>
+          <span class="card-name">canvas-ed-sync</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 2</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">Canvas + Ed MCP 拉取 + 增量同步 + 状态可见（sync status bar + 错误提示 + new-item toast）。用户已有 7th iteration 的 Canvas+Ed MCP，<strong>不重复造</strong>。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-03</span><span class="cov">REQ-13</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">手动 import（违反"first-run wizard 一键体验"）· 纯 Canvas API 不走 MCP（违反 KP-06 不重复造轮子）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Canvas / Ed API 改版 / 用户切换学校</div></div>
+      </article>
+
+      <!-- Spec 5 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">05</span>
+          <span class="card-name">document-ingestion</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 4</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">Canvas/Ed 拉来的 PDF/Office 文档转 markdown。<strong>双管 ingestion</strong> — Marker 处理 PDF（含数学公式），markitdown 处理 Office (docx/xlsx/pptx/html)。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-18</span><span class="cov">KP-02</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">PyMuPDF4LLM（AGPL <span class="reject">⛔</span>，数学弱）· MinerU（CJK 强但英文数学弱）· Docling IBM（输出结构过重）· Nougat（abandoned）· LlamaParse（cloud-only <span class="reject">⛔</span>）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Marker 数学解析在用户实际课件上低于 90% / markitdown 停更 / Anthropic 发布原生文档摄取 API</div></div>
+      </article>
+
+      <!-- Spec 6 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">06</span>
+          <span class="card-name">editor</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">Phase 3</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">Tiptap v3 块编辑器 + slash 菜单 + markdown round-trip。<strong>底层存储仍是 markdown 文件</strong>（vault-storage 负责）— 编辑器只是 UI 层，可独立替换。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">KD-09</span><span class="cov">REQ-06(书写侧)</span></div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">数学渲染走 KaTeX paint-time，<strong>不做 first-class block</strong>（社区 math extension #2946 round-trip bug 已知）。<code>tiptap-markdown</code> (aguingand) 替代 Tiptap Pro 的官方 markdown extension（付费）。</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">BlockNote（MPL-2.0, React-only）· Slate.js（太底层）· Quill（markdown 弱）· Lexical（生态小）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Tiptap v4 breaking change / 出现 Svelte-native 同级编辑器</div></div>
+      </article>
+
+      <!-- Spec 7 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">07</span>
+          <span class="card-name">shell-ux</span>
+          <span class="badge v1">v1</span>
+          <span class="badge phase">跨 Phase 1/2/3</span>
+          <span class="badge status-partial">partial</span>
+        </div>
+        <p class="card-summary">三栏布局壳 + 命令面板 + 多会话 sidebar + 设置 UI + 首次启动向导 — <strong>5 个 v1 REQ 合并成"壳层 UX"承诺</strong>，因为它们都在 shell 容器内，互相依赖布局/快捷键/状态管理。</p>
+        <div class="callout"><strong>⚠ 待你定调：</strong>这是整份草案合并力度最大的一处。要不要拆成 layout + multi-session + command-palette + settings + onboarding 五个独立 spec？</div>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-01</span><span class="cov">REQ-11</span><span class="cov">REQ-12</span><span class="cov">REQ-14</span><span class="cov">REQ-16</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">单页布局（违反 NotebookLM 心智模型）· tabs 而非 multi-session sidebar（不便并行学习）· 不做 onboarding（"future-me 6 个月后"会重新踩坑）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">实测 sidebar+面板+三栏在 13" 屏幕挤爆 / 多会话内存崩 / Claude Code 自带 multi-session 后可直接复用</div></div>
+      </article>
+
+      <!-- Spec 8 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">08</span>
+          <span class="card-name">echo360-video</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 5 spike → Phase 6</span>
+          <span class="badge status-blocked">gated by spike</span>
+        </div>
+        <p class="card-summary">Tauri webview 嵌入 + USYD SSO 首次登录 + Keychain 持久化 cookie + 后续视频秒开。<strong>USyd 特化的关键差异化。</strong></p>
+        <div class="callout"><strong>Phase entry gate（KD-11）：</strong><code>/gsd-spike echo360-webview-auth</code> 必须先通过，验证 (a) SSO 在 Tauri webview 内完成、(b) cookie 跨重启持久化、(c) Echo360 player 在 webview 不被 same-origin 检查打断。<strong>spike 失败 = REQ-04/05 设计完全重写</strong>，这是最大风险。</div>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-04</span><span class="cov">KD-04</span><span class="cov">KD-11</span></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">OAuth 2.0 client credentials（要 institutional admin 权限，学生没有）· LTI 1.3 token 直拿（绑定 launch session）· 外开浏览器 + deep link（如果 spike 失败的 fallback）· HLS 抓流（违反 ToS）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">spike 失败 / Echo360 全面禁第三方 cookie / USYD 切换视频平台</div></div>
+      </article>
+
+      <!-- Spec 9 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">09</span>
+          <span class="card-name">caption-bilingual</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 6</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">从 Echo360 抓 VTT 字幕 → Claude API 翻译 → 双语 VTT（两行 cue）→ HTML5 <code>&lt;track&gt;</code> 渲染。<strong>字幕全文进入 vault grep 索引</strong>，成为搜索资产。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-05</span></div></div>
+        <div class="field"><div class="field-label">依赖</div><div class="field-body">echo360-video spike 通过；与 anchored-mode 共用 Claude API（不同用法）。</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">node-webvtt（简单功能少）· srt-vtt-parser（无 stream API）· Read Frog/FluentRead（GPLv3 ⚠ 只学不抄）· 自写 VTT parser（违反 KP-02）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Claude API 翻译成本超预算 → 改用 macOS native / 本地小模型 / Echo360 字幕缺失率 &gt; 20%</div></div>
+      </article>
+
+      <!-- Spec 10 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">10</span>
+          <span class="card-name">memory-engine</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 5.5 → 7</span>
+          <span class="badge status-blocked">BLOCKED · RQ-01</span>
+        </div>
+        <p class="card-summary">三层记忆（working / episodic / long-term）+ 知识图谱（concept nodes + typed edges + confidence + provenance + 时间戳）+ 主动召回数据支持。<strong>v1.x 最复杂的能力。</strong></p>
+        <div class="callout"><strong>KD-10 库未锁定：</strong>Phase 5.5 RQ-01 必须先产出 4-project 对比 + 1 周 dogfood 才能进 Phase 7。CLAUDE.md Authoritative Overrides 已明确：STACK.md 里"agentmemory PRIMARY HIGH"是陈旧推荐，现实里是 4 选 1。</div>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-07</span><span class="cov">KD-10</span><span class="cov">KP-03</span><span class="cov">KP-07(data)</span><span class="cov">RQ-01</span></div></div>
+        <div class="field"><div class="field-label">评估中的候选</div><div class="field-body">agentmemory rohitg00（架构对但无 benchmark，<span class="reject">fallback</span>）· <span class="ok">Cognee</span>（GraphRAG，Python runtime 重）· <span class="ok">Zep + Graphiti</span>（temporal KG，community 版废弃 ⚠）· Mem0（vector-first 不匹配 graph）· Letta（agent 长期不匹配 student concept）· SimpleMem（太轻）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body"><strong>Phase 5.5 RQ-01 调研结果</strong>（必发生）/ Anthropic 发布原生 memory feature</div></div>
+      </article>
+
+      <!-- Spec 11 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">11</span>
+          <span class="card-name">mindmap-whiteboard</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 8</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">从 memory-engine 的 KG 派生的可视化层 — Cytoscape.js mind-map（课程结构默认）+ Excalidraw whiteboard（周末整合自由画布）。<strong>共享同一份 KG 数据源，不是平行存储。</strong></p>
+        <div class="callout"><strong>⚠ 待你定调：</strong>mind-map 和 whiteboard 在这里被合并（同源 KD-08）。要不要拆成两个独立 spec？</div>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">KD-08</span><span class="cov">REQ-07(视觉)</span></div></div>
+        <div class="field"><div class="field-label">实施约束</div><div class="field-body">Cytoscape <code>dagre</code> 做课程 DAG，<code>cose-bilkent</code> 做自由聚类。Excalidraw 是 React-only → Svelte 5 host 用 <code>svelte-react</code> 或 <code>createRoot()</code> in <code>onMount</code>。强制 KG 派生（与 OOS-06 手画 mind-map 划界）。</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">tldraw v4（proprietary, watermark <span class="reject">⛔</span>）· vis-network（physics 强算法库小）· Sigma.js（适合 100K+ 节点，用不到）· D3-graphviz（静态 SVG）· React Flow（React-only）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Cytoscape v4 breaking / Excalidraw 协议变 / 用户实测"手画白板才是真痛点"</div></div>
+      </article>
+
+      <!-- Spec 12 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">12</span>
+          <span class="card-name">anchored-mode</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 9</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">聊天面板"free ↔ anchored"切换。Anchored 模式把用户勾选的 vault 文件作为 documents 传给 Anthropic Citations API，回答每句都附 <code>[file.md:42]</code> 可点击引用。<strong>NotebookLM 的核心 USP + free 模式覆盖</strong>。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-08</span><span class="cov">KD-05</span></div></div>
+        <div class="field"><div class="field-label">关联待办</div><div class="field-body">free 模式的 source 展示 + 冲突场景化（三源分歧时如何呈现 + 给建议）— 进 Phase 9 plan 时细化。todo 在 <code>.planning/todos/pending/2026-05-07-spec-claude-free-mode-...</code></div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">自建 RAG + vector（违反 KD-07）· 完全只做 anchored 不做 free（用户场景需 free 教师模式）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Citations API 改版 / anchored 成本超预算 → chunking 重设 / 用户实测 free 更高频，anchored 沦为冷功能</div></div>
+      </article>
+
+      <!-- Spec 13 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">13</span>
+          <span class="card-name">per-course-rules</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 8</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">每门课的 <code>.mneme/rules/&lt;rule&gt;.md</code>（YAML frontmatter + markdown body）→ 开聊时 enabled 规则 concat 到 <code>--append-system-prompt</code>。<strong>差异化小投入大回报</strong> — 无学习应用做这事。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-17</span></div></div>
+        <div class="field"><div class="field-label">协同</div><div class="field-body">与 shell-ux/multi-session（哪门课 context → 注入哪堆 rules）· 与 proactive-recall（per-course rules 是主动召回的注入策略之一）</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">全局 <code>~/.claude/CLAUDE.md</code>（不分课，颗粒粗）· 启动时手动 <code>claude --system-prompt</code>（不可持久化）· Cursor <code>.cursor/rules</code> MDC（被参考的设计）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Anthropic 改 <code>--append-system-prompt</code> 行为 / 规则互相冲突无法 debug → 加 debug overlay / Claude Code 出原生 per-project rules</div></div>
+      </article>
+
+      <!-- Spec 14 -->
+      <article class="card">
+        <div class="card-head">
+          <span class="card-num">14</span>
+          <span class="card-name">fsrs-review</span>
+          <span class="badge v1x">v1.x</span>
+          <span class="badge phase">Phase 10</span>
+          <span class="badge status-hyp">hypothesis</span>
+        </div>
+        <p class="card-summary">FSRS-6 间隔重复在<strong>概念页</strong>（不是卡片）上 — daily-due 队列排序 <code>(graph weakness × FSRS due-ness)</code>，进 review 收起三栏 → 单概念全屏 → AI 现场出题 → 1/2/3/4 评分回流。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">REQ-09</span><span class="cov">REQ-15</span><span class="cov">KD-06</span></div></div>
+        <div class="field"><div class="field-label">边界</div><div class="field-body">与 OOS-05（手建 flashcard）的明确边界 — <strong>不做卡片，做概念</strong>。这是核心反 Anki 决策。</div></div>
+        <div class="field"><div class="field-label">评估过的备选</div><div class="field-body">SM-2（多 20-30% review 量）· fsrs-rs Rust port（只在 weight optimization 才需要）· Obsidian spaced-repetition plugin（学习其概念页 review 单元）· Anki 原生 desktop（违反"无卡片"）· thea.study（closed cloud SaaS <span class="reject">⛔</span> 但其 AI 出题算法值得 Phase 10 spike）</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">FSRS-7 发布（不太可能近期）/ AI 出题质量差 → 改用 prebuilt 题库 / 用户实测每天 due 太多 → 改 retention 参数</div></div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ─── 2 个横切 spec ─── -->
+  <section id="cross">
+    <h2>2 个横切 Spec — 约束 / 体验承诺</h2>
+    <p class="section-sub">不是 feature，是其他 spec 必须遵守的约束 / 跨 feature 协同的体验承诺。用橄榄绿区分。</p>
+
+    <div class="cards">
+
+      <!-- Cross A -->
+      <article class="card cross">
+        <div class="card-head">
+          <span class="card-num">A</span>
+          <span class="card-name">visual-design-system</span>
+          <span class="badge cross-tag">横切·约束</span>
+          <span class="badge phase">所有 UI spec</span>
+        </div>
+        <p class="card-summary"><strong>Anthropic / Claude 美学家族</strong>。任何 UI spec 落地时必须遵守。SSOT 在 <code>.planning/references/design/</code>。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">KP-09</span><span class="cov">KD-13</span></div></div>
+        <div class="field"><div class="field-label">Mandatory locks</div><div class="field-body">
+          色彩：<code>#d97757</code> 橙 + <code>#faf9f5</code> 米 + <code>#141413</code> 文字 + <code>#2b2a27</code> 暖深 ·
+          字体：serif body / <span class="reject">禁 Arial+Inter</span> ·
+          动效：ease <code>cubic-bezier(0.165, 0.85, 0.45, 1)</code> · active:scale 0.96 ·
+          边界：8% 软边 + 多层软影
+        </div></div>
+        <div class="field"><div class="field-label">起点 OSS</div><div class="field-body">shadcn.io/theme/claude（端口 CSS variables only，因为我们是 Svelte 不是 React）· anthropics/skills/brand-guidelines（first-party SSOT，冲突时它赢）· tweakcn（shade 扩展）</div></div>
+        <div class="field"><div class="field-label">约束哪些 spec</div><div class="field-body">shell-ux · editor · mindmap-whiteboard · fsrs-review · anchored-mode · per-course-rules · canvas-ed-sync（status bar）— 所有 UI 落 plan-phase 时引用 KD-13 + 检查 references/design/</div></div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">Anthropic 改品牌（小概率）/ 用户决定彻底脱钩 Claude 美学（违反 Dimension 2 "one product feel"）</div></div>
+      </article>
+
+      <!-- Cross B -->
+      <article class="card cross">
+        <div class="card-head">
+          <span class="card-num">B</span>
+          <span class="card-name">proactive-recall</span>
+          <span class="badge cross-tag">横切·体验承诺</span>
+          <span class="badge phase">跨 3 个 spec</span>
+        </div>
+        <p class="card-summary"><strong>"懂我" 体验承诺</strong>（KP-07）— 跨多个 feature spec 协同落实，不是单一 feature 实现。AI 在 chat session 开始 + 对话拐点 <strong>主动浮出</strong> 相关历史上下文。</p>
+        <div class="field"><div class="field-label">覆盖项</div><div class="covers-list"><span class="cov">KP-07</span></div></div>
+        <div class="field"><div class="field-label">验收指标</div><div class="field-body">一周样本 · AI 主动浮出 <strong>≥3次/会话</strong> · 相关度 <strong>≥90%</strong>（held-out test 判定）</div></div>
+        <div class="field"><div class="field-label">横切到哪些 spec</div><div class="field-body">
+          <strong>memory-engine</strong>：数据可用性（KG + 三层 memory 必须有足够上下文可被召回）·
+          <strong>shell-ux/multi-session</strong>：触发时机（session 开始事件、"I'm stuck"、error correction 等 pivot）·
+          <strong>per-course-rules</strong>：注入策略（哪条 rule 在什么 context 下激活召回逻辑）
+        </div></div>
+        <div class="callout"><strong>⚠ 待你定调：</strong>这个横切 spec 之前 summary 是塞进 memory-engine 的。我把它抽出来，因为<strong>触发逻辑不只在 memory 层</strong>。你可以把它并回 memory-engine，但需要 memory-engine spec 内部分章节明确"触发时机由 shell-ux 决定"。</div>
+        <div class="field"><div class="field-label">重评触发</div><div class="field-body">验收指标连续 2 周低于 90% → 算法重设计 / Anthropic 出原生 long-term memory 可直接接管</div></div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ─── 暂不切 ─── -->
+  <section id="defer">
+    <h2>暂不切的能力</h2>
+    <p class="section-sub">这些不是漏掉了，是有意识地暂缓 — 各有原因。</p>
+
+    <div class="defer-list">
+      <div class="defer-item">
+        <h4>voice-input (REQ-19)</h4>
+        <p>2026-05-07 才从 OOS-09 lifted 的 v1.x 候选。STT 库未选（whisper.cpp / distil-whisper / Vosk），phase 也未定，先不立 spec — 等 Intel Mac CPU latency spike 跑出来再补。</p>
+      </div>
+      <div class="defer-item">
+        <h4>oss-dependency-tracking (KP-08)</h4>
+        <p>已有专属 SSOT <code>.planning/dependencies.md</code>，是 ops 流程不是产品能力，不重复立 spec。spec 里相关条目（每个 OSS 选择）引用回 dependencies.md 行号即可。</p>
+      </div>
+      <div class="defer-item">
+        <h4>proactive-recall 是否合并</h4>
+        <p>暂时独立成横切 spec。未来若发现内容主要落在 memory-engine 里，可考虑合并 — 这是 4 个待定决策之一。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Path forward ─── -->
+  <section id="path">
+    <h2>下一步路径</h2>
+
+    <div class="path">
+      <p>整个迁移分 3 个阶段。<strong>阶段 1 已完成</strong>（这份 _INDEX.md）。</p>
+
+      <div class="phase-block">
+        <h3>阶段 2 — 抽内容（5-7 小时，可拆 2-3 个 session）</h3>
+        <ol>
+          <li>你审阅这份 _INDEX.md，调整切分（合并 / 拆分 / 改名 / 调阶段归属）</li>
+          <li>按优先级排序：<strong>先抽 v1 + 当前 phase 关联的 spec</strong>（claude-subprocess / shell-ux / vault-storage / canvas-ed-sync / agentic-search / document-ingestion / editor），后抽 v1.x（memory-engine 等到 Phase 5.5 收尾再抽）</li>
+          <li>每个 spec 一个独立 commit，方便回滚</li>
+          <li>抽完同步压缩 PROJECT.md 到 ~5-8KB 索引页</li>
+        </ol>
+      </div>
+
+      <div class="phase-block">
+        <h3>阶段 3 — PROJECT.md 瘦身（1-2 小时）</h3>
+        <p>保留 5 维度身份 + KP/KD/REQ/OOS/RQ 编号锚点，每个条目一行 + 指向 spec 文件。当前 38KB → 目标 ~5-8KB。原内容不丢，散到 spec 文件去。</p>
+      </div>
+
+      <div class="phase-block">
+        <h3>可选阶段 — 历史 proposal 倒推（3 小时）</h3>
+        <p>把 13 个 KD 倒推回 <code>openspec/changes/archive/</code> 作为虚拟历史 proposal（追溯每个决策"为什么被锁"）。<strong>建议先不做</strong>，除非你想要这份历史档。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 4 个待定问题 ─── -->
+  <section id="questions" class="questions">
+    <h2>等你定调的 4 个点</h2>
+    <ol>
+      <li><strong>shell-ux 5-in-1 是否过度合并？</strong> 现在 REQ-01 三栏 + REQ-11 命令面板 + REQ-12 多会话 + REQ-14 设置 + REQ-16 引导 都塞在一个 spec 里。要不要拆成 5 个独立 spec？合并的好处是"壳层 UX 一致性承诺"显式；拆开的好处是每个能独立替换实现。</li>
+      <li><strong>mindmap-whiteboard 合并是否合理？</strong> 它们共享同一份 KG 数据源（KD-08 同款决策），但 mind-map 是 v1.x 早期、whiteboard 是 v1.x 后期，时间线分离。要不要拆？</li>
+      <li><strong>proactive-recall 是否该并进 memory-engine？</strong> 我抽出来当横切，理由是触发逻辑不只在 memory 层。但你之前的 summary 思路是并进 memory-engine。你想要哪个？</li>
+      <li><strong>第一个抽出的 spec 想从哪个开始？</strong> 我建议 <strong>claude-subprocess</strong>（当前 Phase 1 EXECUTING、风险最高、抽出后立刻能用）。或者你想从 shell-ux / vault-storage 起手都可以。</li>
+    </ol>
+  </section>
+
+  <!-- ─── Footer ─── -->
+  <footer>
+    <p>Mneme OpenSpec 切分草案 v0.1 · 2026-05-11 · 由 OpenSpec 初始化阶段 1 产出。</p>
+    <p>source: <code>openspec/specs/_INDEX.md</code> · 等待用户审阅。</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
