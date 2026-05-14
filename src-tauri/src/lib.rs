@@ -38,13 +38,29 @@ use tauri::{Manager, RunEvent, State, WindowEvent};
 //
 // If getpgid fails (ESRCH for already-dead pid), we silently no-op — that is
 // the only valid path for a self-exited process group.
+//
+// BL-01 fix (2026-05-14): the SIGTERM → 2s sleep → SIGKILL sequence USED to run
+// synchronously on the Tauri event-loop thread. On Cmd+Q the WebView could not
+// repaint and macOS showed a "Mneme is not responding" beach-ball after ~800ms.
+// We now detach the sleep+SIGKILL leg onto a worker thread so the caller
+// returns immediately after the initial SIGTERM. The kernel still delivers
+// SIGKILL within the same 2s window because `std::thread::spawn` is a
+// fire-and-forget detached thread. Test invariant preserved: `kill_pgid()`
+// returns immediately, and within 2.5s the whole process group is dead
+// (kill_pgid_eradicates_whole_process_group still passes — it waits 2.5s after
+// the call returns, exactly the asynchronous timing this fix relies on).
 pub fn kill_pgid(pid_u32: u32) {
     let pid = Pid::from_raw(pid_u32 as i32);
-    if let Ok(pgid) = getpgid(Some(pid)) {
-        let _ = killpg(pgid, Signal::SIGTERM);
+    let Ok(pgid) = getpgid(Some(pid)) else { return; };
+    let _ = killpg(pgid, Signal::SIGTERM);
+    // Detach the SIGKILL leg — caller returns immediately; the kernel still
+    // delivers SIGKILL on the same 2s timer. Avoids blocking the Tauri event
+    // loop on Cmd+Q. Multiple kill_pgid calls (Phase 3 multi-session) now
+    // execute in parallel rather than serial 2s waits.
+    thread::spawn(move || {
         thread::sleep(Duration::from_secs(2));
         let _ = killpg(pgid, Signal::SIGKILL);
-    }
+    });
 }
 
 // ---------------------------------------------------------------------------
