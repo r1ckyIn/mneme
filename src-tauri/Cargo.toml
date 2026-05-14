@@ -4,6 +4,11 @@ version = "0.1.0"
 description = "Personal desktop learning app — Tauri 2 shell wrapping Claude Code CLI"
 authors = ["r1ckyIn"]
 edition = "2021"
+# Phase 01.1 added the `dev-invoke` binary alongside the main `mneme` binary.
+# Without `default-run`, `cargo run` (which `npm run tauri dev` invokes) refuses
+# to pick a default and errors with "could not determine which binary to run".
+# Pin the main app binary so the dev orchestration works out of the box.
+default-run = "mneme"
 
 [lib]
 name = "app_lib"
