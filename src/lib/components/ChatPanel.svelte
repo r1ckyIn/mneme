@@ -132,6 +132,7 @@
         {
           id: uid(),
           role: "system",
+          systemKind: "error",
           text: escapeHtml(scratchDirError ?? "Scratch directory not yet resolved — please retry in a moment."),
           streaming: false,
         },
@@ -160,7 +161,7 @@
       console.error("[claude:build-args]", e);
       dispatch.messages = [
         ...dispatch.messages,
-        { id: uid(), role: "system", text: escapeHtml(`Failed to build spawn args: ${String(e)}`), streaming: false },
+        { id: uid(), role: "system", systemKind: "error", text: escapeHtml(`Failed to build spawn args: ${String(e)}`), streaming: false },
       ];
       teardown();
       return;
@@ -214,7 +215,7 @@
       console.error("[claude:spawn-error]", err);
       dispatch.messages = [
         ...dispatch.messages,
-        { id: uid(), role: "system", text: escapeHtml(String(err)), streaming: false },
+        { id: uid(), role: "system", systemKind: "error", text: escapeHtml(String(err)), streaming: false },
       ];
       teardown();
     });
@@ -227,6 +228,10 @@
           {
             id: uid(),
             role: "system",
+            // WR-08: "stream ended" is an operational signal, not a failure —
+            // the subprocess simply closed before sending a result event. Use
+            // the info variant (neutral border) instead of the red error style.
+            systemKind: "info",
             text: "stream ended unexpectedly (no result event)",
             streaming: false,
           },
@@ -246,7 +251,7 @@
       console.error("[claude:spawn-or-register]", e);
       dispatch.messages = [
         ...dispatch.messages,
-        { id: uid(), role: "system", text: escapeHtml(`Failed to spawn claude or register PID: ${String(e)}`), streaming: false },
+        { id: uid(), role: "system", systemKind: "error", text: escapeHtml(`Failed to spawn claude or register PID: ${String(e)}`), streaming: false },
       ];
       teardown();
       return;
@@ -404,13 +409,13 @@
     return `cp_${Date.now()}_${_uidCounter++}`;
   }
 
+  // WR-08 fix (2026-05-14): classify system bubbles via the explicit
+  // `systemKind` discriminator on the Msg shape, not by string-pattern
+  // matching .text. The prior heuristic was fragile (locale-sensitive,
+  // `&lt;` false-positives on any system message that happened to contain
+  // an HTML-escaped less-than) and would silently break under i18n.
   function isErrorMsg(m: Msg): boolean {
-    return (
-      m.text.startsWith("Failed to") ||
-      m.text.startsWith("stream ended") ||
-      m.text.includes("not yet resolved") ||
-      m.text.includes("&lt;")
-    );
+    return m.systemKind === "error";
   }
 
   // === T-1-47 dev probe (mounted on window for visual_fidelity verification) ===

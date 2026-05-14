@@ -38,6 +38,12 @@ export type Msg = {
   toolInputPreview?: string;
   thinking?: boolean;
   toolGroupId?: string; // A-14 — links tool/tool-result msgs to the parent ToolUseGroup
+  // WR-08 fix (2026-05-14): classify system bubbles explicitly instead of
+  // string-pattern-matching the .text on the render side. Set at every
+  // role:"system" push site. "error" → red border + .error class; "info" →
+  // neutral border (matches "stream ended unexpectedly" — an operational
+  // signal, not a failure).
+  systemKind?: "error" | "info";
 };
 
 export type ToolUseEntry = {
@@ -141,7 +147,7 @@ export function dispatchEvent(evt: ClaudeEvent, state: DispatchState): void {
         // would not match a raw string — accept either shape defensively.
         const rawMessage = readString(evt, "message");
         const text = escapeHtmlMin(rawMessage ?? "unknown error");
-        state.messages.push({ id: uid(state), role: "system", text, streaming: false });
+        state.messages.push({ id: uid(state), role: "system", systemKind: "error", text, streaming: false });
       } else {
         console.log(`[claude:system] ${JSON.stringify(evt).slice(0, 200)}`);
       }
