@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
-status: phase-1-execute-complete
-last_updated: "2026-05-14T05:00:00.000Z"
+status: phase-1-closeout-complete-ship-pending
+last_updated: "2026-05-14T08:00:00.000Z"
 progress:
   total_phases: 13
   completed_phases: 2
@@ -218,7 +218,7 @@ Spike 002 produced a runnable end-to-end demo (Tauri 2 + SvelteKit + claude subp
 ## Session Continuity
 
 **Last GSD command**: `/gsd-resume-work` (2026-05-14 — user 回归后路由到 Phase 01 收尾)。User 自述：上次停在 47-row dogfood checklist HTML 后去做了 Phase 01.1，已 ship 完整 10/10 + extract-learnings + opsx archive；现在回 Phase 01 把 retroactive 收尾 + 01-11 CSP gap 走完。
-**Stopped at**: `/gsd-execute-phase 1` inline 路径完成 — 01-10-SUMMARY 写入并 commit；user mid-session 中断追加要求：(a) 收尾前再跑 `/gsd-verify-work 1` 生成 4-bucket 测试清单 HTML（`visual/window/motion/perf` 硬约束）；(b) 视觉修改建议本 phase 内解决；(c) 按 Phase 1 类别跑 Tier-3 + closeout GSD 命令。Next: 启动 `/gsd-verify-work 1`。
+**Stopped at**: **Phase 1 全部收尾完成**（4-command 序列）：(a) 01-10-SUMMARY (`8310bec`)；(b) verify-work 4-bucket HTML (visual/window/motion/perf 全过；user 澄清视觉在 01.1 已锁)；(c) **code-review --fix --auto** (`cf13c01`) — iter-1 修 15/15 (3 BL + 12 WR + 14 atomic commits, BL-02 关掉了 plan 01-11 gap)，iter-2 status: clean；(d) **validate-phase** (`5e5a9c6`) — Nyquist 2 gap FILLED (BL-03-pin streaming-KaTeX + WR-05-pin Splitter restore)，Splitter impl 修了 (`2f1d83e`)；(e) **secure-phase** (`28a2412`) — 49/49 threat CLOSED (39 mitigate + 10 accept + 0 transfer + 0 OPEN)，ASVS L1 SHIP-ready，KP-04 OAuth 3 层防御验证；(f) **extract-learnings** (此 commit) — 15 decisions + 10 lessons + 9 patterns + 8 surprises。**Plan 01-11 obsolete**（BL-02 CSP fix 已收）。最终 baseline: vitest 147/147 · svelte-check 0/0 · cargo 3/3 · audit PASS。Next: 下个 session `/gsd-pr-branch main && /gsd-ship 1` 出 PR + merge，然后启 Phase 2 (vault + Canvas/Ed sync + onboarding)。
 **Resume file**: 无 — HANDOFF.json + .continue-here 均在 commit `0d3fd1f` 清理过；本次 resume 不重生成。
 
 **Prior pause context (历史保留)**: `/gsd-pause-work` (2026-05-11 19:48 — paused for `/gsd-explore test-automation` Socratic session). Earlier pause 2026-05-09 ~22:50 (window-drag blocker) was resolved via plan 01-10 H4 capability fix (commit `fcd939a`); the Last action description below is from that earlier pause and is **historical** (preserved for the window-drag debugging trail). For why STATE.md was 3 days stale see `.planning/forensics/report-20260512-102126.md`.
