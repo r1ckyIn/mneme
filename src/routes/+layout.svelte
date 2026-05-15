@@ -15,6 +15,14 @@
 -->
 <script lang="ts">
   import "$lib/styles/tokens.css";
+  // CR-04a (2026-05-15): without katex.css the .katex-mathml screen-reader
+  // span is NOT visually hidden, so KaTeX inline math renders TWICE — once
+  // as the MathML fallback (plain text) and once as the styled HTML version,
+  // producing visible duplicates like "f(x)f(x)". katex.min.css supplies the
+  // `position: absolute; clip: rect(...)` rule that hides .katex-mathml and
+  // also loads the KaTeX font faces (relative `url(./fonts/...)` resolved
+  // by Vite at build time — no external network).
+  import "katex/dist/katex.min.css";
 
   // Phase 01.1 D-SF-01 — dev-only Svelte forwarder install (R1 spec.md).
   //

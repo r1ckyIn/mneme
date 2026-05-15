@@ -152,6 +152,15 @@
     dispatch.messages = [
       ...dispatch.messages,
       { id: uid(), role: "user", text: userText, streaming: false },
+      // CR-03 (2026-05-15): empty assistant placeholder with streaming=true
+      // so the orange .stream-dot pulse renders the moment the user hits
+      // send — matches Claude Desktop's "thinking..." indicator. The dispatcher's
+      // findOrCreateStreamingAssistant reuses this last-streaming-assistant
+      // when the first text_delta arrives, so the placeholder gets filled
+      // in-place rather than spawning a second bubble. On error / close-
+      // without-text_delta paths the placeholder is removed by the cleanup
+      // hooks below so an empty bubble does not linger in the transcript.
+      { id: uid(), role: "assistant", text: "", streaming: true },
     ];
     prompt = "";
     if (inputBox) inputBox.style.height = "auto";
@@ -242,6 +251,7 @@
       // disconnected at the TOP of the handler, before any other side effect.
       setStatus("disconnected");
       console.error("[claude:spawn-error]", err);
+      popEmptyStreamingAssistant();
       dispatch.messages = [
         ...dispatch.messages,
         { id: uid(), role: "system", systemKind: "error", text: escapeHtml(String(err)), streaming: false },
@@ -263,6 +273,7 @@
       }
       teardown();
       if (!dispatch.resultReceived) {
+        popEmptyStreamingAssistant();
         dispatch.messages = [
           ...dispatch.messages,
           {
@@ -294,6 +305,7 @@
       // disconnected; otherwise the titlebar would stick on "connecting"
       // forever after onMount's initial transition fails to complete.
       setStatus("disconnected");
+      popEmptyStreamingAssistant();
       dispatch.messages = [
         ...dispatch.messages,
         { id: uid(), role: "system", systemKind: "error", text: escapeHtml(`Failed to spawn claude or register PID: ${String(e)}`), streaming: false },
@@ -307,6 +319,20 @@
       dispatch.isStreaming = false;
       pulseDotVisible = false;
     };
+  }
+
+  function popEmptyStreamingAssistant(): void {
+    // CR-03 cleanup: if the last message is the "thinking" placeholder pushed
+    // by sendPrompt (role:"assistant", streaming:true, text:""), remove it
+    // so failure-path system bubbles do not sit beneath a forever-empty
+    // assistant bubble. Idempotent — no-op when text_delta filled the
+    // placeholder before the failure (m.text non-empty), or when the
+    // placeholder has already been popped by a prior failure-path branch.
+    const msgs = dispatch.messages;
+    const last = msgs[msgs.length - 1];
+    if (last && last.role === "assistant" && last.streaming && last.text === "") {
+      dispatch.messages = msgs.slice(0, -1);
+    }
   }
 
   function teardown() {

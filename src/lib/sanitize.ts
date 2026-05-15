@@ -41,10 +41,38 @@ export function escapeHtml(s: string): string {
 }
 
 export function sanitizeMarkdown(text: string): string {
+  // CR-04b (2026-05-15): pre-process $$...$$ display math BEFORE marked.parse.
+  // With breaks:true marked converts every newline inside a paragraph to <br>,
+  // so a multi-line display math block ($$ \n math \n $$) lands in the DOM as
+  //   <p>$$<br>math<br>$$</p>
+  // which makes each segment a SEPARATE text node — the post-render TreeWalker
+  // in renderKatexInDom never sees a single text node that contains both $$
+  // delimiters and the body, so block math passes through as raw text.
+  //
+  // Fix: render the display math up front (via renderKatex which itself
+  // DOMPurify-sanitizes its KaTeX output at the source), drop an opaque
+  // alphanumeric placeholder that marked + DOMPurify leave untouched, and
+  // swap the placeholder back AFTER DOMPurify finishes. Inline `$...$` math
+  // is still handled by the post-render walker since it always lands in a
+  // single text node.
+  const displayMathHtml: string[] = [];
+  const prepped = text.replace(/\$\$([\s\S]+?)\$\$/g, (_m, body: string) => {
+    const idx = displayMathHtml.length;
+    displayMathHtml.push(renderKatex(body.trim(), true));
+    return `XKATEXDISPLAYX${idx}X`;
+  });
+
   // marked.parse can return Promise<string> under async highlighters — we don't
   // use one in Phase 1, so the sync return path is correct. Cast for TS.
-  const html = marked.parse(text, { gfm: true, breaks: true }) as string;
-  return DOMPurify.sanitize(html, { FORBID_TAGS, FORBID_ATTR });
+  const html = marked.parse(prepped, { gfm: true, breaks: true }) as string;
+  const sanitized = DOMPurify.sanitize(html, { FORBID_TAGS, FORBID_ATTR });
+
+  // Restore display math. The replacement HTML has already passed the
+  // sanitize gate at the source (renderKatex → DOMPurify); the surrounding
+  // string has just passed DOMPurify. Combined output is safe by composition.
+  return sanitized.replace(/XKATEXDISPLAYX(\d+)X/g, (_, idx: string) => {
+    return displayMathHtml[Number(idx)] ?? "";
+  });
 }
 
 export function renderKatex(src: string, displayMode = false): string {

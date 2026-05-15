@@ -159,13 +159,20 @@ describe("renderKatexInDom — partial streaming buffer hazard (BL-03 contract)"
     expect(after).toContain("katex");
   });
 
-  it("mid-stream `\\max` tail after a complete $$..$$ leaves an orphan $$ that the walker leaves alone (flicker hazard)", () => {
+  it("mid-stream `\\max` tail after a complete $$..$$ leaves an orphan $$ that the renderer leaves alone (flicker hazard)", () => {
     // Multi-chunk scenario: the stream has emitted `$$ r(n)$$ then $$\max`.
     // The first display chunk is complete, the second is half. On the NEXT
     // chunk (`\{p\}$$`) the assistant html is re-sanitized from scratch by
-    // ChatPanel.scheduleHtmlRecompute. If the walker runs on this INTERMEDIATE
-    // state, the user sees `$$\max` flicker as plaintext, then complete math,
-    // then plaintext-again as the buffer resets — distracting UX.
+    // ChatPanel.scheduleHtmlRecompute. If a partial-buffer renderer ran on
+    // this INTERMEDIATE state, the user could see `$$\max` flicker as
+    // plaintext, then complete math, then plaintext-again as the buffer
+    // resets — distracting UX.
+    //
+    // CR-04b architecture (2026-05-15): display math `$$..$$` is now rendered
+    // by sanitizeMarkdown ITSELF before marked.parse (pre-pass), not by the
+    // post-render walker. The walker still gates on AssistantMessage's
+    // `streaming` flag for inline `$..$` math. The orphan-buffer contract
+    // remains: complete $$..$$ renders, orphan $$..$$ stays as text.
     const sanitized = sanitizeMarkdown("Math: $$ r(n)$$ then $$\\max");
     const host = document.createElement("div");
     host.appendChild(
@@ -175,14 +182,15 @@ describe("renderKatexInDom — partial streaming buffer hazard (BL-03 contract)"
     renderKatexInDom(host);
     const after = host.innerHTML;
 
-    // Document the hazard: walker rendered the FIRST $$..$$ (a known
-    // mutation) but the orphan `$$\max` tail is left as literal text.
-    expect(after).not.toBe(before);
+    // sanitizeMarkdown rendered the FIRST $$..$$ pre-marked; walker is a
+    // no-op on the post-sanitize DOM (no new $$..$$ tokens to find).
+    expect(before).toContain("katex-display");
+    expect(after).toBe(before);
     expect(after).toContain("katex-display");
     // The orphan `$$\max` should be present somewhere in the result as
-    // plaintext (the bug surface — what AssistantMessage avoids by
-    // gating with `if (streaming) return`).
-    expect(after).toContain("\\max");
+    // plaintext — sanitizeMarkdown's pre-pass regex requires a closing $$
+    // to match. Marked may escape `\` as `\` so we tolerate either.
+    expect(after).toContain("max");
   });
 
   it("complete `$$x = 1$$` and `$y$` SHOULD render correctly (positive baseline)", () => {
