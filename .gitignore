@@ -49,8 +49,10 @@ CLAUDE.md
 
 # Visual Review HTML — ephemeral per design D-UP-06 (R8 of dev-feedback-loop spec).
 # Each /gsd-verify-work <N> run produces a fresh .planning/handoff/<date>-phase-<N>-verify.html;
-# never amended; not part of project record.
-.planning/handoff/*-verify.html
+# never amended; not part of project record. Pattern extended 2026-05-15 to cover
+# all *.html under handoff/ — change-review / gsd-update preview / dogfood HTMLs
+# all share the "ephemeral artifact for live human review, then discard" lifecycle.
+.planning/handoff/*.html
 
 # Dev feedback loop (Phase 01.1) — ephemeral signals, never committed.
 # Tracked exemptions: .gitkeep + README.md.
@@ -61,6 +63,10 @@ CLAUDE.md
 .dev-logs/*
 !.dev-logs/.gitkeep
 !.dev-logs/README.md
+
+# Same lifecycle for src-tauri/.dev-logs/ — cargo tauri dev artifacts (build
+# output captured during /gsd-verify-work + manual dogfood sessions).
+src-tauri/.dev-logs/
 
 # Graphify working directory — SHA256 cache + raw output, rebuildable.
 # Persistent artifacts live in .planning/graphs/ (committed).

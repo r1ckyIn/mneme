@@ -2,14 +2,19 @@
 phase: 01
 phase_name: "tauri-shell-foundation-subprocess-hardening"
 project: "mneme"
-generated: "2026-05-14T00:00:00Z"
+generated: "2026-05-15T07:35:00Z"
 counts:
-  decisions: 15
+  decisions: 19
   lessons: 10
-  patterns: 9
-  surprises: 8
-missing_artifacts:
-  - "01-VERIFICATION.md (no UAT.md either — verify-work was 4-bucket HTML rendering only, no UAT state file)"
+  patterns: 12
+  surprises: 14
+missing_artifacts: []
+gap_closure_cycle:
+  date: "2026-05-15"
+  plans_added: ["01-12", "01-13"]
+  inline_fixes: ["CR-01", "CR-02", "CR-03", "CR-04a", "CR-04b"]
+  amendments: ["01-AMENDMENT-2026-05-14.md (A-16/A-17/A-18)"]
+  spike_docs: ["spike-tauri-capability-multi-entry.md"]
 ---
 
 # Phase 01 Learnings: tauri-shell-foundation-subprocess-hardening
@@ -133,6 +138,38 @@ gsd-nyquist-auditor + gsd-security-auditor agents have read-only-on-impl constra
 
 **Rationale:** Auditor's constraint correctly bounds its scope (single-responsibility, predictable side effects). Orchestrator's broader scope allows it to take the documented recipe + close the loop atomically. Without this pattern, every auditor-found impl bug would need a separate plan cycle.
 **Source:** 01-VALIDATION.md Validation Audit 2026-05-14, commit `2f1d83e`
+
+---
+
+### Tauri 2 multi-entry capability — Option B (dual Command names) locked
+30-minute spike (`spike-tauri-capability-multi-entry.md`) compared three topologies for the resume-vs-fresh argv split. Option A (single Command name with two `args:` shapes) is structurally impossible — `tauri-plugin-shell-2.3.5/src/scope.rs:251-261` uses short-circuit `find()` so only the first allow-entry matching the command name ever applies. Option C (sentinel session id passed always) trades one unverified question for another (Claude CLI sentinel-id semantics) and erodes `SESSION_ID_REGEX` narrowness. Option B — register two Command names `claude-bin-fresh` (15 args, no `--resume`) and `claude-bin-resume` (17 args, includes `--resume <id>`) — is provable correct from upstream Tauri source alone.
+
+**Rationale:** Picking from the option matrix on EVIDENCE (source code + spike) rather than vibes prevented spending 2-3 days hand-testing a topology that the Tauri runtime would have silently rejected. Spike-before-implement for any "capability schema interaction" question is now the standing pattern.
+**Source:** spike-tauri-capability-multi-entry.md, 01-12-PLAN.md Task 4a, 01-12-SUMMARY.md decisions
+
+---
+
+### CR-02 — default connection-state to "connected" at onMount (supersedes A-16)
+A-16 (plan 01-12) moved `setStatus("connecting")` from per-prompt to `onMount` with the intent "subprocess hasn't proven it works yet". Effect at runtime: titlebar dot stuck grey for the entire duration between app launch and first text_delta of the user's first prompt — pure negative UX (app looked broken at startup). CR-02 supersedes: `setStatus("connected")` at onMount; `setStatus("connected")` at first text_delta becomes idempotent defense-in-depth; `"connecting"` state retired at runtime in Phase 1 (kept in type union for future MCP/remote phases).
+
+**Rationale:** mneme is a Tauri shell + per-prompt claude CLI subprocess wrapper, NOT a WebSocket client. There is no persistent "handshake in progress" state at startup. Once the shell is mounted (Tauri + Vite + claude CLI on PATH all wired by then), the app IS ready to chat. Per-prompt streaming feedback continues via `pulseDotVisible` + `dispatch.isStreaming`; the connection-state dot is reserved for "infrastructure healthy / something blew up" only.
+**Source:** commit `b64f261`, src/lib/connection-state.svelte.ts docblock
+
+---
+
+### CR-04b — pre-render display math at sanitizeMarkdown, NOT at the post-DOM walker
+Block math `$$...$$` was not rendering because `marked + breaks:true` converts every newline inside a paragraph to `<br>`, splitting a multi-line `$$\nmath\n$$` block into three separate text nodes (`$$`, `math`, `$$`). The post-render TreeWalker walks per-text-node and never sees both delimiters + body in one node, so the regex `/\$\$([\s\S]+?)\$\$/` never matches. The fix moves display-math rendering to a pre-pass inside `sanitizeMarkdown` that operates on the raw markdown source (before marked), renders via `renderKatex` (already DOMPurify-sanitized at the source), drops an opaque alphanumeric placeholder, and swaps the placeholder back after DOMPurify finishes. Inline `$...$` math is still handled by the post-render walker because it always lands in a single text node.
+
+**Rationale:** Fixing the walker would require either spanning multiple DOM nodes (heavy) or pre-joining text + `<br>` siblings per paragraph (fragile). Pre-rendering at the source layer is architecturally cleaner — the math is rendered before marked has a chance to split it, the walker stays small, and the sanitize gate remains the single security boundary (both KaTeX HTML and surrounding text are DOMPurify-sanitized).
+**Source:** commit `9316bd1`, src/lib/sanitize.ts sanitizeMarkdown header comment
+
+---
+
+### KP-04 defense extended to `--system-prompt` full-replacement
+Plan 01-12 needed `--append-system-prompt CHAT_RENDERING_HINTS` to make Claude honor a markdown-friendly rendering hint without replacing the system prompt entirely. Audit checks 4b + 9 were added to reject naked `--system-prompt` (full replacement) in BOTH the SSOT (`spawn-args.shared.ts`) and the capability JSON. The 3-layer KP-04 defense (SSOT absence + validator absence + audit grep) now covers two forbidden flags: `--bare` AND `--system-prompt`.
+
+**Rationale:** `--system-prompt` would let a future contributor or a misconfigured prompt-injection vector replace the system prompt entirely, bypassing any safety-related guardrails Claude.ai's default system prompt provides. `--append-system-prompt` ADDS to the existing system prompt without replacing it — semantically equivalent to a user message preamble, structurally safe. The 3-layer defense extends naturally to the new flag.
+**Source:** scripts/audit-capabilities.sh checks 4b + 9, tests/audit/fixture-append-system-prompt.json + fixture-system-prompt-rejected.json, 01-12-SUMMARY.md
 
 ---
 
@@ -292,6 +329,30 @@ When read-only auditor (nyquist-auditor / security-auditor) escalates an impl bu
 
 ---
 
+### Empty streaming-assistant placeholder = "thinking" indicator
+At `sendPrompt`, push an empty assistant message `{ role: "assistant", text: "", streaming: true }` immediately after the user message. AssistantMessage renders empty html + `.stream-dot` (the pulsing orange dot) — visible feedback that "Claude is thinking" before the first text_delta arrives. The dispatcher's `findOrCreateStreamingAssistant` REUSES the last streaming assistant on text_delta arrival, so the placeholder gets filled in-place rather than spawning a second bubble. Failure paths (cmd.on("error") / cmd.on("close") without result / spawn-or-register catch) call `popEmptyStreamingAssistant()` to remove the placeholder before pushing the error/info system message — so empty bubbles never linger beneath errors.
+
+**When to use:** Any per-prompt or per-request streaming UX where the response has measurable latency (subprocess spawn, network RTT, model thinking time). The placeholder pattern is preferable to a separate "thinking" UI element because it (a) lives in the same message-list flow as the actual reply, (b) gets auto-filled rather than auto-replaced when the response arrives, and (c) keeps streaming-state ownership in one type (`Msg`).
+**Source:** commit `9316bd1`, src/lib/components/ChatPanel.svelte sendPrompt + popEmptyStreamingAssistant
+
+---
+
+### Pre-render at sanitize stage when post-DOM walker can't span boundaries
+When a downstream renderer (DOM TreeWalker, post-process regex, sanitizer hook) walks per-text-node and the markdown engine splits a logical block across multiple DOM nodes (via `<br>`, list items, paragraphs), pre-render the block at the SOURCE layer before the markdown engine touches it. Use an opaque alphanumeric placeholder (no markdown specials) to survive marked.parse + DOMPurify, then swap the placeholder back at the end. Both the rendered HTML and the surrounding text pass through DOMPurify so the sanitize gate stays the single security boundary.
+
+**When to use:** Any extension to the markdown rendering pipeline where the natural fit is "render block X by walking the DOM" but the DOM doesn't preserve block boundaries cleanly. Display-math, multi-line code-fence variants, and reactive widget embeds all fit this pattern.
+**Source:** src/lib/sanitize.ts sanitizeMarkdown CR-04b pre-pass, commit `9316bd1`
+
+---
+
+### Failure-path cleanup helper for placeholder messages
+When sendPrompt pushes a placeholder message that gets filled in on success, parallel-add a small `popEmptyStreamingAssistant()` helper that removes the placeholder before each failure-path branch pushes its error/info system message. The helper checks last-message shape (role + streaming + empty text) and is idempotent — no-op when text_delta filled the placeholder, no-op when a prior failure-path branch already popped it.
+
+**When to use:** Whenever a UX optimization pushes a placeholder/optimistic-update at start-of-operation. Every error path must either consume the placeholder (fill in error text) or pop it (remove cleanly). Leaving empty placeholders sitting beneath error messages is a stale-state smell.
+**Source:** src/lib/components/ChatPanel.svelte popEmptyStreamingAssistant, 3 failure-path call sites
+
+---
+
 ## Surprises
 
 ### T-1-49 window-drag took 4 chat fixes before H1 probe surfaced the real cause
@@ -355,3 +416,52 @@ The Nyquist auditor escalated WR-05-pin (Splitter restore drift) rather than sil
 
 **Impact:** Read-only audit roles are a FEATURE because they force the escalation surface to be visible. Hidden auditor-applied fixes would have papered over an impl bug; the escalation made it impossible to ignore.
 **Source:** 01-VALIDATION.md Validation Audit 2026-05-14 (escalation → orchestrator-applied fix chain)
+
+---
+
+### Placeholder strings must avoid markdown special characters
+First version of CR-04b's display-math pre-pass used `__MNEMEKATEXDISPLAY${idx}__` as the placeholder. After marked.parse, the leading + trailing `__` were interpreted as markdown bold syntax, transforming the placeholder into `<strong>MNEMEKATEXDISPLAY0</strong>`. The post-DOMPurify replace regex no longer matched (underscores gone), so display math never restored. Fix: switch to `XKATEXDISPLAYX${idx}X` (pure alphanumeric, no markdown specials). Test suite caught this within seconds via the existing BL-03 contract test.
+
+**Context:** When designing placeholder tokens for any pre-process/post-process pipeline that runs THROUGH a markdown engine, the placeholder must contain no `_`, `*`, `` ` ``, `~`, `[`, `]`, `(`, `)`, `#`, `>`, `-`, `+`, `.`, `!`. Pure-letter prefixes + numeric body + pure-letter suffix is safest. Existing test coverage paid off — the broken contract surfaced as a test failure, not a runtime bug in production.
+**Source:** commit `9316bd1`, tests/sanitize.test.ts BL-03 contract test, src/lib/sanitize.ts placeholder regex evolution
+
+---
+
+### KaTeX without katex.css renders math TWICE — silent UX bug
+KaTeX's HTML output structure is `<span class="katex"><span class="katex-mathml">[MathML for screen readers]</span><span class="katex-html">[styled visual]</span></span>`. The `katex.css` stylesheet hides `.katex-mathml` via `position: absolute; clip: rect(1px,1px,1px,1px)`. Without that stylesheet (we'd never imported it), both spans render visibly — producing duplicates like `f(x)f(x)` on every inline math expression. The 2026-05-14 dogfood verification flagged this as "math doesn't render correctly" without realizing the underlying duplication mechanism — fix took one `import "katex/dist/katex.min.css"` line.
+
+**Context:** Any third-party library that ships with a stylesheet probably REQUIRES that stylesheet — not just for aesthetics, but for structural correctness (visually-hidden a11y fallbacks are a common pattern). Audit imports: every library used at runtime should have its CSS imported at the global layout level even if you don't think you need the styles.
+**Source:** commit `9316bd1`, src/routes/+layout.svelte katex.min.css import + rationale comment
+
+---
+
+### Comment block must update when the documented contract changes
+Adding the 5th `setStatus("disconnected")` site (CR-01 fix in `cmd.on("close")`) required updating the `teardown()` comment block from "the FOUR enumerated sites" to "the FIVE enumerated sites" — and adding the same enumeration to the connection-state docblock for CR-02. Inline comments that reference invariant counts ("the X enumerated sites", "the Y allowed flags") are load-bearing documentation — they let future readers grep back to the contract. Leaving the count stale would have silently misled the next reader.
+
+**Context:** Whenever a contract is expressed as a count or enumeration in a header comment, and you add/remove an item, grep the comment site set and update ALL of them in the same commit. This is parallel to the CLAUDE.md "4-file sync checklist" — same principle, smaller scope.
+**Source:** src/lib/components/ChatPanel.svelte teardown() comment, src/lib/connection-state.svelte.ts docblock, commits `f0f1dce` + `b64f261`
+
+---
+
+### A-16 design intent diverged from UX intent — review on dogfood, not on spec read
+Plan 01-12's A-16 amendment moved `setStatus("connecting")` from per-prompt to onMount with the documented intent "subprocess hasn't proven it works yet". Code reviews passed; tests passed; the spec read coherent. Live dogfood immediately surfaced the actual experience: titlebar dot stuck grey for the entire duration between app launch and first text_delta of the user's first prompt. CR-02 superseded the design within 24 hours of dogfood.
+
+**Context:** State-machine designs that read sensible on paper can produce a degraded steady-state when interpreted through real user time. Always run real-world dogfood on any visible state-machine change — not just unit tests + spec walk-through. "Looks right in spec" is a different signal from "feels right in app".
+**Source:** 01-AMENDMENT-2026-05-14.md A-16 → CR-02 supersession, commits `4e46e81` → `b64f261`
+
+---
+
+### CR-01 was a parallel-set enumeration miss — 5 lifecycle sites, plan enumerated 4
+Plan 01-12 reshaped per-prompt status transitions, explicitly enumerating "FOUR setStatus('disconnected') sites: onDestroy / cmd.on('error') / spawn-or-register catch / scratchDir no-op early return". Code review surfaced the 5th: `cmd.on("close")` when `!firstTextDeltaSeen` (subprocess closed without ever streaming anything — rate-limit / early-EOF / handshake failure surfacing via stdout close). The plan's enumeration was a count, not a derivation — there was no listing of "every lifecycle entrypoint" to cross-check against.
+
+**Context:** When a plan enumerates "the N sites where X happens" as a count, follow it with a derivation step: list EVERY lifecycle entrypoint or event handler in the affected module + verify N matches the list. Counts without derivations are auto-correcting only when the next reader audits them; lacking that, they ossify silently.
+**Source:** 01-AMENDMENT-2026-05-14.md A-16, 01-REVIEW.md CR-01, commit `f0f1dce`
+
+---
+
+### Detached `cargo tauri dev` with `stdio:'ignore'` fails silently
+`verify.start-dev-loop --surface tauri` spawns `cargo tauri dev` with `detached: true, stdio: 'ignore'`. When the spawn fails (transient cache issue, port conflict, etc.), no error surfaces — the SDK returns the spawned PID as if successful, the PID exits within seconds, and the caller has no signal. We attempted 2 starts before realizing the issue: `cargo tauri` standalone CLI doesn't exist; must be `npm run tauri dev` (which invokes `@tauri-apps/cli` from devDependencies).
+
+**Context:** Detached child processes with stdio:'ignore' are silent on failure by design. Any orchestration tool that wraps them needs an out-of-band readiness check (port probe, log file tail, process-still-alive check after a fixed delay) before declaring success. This is a v1.x upstream improvement candidate for `verify.start-dev-loop`.
+**Source:** GSD verify-dev-loop.cjs lines 49-100, .dev-logs/cargo-tauri.log error, 2026-05-15 session
+
