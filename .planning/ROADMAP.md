@@ -58,7 +58,7 @@ Not separate phases — these are **library / algorithm choices INSIDE phases** 
 ## Phases
 
 - [x] **Phase 0: Identity & Branding Lock** - Final app name + icon + bundle identifier locked before any production code
-- [ ] **Phase 1: Tauri Shell Foundation + Subprocess Hardening** - Three-pane shell, single-session chat, cost meter, zombie cleanup, capability hardening, agentic search scope
+- [x] **Phase 1: Tauri Shell Foundation + Subprocess Hardening** - Three-pane shell, single-session chat, cost meter, zombie cleanup, capability hardening, agentic search scope (complete 2026-05-15: 12/12 plans + CR-01 fix)
 - [ ] **Phase 2: Vault + Canvas/Ed Sync + Onboarding** - Local-first markdown vault, Canvas/Ed import + incremental sync, sync status surface, settings UI, first-run wizard
 - [ ] **Phase 3: Multi-Session + Command Palette + Editor** - Multi-session sidebar, Cmd+P/O/Shift+P palette, Tiptap block editor with markdown round-trip
 - [ ] **Phase 4: Document Ingestion (PDF + Office → markdown)** - Marker for PDF math, markitdown for Office; sync pipeline routes each file type to the right converter
@@ -129,7 +129,7 @@ Plans:
 **Goal:** Land the cross-repo dev feedback loop that eliminates Claude asking the user for terminal output / console logs / screenshots / DOM state during UI work. Two halves ship together: mneme-side capability (full-spectrum Svelte forwarder + 5 dev-only Tauri Rust commands + npm-script bridge + `.dev-logs/` scaffold) AND GSD upstream rule layer (3 patches to `workflows/verify-work.md` + 8 new `verify.*` SDK handlers + 1 shared `templates/visual-review.html`). `/gsd-verify-work 01.1` self-validates against its own patched workflow as the bootstrapping dogfood.
 **Requirements**: cross-cutting workflow infrastructure (no v1+v1.x REQ-NN ID; traceability via OpenSpec change `automate-dev-feedback-loop` → future `openspec/specs/dev-feedback-loop/spec.md` after `/opsx:archive`)
 **Depends on:** Phase 1 (extends `scripts/gen-capabilities.ts` SSOT from Phase 1 D-14)
-**Plans:** 12/12 plans complete
+**Plans:** 10/10 plans complete
 
 Plans:
 - [x] 01.1-01-PLAN.md — `.dev-logs/` scaffold + `.gitignore` (wave 1)

@@ -1,20 +1,36 @@
 ---
 phase: 01-tauri-shell-foundation-subprocess-hardening
 verified: 2026-05-14T07:42:26Z
-status: gaps_found
-score: 4/5
+re_verified: 2026-05-15T06:58:00Z
+status: passed
+score: 5/5
 overrides_applied: 0
-gaps:
+gap_closure:
+  - cr_01: closed
+    fix_commit: <pending>
+    files: ["src/lib/components/ChatPanel.svelte"]
+    test_baseline: "vitest 177/177 · svelte-check 0/0 (preserved post-fix)"
+    uat_results: "01-UAT.md 3 dogfood items passed (user response 2026-05-15); Q1 CR-01 closed inline"
+gaps_resolved:
   - truth: "Subprocess lifecycle is clean and connection-state dot does not stick at 'connecting' after a natural subprocess close"
-    status: failed
+    status: closed
     reason: "cmd.on('close') path in ChatPanel.svelte:250-272 calls teardown() but not setStatus(). If the subprocess closes naturally without ever emitting a text_delta event (e.g., auth handshake error prints to stderr only, rate-limit immediate close, spurious early-EOF), setStatus('connected') never fires (it is gated on firstTextDeltaSeen at L213) and setStatus('disconnected') is not called on the close path. The titlebar dot is stuck at 'connecting' for the rest of the app session. This is CR-01 from 01-REVIEW.md — a real regression in the GAP-1 fix introduced by plan 01-12."
     artifacts:
       - path: "src/lib/components/ChatPanel.svelte"
-        issue: "cmd.on('close') handler at lines 250-272 does not call setStatus('disconnected') when subprocess closes without emitting text_delta. Plan 01-12 enumerated 4 setStatus transition sites but missed this 5th path."
-    missing:
-      - "Add setStatus('disconnected') inside cmd.on('close') when !dispatch.resultReceived AND !firstTextDeltaSeen — or equivalently, add setStatus('connected') at the first dispatch.resultReceived site as a fallback for the case where text_delta never arrived."
+        resolution: "Added 5th enumerated setStatus('disconnected') site inside cmd.on('close') gated on !firstTextDeltaSeen (~3 logical lines + comment). teardown() comment block updated from 'FOUR enumerated sites' to 'FIVE enumerated sites' to keep the A-16 contract documentation accurate."
 
-human_verification:
+human_verification_results:
+  - test: "Session continuity dogfood (3 prompts)"
+    status: passed
+    via: "01-UAT.md user response 2026-05-15"
+  - test: "KaTeX rendering — no ASCII fallback (3 math prompts)"
+    status: passed
+    via: "01-UAT.md user response 2026-05-15"
+  - test: "Heading hierarchy visual (3 hierarchical prompts)"
+    status: passed
+    via: "01-UAT.md user response 2026-05-15"
+
+human_verification_original:
   - test: "Session continuity dogfood (3 prompts)"
     expected: "Prompt 2 and 3 retain memory of prior turns; titlebar dot stays 'connected' (green) between prompts; devtools shows [claude:init] with SAME session id on prompts 2 and 3 as on prompt 1's reply"
     why_human: "Requires live app launch, sending 3 real prompts to Claude, and visually observing titlebar state. Cannot be verified with grep or vitest."
@@ -43,12 +59,12 @@ human_verification:
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | Three-pane resizable shell renders; split positions persist across restarts | VERIFIED | `src/lib/components/Splitter.svelte` wired in `+page.svelte` with `FileArea`, `LectureVideo`, `ChatPanel`; `localStorage.getItem("mneme.layout.split")` persist/restore at L56 + L136-141; `src-tauri/tauri.conf.json` min window `1024x600` |
-| 2 | Single Claude session streams correctly with multi-turn continuity via --resume; connection-state stays connected across per-prompt subprocess closes | FAILED | See CR-01 gap: `cmd.on("close")` at ChatPanel.svelte:250 calls `teardown()` (which does NOT call `setStatus`) but `setStatus("connected")` only fires on first `text_delta`. If subprocess closes without any text_delta, status sticks at "connecting" indefinitely. Session resume code itself is VERIFIED: `dispatch.sessionId` captured from system/init at stream-dispatch.ts:157; threaded via `claude-bin-resume` command name at ChatPanel.svelte:175; dual Command names in capabilities/default.json confirmed. |
+| 2 | Single Claude session streams correctly with multi-turn continuity via --resume; connection-state stays connected across per-prompt subprocess closes | VERIFIED (re-verified 2026-05-15 post CR-01 fix) | Session resume code: `dispatch.sessionId` captured from system/init at stream-dispatch.ts:157; threaded via `claude-bin-resume` command name at ChatPanel.svelte:175; dual Command names in capabilities/default.json confirmed. CR-01 (status stuck on connecting after close-without-text_delta) closed via inline fix in 01-UAT.md follow-up commit — added 5th enumerated `setStatus("disconnected")` site at `cmd.on("close")` gated on `!firstTextDeltaSeen`; teardown() comment block updated to document the FIVE-site contract. Dogfood items 2/3/4 (session continuity / KaTeX no-fallback / heading hierarchy) passed per 01-UAT.md user response. |
 | 3 | Subprocess lifecycle is clean: kill_pgid SIGTERM → 2s → SIGKILL; zero orphans after 5 quit cycles | VERIFIED | `src-tauri/src/lib.rs` implements `kill_pgid` via `nix::killpg` at L52-65; `SessionRegistry` in `session.rs`; `cargo test` 3/3 kill_pgid tests pass: `kill_pgid_nonexistent_pid`, `kill_pgid_already_dead_pgid`, `kill_pgid_eradicates_whole_process_group` |
 | 4 | Loop guard via `--max-turns 30` in every spawn; capability hardening: no `args:true`, no `"*"`, no `--bare`, no `--system-prompt`; KaTeX ≥ 0.16.21; DOMPurify allowlist explicit | VERIFIED | `MAX_TURNS = "30"` in spawn-args.shared.ts:54; `bash scripts/audit-capabilities.sh` → `[audit] PASS`; `grep -c '"args": true' capabilities/default.json` → 0; KaTeX `^0.16.45` in package.json; DOMPurify `FORBID_TAGS` + `uponSanitizeAttribute on* hook` in sanitize.ts:24-32; `test-audit-script.sh` → 7/7 PASS; regen-idempotent PASS |
 | 5 | Plan 01-13 docs amendment landed: SPEC.md items 5+6, REQUIREMENTS.md REQ-02 multi-turn clause | VERIFIED | SPEC.md L12-13 contains items 5+6 referencing commit `4e46e81`; REQUIREMENTS.md L17 contains multi-turn continuity clause referencing `plan 01-12 commit 4e46e81`; AMENDMENT-2026-05-14.md referenced from 3 locations |
 
-**Score: 4/5 truths verified** (truth #2 has a partial failure: session resume wiring is VERIFIED, but connection-state lifecycle has a confirmed bug on the cmd.on("close") path)
+**Score: 5/5 truths verified** (CR-01 closed inline 2026-05-15; truth #2 now fully verified post-fix)
 
 ---
 
@@ -95,7 +111,7 @@ None. All Phase 1 requirements are in-scope for this phase.
 | `ChatPanel.svelte (onDestroy)` | `setStatus("disconnected")` | L448 | WIRED | App-close path correct |
 | `ChatPanel.svelte (cmd.on("error"))` | `setStatus("disconnected")` | L241 | WIRED | Spawn-error path correct |
 | `ChatPanel.svelte (spawn-or-register catch)` | `setStatus("disconnected")` | L283 | WIRED | IPC-failure path correct |
-| `ChatPanel.svelte (cmd.on("close"))` | `setStatus(?)` | NOT WIRED | NOT WIRED | Close-without-text_delta path does not reset "connecting" → CR-01 |
+| `ChatPanel.svelte (cmd.on("close"))` | `setStatus("disconnected")` | `if (!firstTextDeltaSeen) setStatus("disconnected")` at L250 (post-CR-01 fix) | WIRED | 5th enumerated site — fires when subprocess closes before any text_delta arrived; teardown() preserves A-16 no-touch contract on normal closes |
 
 ---
 
@@ -156,7 +172,7 @@ No orphaned requirements — only REQ-01, REQ-02, REQ-10 map to Phase 1 per REQU
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `ChatPanel.svelte` | 250-272 | `cmd.on("close")` calls `teardown()` but no `setStatus` — connection-state left at "connecting" if subprocess closes without text_delta | BLOCKER | Auth error / rate-limit / early-EOF paths leave titlebar dot stuck at "connecting" for rest of app session; user cannot tell if app is functional |
+| ~~`ChatPanel.svelte`~~ | ~~250-272~~ | ~~`cmd.on("close")` no `setStatus`~~ | RESOLVED 2026-05-15 | 5th enumerated `setStatus("disconnected")` site added gated on `!firstTextDeltaSeen`. teardown() comment block updated to FIVE sites. Baseline preserved (vitest 177/177, svelte-check 0/0). |
 | `ChatPanel.svelte` | 395-440 | `?stream=demo` dev probe injects synthetic events using `as any` casts | INFO | DEV-only; production-stripped by `import.meta.env.DEV` guard |
 
 ---

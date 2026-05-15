@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
-status: unknown
+status: ready_to_plan
 last_updated: "2026-05-14T06:55:59.502Z"
 progress:
   total_phases: 13
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 26
   completed_plans: 24
-  percent: 92
+  percent: 31
 ---
 
 # mneme Project State
@@ -31,8 +31,8 @@ progress:
 
 ## Current Position
 
-Phase: 01 (tauri-shell-foundation-subprocess-hardening) — EXECUTING
-Plan: 1 of 12
+Phase: 2
+Plan: Not started
 
 **Phase 01.1 complete (10/10 plans, shipped)** — PR #1 merged (commit `77ebe92`), `/gsd-extract-learnings 01.1` ran (`01.1-LEARNINGS.md` written), `/opsx:archive automate-dev-feedback-loop` ran (spec moved from `openspec/changes/` → `openspec/specs/dev-feedback-loop/`). All ship-track artifacts retired.
 

@@ -248,6 +248,17 @@
     });
 
     cmd.on("close", () => {
+      // CR-01 — 5th enumerated setStatus("disconnected") site: subprocess
+      // closed without ever emitting text_delta (rate-limit / early-EOF /
+      // auth handshake failure that surfaces via stdout-close rather than
+      // the error event). The setStatus("connected") gate at the text_delta
+      // arm never fired; teardown() does not touch status per A-16. Without
+      // this flip the titlebar dot sticks on "connecting" for the rest of
+      // the app session. Normal closes (text_delta arrived earlier) leave
+      // status alone — already "connected", remains so per A-16 invariants.
+      if (!firstTextDeltaSeen) {
+        setStatus("disconnected");
+      }
       teardown();
       if (!dispatch.resultReceived) {
         dispatch.messages = [
@@ -298,12 +309,15 @@
 
   function teardown() {
     // Plan 01-12 GAP-1 (A-16 supersedes A-10): teardown() is the per-prompt
-    // subprocess cleanup primitive. It MUST NOT touch connection state
-    // anymore — per-prompt natural close (cmd.on('close') path) is NOT a
-    // connection event. setStatus("disconnected") fires only at the four
-    // enumerated sites: onDestroy + cmd.on('error') + spawn-or-register catch
-    // + the scratchDir-unresolved no-op early return. The 'connected' status
-    // is held for the entire app lifetime once flipped.
+    // subprocess cleanup primitive. It MUST NOT touch connection state —
+    // per-prompt natural close (cmd.on('close') path) is NOT itself a
+    // connection event. setStatus("disconnected") fires at FIVE enumerated
+    // sites: onDestroy + cmd.on('error') + spawn-or-register catch + the
+    // scratchDir-unresolved no-op early return + cmd.on('close') WHEN
+    // firstTextDeltaSeen is false (CR-01 — subprocess closed before stream
+    // ever started, e.g. rate-limit / early-EOF / handshake failure). For
+    // close paths where text_delta did arrive, status is already 'connected'
+    // and is held for the entire app lifetime per A-16 invariants.
     if (finalizeOnce) finalizeOnce();
     invoke("clear_session_pid").catch(() => {});
     dispatch.isStreaming = false;
