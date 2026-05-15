@@ -1,11 +1,19 @@
 // src/lib/connection-state.svelte.ts — A-10 shared connection state for the titlebar.
 //
-// Phase 1 lifecycle:
-//   - "disconnected" — initial state on app launch (no subprocess yet, or after exit)
-//   - "connecting"   — flipped by ChatPanel (01-06) when sendPrompt() is called and
-//                      the spawn is in flight; cleared on first stream_event/text_delta
-//   - "connected"    — flipped on first stream_event/text_delta; held until
-//                      cmd.on("close") fires
+// Phase 1 lifecycle (CR-02 2026-05-15 supersedes A-16 onMount transition):
+//   - "disconnected" — module-default before mount; also flipped at the FIVE
+//                      enumerated disconnect sites (onDestroy / cmd.on('error') /
+//                      spawn-or-register catch / scratchDir no-op / cmd.on('close')
+//                      WHEN !firstTextDeltaSeen [CR-01])
+//   - "connected"    — flipped at onMount (app shell is up = infrastructure
+//                      ready = mneme has nothing to "connect to" since it is
+//                      a Tauri shell + claude CLI subprocess wrapper, not a
+//                      WebSocket client). Re-asserted (idempotently) on first
+//                      text_delta as defense-in-depth.
+//   - "connecting"   — RETIRED at runtime; no code path sets this state in
+//                      Phase 1. Kept in the type union for future use (e.g.
+//                      explicit reconnection states if MCP / remote services
+//                      get added in later phases).
 //
 // TitlebarMeta (Task 7) reads .status to render the dot color + label.
 // ChatPanel (01-06) imports setStatus() and calls it at lifecycle transitions.

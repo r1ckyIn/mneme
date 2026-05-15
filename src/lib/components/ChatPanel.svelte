@@ -158,10 +158,12 @@
     dispatch.isStreaming = true;
     dispatch.resultReceived = false;
     pulseDotVisible = true;
-    // Plan 01-12 GAP-1 (A-16 supersedes A-10): setStatus("connecting") moved
-    // to onMount; sendPrompt no longer touches connection status because the
-    // app is already "connecting" or "connected" by the time the user clicks.
-    // teardown() on per-prompt close also no longer flips status (see below).
+    // Plan 01-12 GAP-1 + CR-02 2026-05-15: sendPrompt no longer touches
+    // connection status. The app is already "connected" by the time the user
+    // clicks (set at onMount). teardown() on per-prompt close also does not
+    // flip status (see teardown() below). The connection-state dot reflects
+    // infrastructure health only; per-prompt streaming uses pulseDotVisible
+    // + dispatch.isStreaming for its own visual feedback.
 
     // Plan 01-12 GAP-1 (Option B per Task 4a spike): thread captured session id
     // via --resume on prompts 2+; pick the Command name to match Tauri's
@@ -391,13 +393,20 @@
     window.addEventListener("keydown", onWindowKeydown);
     if (inputBox) inputBox.focus();
     void resolveScratchDir();
-    // Plan 01-12 GAP-1 (A-16 supersedes A-10): the app is "connecting" the
-    // moment the chat shell mounts — matches Claude.ai web's UX where the
-    // status dot is grey at app boot and flips green on first successful
-    // stream chunk (via the existing setStatus("connected") at the first
-    // text_delta site). sendPrompt no longer fires setStatus("connecting")
-    // per-prompt; this onMount call is the SOLE entry transition.
-    setStatus("connecting");
+    // CR-02 (2026-05-15 follow-on to CR-01 fix): default to "connected" the
+    // moment the chat shell mounts. Rationale: mneme is not a WebSocket app —
+    // there is no "still negotiating handshake" state at startup. Once the
+    // Tauri shell + Vite + claude CLI on PATH are all wired (which they are
+    // by the time onMount runs), the app IS ready to chat. The prior
+    // "connecting at onMount" semantics made the titlebar dot look grey/broken
+    // until first text_delta arrived from the user's first prompt — pure
+    // negative UX. Per-prompt streaming feedback is already carried by
+    // pulseDotVisible + dispatch.isStreaming; the connection-state dot is
+    // reserved for "infrastructure healthy / something blew up" only.
+    // The setStatus("connected") at the first text_delta site below is now
+    // idempotent (re-asserts the already-set state); kept as defense-in-depth
+    // for the case where future code paths reset status mid-session.
+    setStatus("connected");
     // Plan 01-09 Task 10 dev hook: visiting `?stream=demo` triggers the
     // dev probe with a synthetic stream-event sequence so the visual
     // verification step can capture an in-progress (mid-stream) snapshot
