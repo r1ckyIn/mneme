@@ -47,9 +47,9 @@
 | **General** | App language（先锁中文）/ start behavior / update channel |
 | **Vault** | Vault path（移动 + re-index 触发 vault-storage 全扫）/ `_source/` 写保护开关（默认开） |
 | **Sync** | 已废弃 — external-import 替代；保留 category 但内容改为"手动 import 触发" / "UniBoard 桥" 配置 |
-| **Claude** | 默认 `--permission-mode`（`bypassPermissions` 切换 + 显式 warning）/ `--add-dir` scope / model profile passthrough / cost cap 上限（默认 $5）|
+| **Claude** | 默认 `--permission-mode`（`bypassPermissions` 切换 + 显式 warning）/ `--add-dir` scope / model profile passthrough |
 | **Privacy** | 数据导出（vault tar）/ memory 三层清空 / Claude API 请求历史 |
-| **Appearance** | 主题（light / dark / system）— 必遵守 visual-design-system 美学锁；字体大小；行距 |
+| **Appearance** | 主题 — **v1 锁 light-only**（KD-13 Anthropic/Claude 美学锁，2026-05-07 决定）；dark / system 推迟到 v1.x 评估；字体大小；行距 |
 | **Keybindings** | **极少** — 大部分鼠标交互（interaction-paradigm）；只保留 Cmd+Q（subprocess drain，不可改）+ 可能加 Cmd+,（开 settings，macOS native）|
 | **Advanced** | dev mode 开关 / log level / experimental flag / 重置布局 / 清空 localStorage |
 
@@ -72,11 +72,12 @@
 - 改动即时生效（无 "Save" 按钮），重启 app 仍然保留
 - 部分改动需重启 app（如切换 `--permission-mode`） — UI 显式提示"需要重启生效"
 
-### 5. cost cap kill switch（与 claude-subprocess 协作）
+### 5. ~~cost cap kill switch~~ — **已废弃**（2026-05-15）
 
-- settings Claude category 设单 session cost 上限（默认 $5）
-- claude-subprocess §7 中已实施 — settings-ui 只是入口配置 + UI 显示
-- 超 cap 时弹 modal 通知 user，subprocess 被 kill（不静默）
+> **状态变更**：原 §5 cost cap kill switch 设计基于"用户用 Claude API key 按 token 计费"的假设。实际 user 用 Anthropic Pro/Max 订阅（turn-throttled，非 USD-metered）。Phase 1 UsageMeter 出图确认显示契约为 `Ctx X% · Total Nk · Session Xh Ym`，**没有 USD 字段**。  
+> Phase 2 02-SPEC.md L41-42 + 02-CONTEXT.md 明确：Phase 2 不实施 cost-cap kill switch。Claude category 也移除"cost cap 上限"lever（见 §1 表）。
+>
+> 重新启用条件（v1.x+ 评估）：user 改回 API key 计费 OR Anthropic 改订阅模型为按量。
 
 ### 6. 与其他 spec 的契约边界
 
@@ -84,7 +85,7 @@
 - **visual-design-system**（thread）— 必遵守
 - **interaction-paradigm**（thread）— Cmd+, 是例外（OS 标准），其余鼠标
 - **vault-storage** — vault path 配置入口；改 vault path 触发 re-index
-- **claude-subprocess** — permission mode / model profile / cost cap 入口
+- **claude-subprocess** — permission mode / model profile 入口（cost cap 已废弃，见 §5）
 - **agentic-search** — `--add-dir` scope 入口（继承 vault path）
 - **multi-session** — session 名 / model 默认 / 自动清理策略入口
 - **onboarding**（seed）— onboarding 完成态写入 settings
@@ -131,4 +132,5 @@
 
 ---
 
-*抽出于 2026-05-14 · OpenSpec 阶段 2 · 批次 2 · 2/2 完成*
+*抽出于 2026-05-14 · OpenSpec 阶段 2 · 批次 2 · 2/2 完成*  
+*2026-05-16 修订：cost cap kill switch 标记废弃（订阅计费契约）；Appearance 主题锁 light-only（KD-13）*

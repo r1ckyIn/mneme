@@ -153,7 +153,7 @@ time.sleep(60)
     );
 
     // The function under test
-    app_lib::kill_pgid(parent_pid);
+    mneme_lib::kill_pgid(parent_pid);
 
     // Wait past the 2s SIGTERM grace + a small buffer for SIGKILL delivery.
     // SPEC REQ-3 acceptance is "within 2s of Cmd+Q"; we wait 2.5s to give the
@@ -208,7 +208,7 @@ fn kill_pgid_safe_on_nonexistent_pid() {
     // Should NOT panic — getpgid will return ESRCH which we drop silently via
     // `let _ = …`. We pick a high PID unlikely to exist; even if it does, the
     // function must complete without panicking.
-    app_lib::kill_pgid(999_999);
+    mneme_lib::kill_pgid(999_999);
 }
 
 #[test]
@@ -227,5 +227,5 @@ fn kill_pgid_safe_on_already_dead_pgid() {
     thread::sleep(Duration::from_millis(250));
 
     // Kill_pgid against a process group that no longer exists — must NOT panic.
-    app_lib::kill_pgid(parent_pid);
+    mneme_lib::kill_pgid(parent_pid);
 }

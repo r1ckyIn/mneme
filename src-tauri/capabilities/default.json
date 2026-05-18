@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
+  "description": "Capability for the main window. Phase 2 user #[tauri::command] surface (registered via generate_handler!): load_config, save_config, load_onboarding_state, save_onboarding_state, complete_onboarding, claude_auth_check, vault_create_scaffold, course_create, list_courses, reconcile_vault_index, start_import, cancel_import, get_recent_imports, open_file_picker, open_folder_picker, move_vault.",
   "windows": [
     "main"
   ],
@@ -119,6 +119,15 @@
               "validator": ".+"
             }
           ]
+        },
+        {
+          "name": "claude-version-probe",
+          "cmd": "claude",
+          "args": [
+            {
+              "validator": "^--version$"
+            }
+          ]
         }
       ]
     },
@@ -232,8 +241,23 @@
               "validator": ".+"
             }
           ]
+        },
+        {
+          "name": "claude-version-probe",
+          "cmd": "claude",
+          "args": [
+            {
+              "validator": "^--version$"
+            }
+          ]
         }
       ]
-    }
+    },
+    "dialog:default",
+    "dialog:allow-open",
+    "core:event:default",
+    "core:event:allow-emit",
+    "core:event:allow-listen",
+    "core:menu:default"
   ]
 }

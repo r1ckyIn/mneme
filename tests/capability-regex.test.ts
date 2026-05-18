@@ -30,23 +30,35 @@ describe("capability default.json — structural shape (Option B per plan 01-12 
     expect(capability.identifier).toBe("default");
   });
 
-  it("has shell:allow-spawn permission with two allow entries (Option B dual Command names)", () => {
+  it("has shell:allow-spawn permission with three allow entries (Option B chat pair + B3 version-probe)", () => {
+    // Phase 02.1 02.1-02 (B3 fix) added a third entry `claude-version-probe`
+    // alongside the Option-B chat-subprocess pair. The probe is the
+    // single-arg `claude --version` invocation made by probe_claude_binary()
+    // in src-tauri/src/lib.rs at onboarding Step 2 (dogfood blocker fix).
     const scope = findScope("shell:allow-spawn");
     expect(scope).toBeTruthy();
-    expect(scope.allow).toHaveLength(2);
+    expect(scope.allow).toHaveLength(3);
     const names = scope.allow.map((a: any) => a.name).sort();
-    expect(names).toEqual(["claude-bin-fresh", "claude-bin-resume"]);
+    expect(names).toEqual([
+      "claude-bin-fresh",
+      "claude-bin-resume",
+      "claude-version-probe",
+    ]);
     for (const a of scope.allow) {
       expect(a.cmd).toBe("claude");
     }
   });
 
-  it("has shell:allow-execute permission mirroring the spawn topology (two entries)", () => {
+  it("has shell:allow-execute permission mirroring the spawn topology (three entries)", () => {
     const scope = findScope("shell:allow-execute");
     expect(scope).toBeTruthy();
-    expect(scope.allow).toHaveLength(2);
+    expect(scope.allow).toHaveLength(3);
     const names = scope.allow.map((a: any) => a.name).sort();
-    expect(names).toEqual(["claude-bin-fresh", "claude-bin-resume"]);
+    expect(names).toEqual([
+      "claude-bin-fresh",
+      "claude-bin-resume",
+      "claude-version-probe",
+    ]);
   });
 
   it("declares windows: ['main'] (no wildcards)", () => {
@@ -180,6 +192,58 @@ describe("capability default.json — claude-bin-resume args validators (17-arg 
 
   it("NO validator contains the string 'bare' (defense vs --bare bypass)", () => {
     for (const v of validators) {
+      expect(v.validator.toLowerCase()).not.toContain("bare");
+    }
+  });
+});
+
+// === Phase 02.1 02.1-02 (B3 fix) — claude-version-probe entry shape ===
+
+describe("capability default.json — claude-version-probe entry shape (B3 fix 02.1-02)", () => {
+  it("has exactly one arg validator, anchored to ^--version$", () => {
+    const spawnScope = findScope("shell:allow-spawn");
+    const probeEntry = spawnScope.allow.find(
+      (a: any) => a.name === "claude-version-probe",
+    );
+    expect(probeEntry).toBeTruthy();
+    expect(probeEntry.cmd).toBe("claude");
+    expect(probeEntry.args).toHaveLength(1);
+    expect(probeEntry.args[0].validator).toBe("^--version$");
+  });
+
+  it("spawn-probe and execute-probe validator lists are identical (mirroring claude-bin-* invariant)", () => {
+    const spawnScope = findScope("shell:allow-spawn");
+    const executeScope = findScope("shell:allow-execute");
+    const spawnProbe = spawnScope.allow.find(
+      (a: any) => a.name === "claude-version-probe",
+    );
+    const executeProbe = executeScope.allow.find(
+      (a: any) => a.name === "claude-version-probe",
+    );
+    expect(executeProbe).toBeTruthy();
+    expect(executeProbe.args).toEqual(spawnProbe.args);
+  });
+
+  it("--version validator rejects any other argv (no wildcard slip)", () => {
+    const spawnScope = findScope("shell:allow-spawn");
+    const probeEntry = spawnScope.allow.find(
+      (a: any) => a.name === "claude-version-probe",
+    );
+    const re = new RegExp(probeEntry.args[0].validator);
+    expect(re.test("--version")).toBe(true);
+    expect(re.test("--bare")).toBe(false);
+    expect(re.test("--version --bare")).toBe(false);
+    expect(re.test("--version ; rm -rf /")).toBe(false);
+    expect(re.test("")).toBe(false);
+    expect(re.test("-V")).toBe(false);
+  });
+
+  it("NO validator contains the string 'bare' (defense vs --bare bypass)", () => {
+    const spawnScope = findScope("shell:allow-spawn");
+    const probeEntry = spawnScope.allow.find(
+      (a: any) => a.name === "claude-version-probe",
+    );
+    for (const v of probeEntry.args) {
       expect(v.validator.toLowerCase()).not.toContain("bare");
     }
   });

@@ -44,7 +44,7 @@ governs: KP-08 (OSS dependency tracking + upstream monitoring)
 | `katex` | ≥ 0.16.21 (pinned) | MIT | KD-02, Phase 1 hardening | npm-dep | none | active | weekly (security) | 2026-05-07 |
 | `dompurify` | latest | MPL-2.0 | KD-02, Phase 1 hardening | npm-dep | none | active | weekly (security) | 2026-05-07 |
 | `cmdk` (or kbar) | TBD (Phase 3) | MIT | REQ-11, Phase 3 | npm-dep | TBD | active | release-only | 2026-05-07 |
-| `gray-matter` | latest | MIT | REQ-06, Phase 2 | npm-dep | none | maintained | monthly | 2026-05-07 |
+| `gray-matter` | ^4.0.3 | MIT | REQ-06, Phase 2 | npm-dep | none | maintained | monthly | 2026-05-15 |
 
 ## Group 2 — Editor & whiteboard (npm-dep)
 
@@ -71,7 +71,7 @@ governs: KP-08 (OSS dependency tracking + upstream monitoring)
 |---|---|---|---|---|---|---|---|---|
 | Tauri 2 | 2.x | MIT/Apache-2.0 | KD-01 | cargo-dep | none | active | monthly | 2026-05-07 |
 | Rust toolchain | ≥ 1.88 (`rust-toolchain.toml`) | MIT/Apache-2.0 | KD-03 | cargo-dep | n/a | active | release-only | 2026-05-07 |
-| `rusqlite` | latest | MIT | REQ-06 SQLite index, Phase 2 | cargo-dep | none | maintained | monthly | 2026-05-07 |
+| `rusqlite` | 0.39 | MIT | REQ-06 SQLite index, Phase 2 | cargo-dep | none | maintained | monthly | 2026-05-15 |
 | `sqlite-vec` | 0.1.9 | Apache-2.0 OR MIT (dual) | future v2 vector path | cargo-dep (future) | none | active | release-only | 2026-05-07 |
 
 ## Group 5 — Subprocess CLIs (external Python / Node tools)

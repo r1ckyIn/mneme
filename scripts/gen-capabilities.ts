@@ -33,6 +33,7 @@ import {
   SESSION_ID_REGEX,
   CHAT_RENDERING_HINTS,
   MAX_TURNS,
+  CLAUDE_VERSION_PROBE_ARGS,
 } from "../src/lib/spawn-args.shared.ts";
 import { SCRATCH_DIR } from "../src/lib/spawn-args.node.ts";
 
@@ -166,19 +167,111 @@ if (!new RegExp(SCRATCH_DIR_REGEX).test(SCRATCH_DIR)) {
   process.exit(1);
 }
 
+// B3 fix (Phase 02.1 02.1-02) — `claude --version` probe shape.
+// Single arg; anchored regex per arg derived from CLAUDE_VERSION_PROBE_ARGS
+// in src/lib/spawn-args.shared.ts. The name `claude-version-probe` is a
+// sibling of the chat-subprocess entries (claude-bin-fresh /
+// claude-bin-resume); Tauri's `find`-based scope resolution short-circuits
+// on first matching name so distinct names per Command shape avoid the
+// multi-entry-with-same-name pitfall (Plan 01-12 spike).
+const VERSION_PROBE_ARGS: Array<{ validator: string }> = CLAUDE_VERSION_PROBE_ARGS.map(
+  (a) => ({ validator: `^${escapeRegex(a)}$` }),
+);
+
 // Plan 01-12 Option B: TWO `allow` entries under each shell identifier with
 // distinct Command names (claude-bin-fresh + claude-bin-resume). Tauri 2's
 // shell-plugin scope-resolution uses `find` (short-circuit on first matching
 // name); distinct names avoid the multi-entry-with-same-name pitfall.
+//
+// Phase 02.1 02.1-02 adds a THIRD entry: claude-version-probe (1-arg shape
+// for the onboarding Step 2 `claude --version` subprocess invoked by
+// probe_claude_binary() in src-tauri/src/lib.rs).
 const SPAWN_ALLOW = [
   { name: "claude-bin-fresh", cmd: "claude", args: FRESH_ARGS },
   { name: "claude-bin-resume", cmd: "claude", args: RESUMED_ARGS },
+  { name: "claude-version-probe", cmd: "claude", args: VERSION_PROBE_ARGS },
 ];
+
+// Phase 2 Plan 02-07 (D-19 standard model) — IPC capability additions for
+// the 16 new user commands registered in src-tauri/src/lib.rs. Per the same
+// EMPIRICAL FINDING above, user-defined `#[tauri::command]` functions
+// registered via `generate_handler!` do NOT need per-command allow-*
+// permissions — the IPC dispatch table is the access gate. However, the
+// Tauri 2 plugins they bridge (`tauri-plugin-dialog`, `tauri-plugin-event`,
+// `tauri-plugin-menu`) DO require capability entries because their JS-side
+// APIs (e.g. `getCurrentWebviewWindow().listen(...)` or
+// `dialog.open(...)`) check the capability table at call time.
+//
+// The mneme:phase-2-vault identifier is a project-namespaced label declared
+// here primarily for documentation + audit-grep purposes (audit Gate 12 in
+// scripts/audit-capabilities.sh asserts its presence). The wrapped `allow`
+// array enumerates every Phase 2 command so a future reader can grep the
+// JSON to confirm the full IPC surface in one place.
+// Permission-identifier notes (Tauri 2.11 + tauri-plugin-dialog 2.7.1):
+//
+//   - The dialog plugin's permissions are namespaced under `dialog:*`
+//     (NOT `core:dialog:*`). `core:*` is reserved for built-in Tauri
+//     permissions (event / menu / window / webview / image / etc.). Empirical:
+//     building with `core:dialog:default` fails with `Permission
+//     core:dialog:default not found, expected one of ... dialog:default,
+//     dialog:allow-open ...`. The 02-07 plan listed `core:dialog:default` —
+//     corrected here (Rule 1 deviation; see SUMMARY.md "Deviations").
+//
+//   - The built-in event API uses `core:event:default` plus
+//     `core:event:allow-emit` / `core:event:allow-listen` (NOT `event:*`).
+//
+//   - **Custom project identifiers (`mneme:phase-2-vault`) are REJECTED
+//     by Tauri 2.** The Tauri build-time permission validator only accepts
+//     identifiers declared in a plugin crate's manifest (e.g.
+//     `tauri-plugin-dialog`, `tauri-plugin-shell`). Any other
+//     identifier — including project-namespaced documentation labels —
+//     fails the build with `Permission <id> not found`. Per the EMPIRICAL
+//     FINDING above, user-defined `#[tauri::command]` functions registered
+//     via `generate_handler!` do NOT require capability allow-* entries
+//     anyway (the IPC dispatch table is the access gate). The list of
+//     Phase 2 commands is documented inline above the
+//     `tauri::generate_handler!` invocation in `src-tauri/src/lib.rs`
+//     where it belongs. Plan 02-07 expected `mneme:phase-2-vault` in
+//     capabilities/default.json + an audit-grep gate against it; both
+//     adjusted (Rule 1 deviation; see SUMMARY.md "Deviations").
+const PHASE_2_IPC_PERMISSIONS = [
+  "dialog:default",
+  "dialog:allow-open",
+  "core:event:default",
+  "core:event:allow-emit",
+  "core:event:allow-listen",
+  "core:menu:default",
+];
+
+// 02-09 documentation: enumerate the user-defined #[tauri::command] surface
+// here so a future grep of capabilities/default.json reveals every IPC entry
+// the main window can invoke. Per the EMPIRICAL FINDING above, these commands
+// do NOT require an allow-* permission entry — generate_handler! is the gate.
+// The description string is opaque to Tauri's permission validator; it is
+// purely a documentation channel that survives `gen-capabilities.ts --dry-run`
+// + diff. Phase 2 commands (Plan 02-07 + 02-09):
+//   load_config, save_config,
+//   load_onboarding_state, save_onboarding_state, complete_onboarding,
+//   claude_auth_check,
+//   vault_create_scaffold, course_create, list_courses, reconcile_vault_index,
+//   start_import, cancel_import, get_recent_imports,
+//   open_file_picker, open_folder_picker,
+//   move_vault
+const PHASE_2_COMMAND_LIST =
+  "load_config, save_config, load_onboarding_state, save_onboarding_state, " +
+  "complete_onboarding, claude_auth_check, vault_create_scaffold, " +
+  "course_create, list_courses, reconcile_vault_index, start_import, " +
+  "cancel_import, get_recent_imports, open_file_picker, open_folder_picker, " +
+  "move_vault";
 
 const capability = {
   $schema: "../gen/schemas/desktop-schema.json",
   identifier: "default",
-  description: "Capability for the main window",
+  description:
+    "Capability for the main window. Phase 2 user #[tauri::command] surface " +
+    "(registered via generate_handler!): " +
+    PHASE_2_COMMAND_LIST +
+    ".",
   windows: ["main"],
   permissions: [
     "core:default",
@@ -192,6 +285,7 @@ const capability = {
       identifier: "shell:allow-execute",
       allow: SPAWN_ALLOW,
     },
+    ...PHASE_2_IPC_PERMISSIONS,
     // ...DEV_ONLY_PERMISSIONS, // SEE NOTE ABOVE: Tauri 2 user commands
     //                              registered via generate_handler! do not
     //                              accept allow-* permission entries; the

@@ -51,7 +51,10 @@ fn main() -> ExitCode {
 
     let result: Result<String, String> = match cmd.as_str() {
         "dev_capture_screenshot" => {
-            let scope = rest.first().cloned().unwrap_or_else(|| "webview".to_string());
+            let scope = rest
+                .first()
+                .cloned()
+                .unwrap_or_else(|| "webview".to_string());
             cli_capture_screenshot(&scope)
         }
         "dev_query_state" => {
@@ -88,7 +91,10 @@ fn main() -> ExitCode {
         }
         Err(e) => {
             // Escape the error string into JSON for the SDK consumer.
-            eprintln!(r#"{{"error":"{}"}}"#, e.replace('\\', "\\\\").replace('"', "\\\""));
+            eprintln!(
+                r#"{{"error":"{}"}}"#,
+                e.replace('\\', "\\\\").replace('"', "\\\"")
+            );
             ExitCode::from(1)
         }
     }
@@ -103,7 +109,7 @@ fn cli_capture_screenshot(scope: &str) -> Result<String, String> {
     let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
     let log_dir = cwd.join(".dev-logs/screenshots");
     std::fs::create_dir_all(&log_dir).map_err(|e| e.to_string())?;
-    let ts = app_lib::dev::iso8601_now().replace(':', "-");
+    let ts = mneme_lib::dev::iso8601_now().replace(':', "-");
     let out_path = log_dir.join(format!("{ts}.png"));
 
     match scope {
@@ -131,7 +137,9 @@ fn cli_capture_screenshot(scope: &str) -> Result<String, String> {
                     String::from_utf8_lossy(&win_id_output.stderr).trim()
                 ));
             }
-            let win_id = String::from_utf8_lossy(&win_id_output.stdout).trim().to_string();
+            let win_id = String::from_utf8_lossy(&win_id_output.stdout)
+                .trim()
+                .to_string();
             if win_id == "-1" || win_id.is_empty() {
                 return Err("mneme window not frontmost (start cargo tauri dev first)".to_string());
             }
