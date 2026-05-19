@@ -170,7 +170,7 @@
 
 | Thread | Scope | 文件 |
 |--------|-------|------|
-| **visual-design-system** | UI 设计 → 实现工作流契约（user prototypes in Claude Design Lab → 我像素级复刻）+ KP-09 / KD-13 美学锁 quick reference + Mneme.html prototype 路径跟踪 | `.planning/threads/visual-design-system.md` |
+| **visual-design-system** | UI 设计 → 实现工作流契约（user prototypes in Claude Design Lab → 我像素级复刻）+ KP-09 / KD-13 美学锁 quick reference + 视觉 SSOT bundle 路径跟踪（当前锁定 `/Users/qinyuan/Downloads/Mneme 3/`，含 8 HTML — 主壳 + 7 Phase 2 surface） | `.planning/threads/visual-design-system.md` |
 | **interaction-paradigm** | 鼠标优先 + Cmd+Q 唯一全局热键 + 4 个窄场景例外候选跟踪（voice-input Cmd+Shift+V / fsrs-review 1234 / multi-session Cmd+K / fsrs-review Esc） | `.planning/threads/interaction-paradigm.md` |
 
 ---

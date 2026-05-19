@@ -77,10 +77,7 @@ pub fn iso8601_now() -> String {
     let h = time_of_day / 3600;
     let min = (time_of_day % 3600) / 60;
     let s = time_of_day % 60;
-    format!(
-        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-        y, m, day_in_month, h, min, s
-    )
+    format!("{y:04}-{m:02}-{day_in_month:02}T{h:02}:{min:02}:{s:02}Z")
 }
 
 fn is_leap(y: i64) -> bool {
@@ -258,7 +255,9 @@ impl DevWriter {
 
 impl Default for DevWriter {
     fn default() -> Self {
-        let dir = std::env::current_dir().unwrap_or_default().join(".dev-logs");
+        let dir = std::env::current_dir()
+            .unwrap_or_default()
+            .join(".dev-logs");
         Self::new(dir)
     }
 }

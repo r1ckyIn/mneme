@@ -1,13 +1,25 @@
 /* tokens.css — KP-09 + KD-13 Anthropic/Claude family palette + UI-SPEC §"Token Module" verbatim.
  *
- * Plan 01-09 SSOT: /Users/qinyuan/Downloads/mneme/project/Mneme.html (1840 LOC,
- * locked 2026-05-09 by user as the visual contract for Phase 1 — see
- * .planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-09-PLAN.md
- * threats_closed: T-1-48). The :root block in lines 7-76 of that file is the
- * canonical token registry. Tokens defined by plans 01-05 / 01-06 are kept where
- * they do not conflict; tokens introduced here are a superset. Any future drift
- * from Mneme.html should be reconciled by re-running the prototype-vs-impl
- * screenshot loop.
+ * Visual SSOT (locked 2026-05-15): /Users/qinyuan/Downloads/Mneme 3/
+ *   - Mneme.html (1840 LOC, three-pane main shell; locked 2026-05-09 by user as
+ *     the Phase 1 visual contract; content unchanged since then, only path
+ *     migrated into the Mneme 3 bundle).
+ *   - Plus 7 surface HTMLs covering all Phase 2 net-new UI (onboarding, settings,
+ *     import dialog + duplicate sub-dialog, dropzone, status pill, history modal,
+ *     reconciliation overlay).
+ *
+ * The :root block in Mneme.html lines 7-76 is the canonical token registry.
+ * Line ranges referenced below (L9-21, L23-25, L27-37, etc.) refer to that file
+ * inside the bundle. Tokens defined by plans 01-05 / 01-06 are kept where they do
+ * not conflict; tokens introduced here are a superset. Any future drift from
+ * Mneme.html should be reconciled by re-running the prototype-vs-impl screenshot
+ * loop against the bundle.
+ *
+ * Path note: the bundle directory name contains a space ("Mneme 3"); shell-quote
+ * as `~/Downloads/Mneme\ 3/` or `"~/Downloads/Mneme 3/"` when scripting.
+ *
+ * History: previously sourced from /Users/qinyuan/Downloads/mneme/project/Mneme.html
+ * (Phase 1 single-file path, superseded 2026-05-15 by the Mneme 3 bundle).
  */
 
 :root {
@@ -23,11 +35,21 @@
   --color-warm-surface: #2b2a27;        /* tool-use card */
   --color-warm-surface-edge: #3a3835;
   --color-error: #c15f3c;
+  /* Validation success — reserved for onboarding only per UI-SPEC §4 line 148-150.
+   * NEVER use as primary CTA fill or general success accent.
+   * Three reserved sites: Step 2 auth `found` dot, Step 3 vault path `valid` checkmark,
+   * Step 5 add-course `typing-valid` + `added` validation states. */
+  --color-success: #4ea36b;
 
   /* === ALPHA BORDERS — 8% soft (Mneme.html L23-25) === */
   --border-soft: rgba(20, 20, 19, 0.08);
   --border-softer: rgba(20, 20, 19, 0.05);
   --border-on-dark: rgba(250, 249, 245, 0.08);
+
+  /* === SCRIM / BACKDROP — modal veil derived from --color-warm-dark (D-04 dropzone, 02.1-06).
+     Reusable for any future overlay needing the same dark-veil affordance. */
+  --color-scrim: rgba(20, 20, 19, 0.45);
+  --blur-soft: 4px;
 
   /* === TYPE — Mneme.html L27-37 (transitional serif Latin + neutral CJK fallback) === */
   --font-serif: "Tiempos Text", "Source Serif Pro", "Source Serif 4",

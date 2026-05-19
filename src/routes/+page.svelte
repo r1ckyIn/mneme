@@ -1,16 +1,62 @@
 <!--
-  +page.svelte — Phase 1 main view.
+  +page.svelte — Phase 1 main view + Phase 2 Plan 02-12 integration wave.
+
+  PHASE 1 SHELL (preserved verbatim):
   Three-pane resizable shell + 120px bottom row + Round 5 amendments
   (A-05 drag handles + A-07 Finder file area + A-10 titlebar meta + A-11
   settings modal + A-12 middle 2-row split).
 
-  Wave 4 (plan 01-06) replaces the right-pane inner placeholder TEXT with
+  Wave 4 (plan 01-06) replaced the right-pane inner placeholder TEXT with
   <ChatPanel />. The wrapping div + DragHandle (A-05 placement #4) PERSIST.
 
   Bottom-row placeholder copy is LOCKED per UI-SPEC §"Three placeholder copy
   (locked)" — do NOT alter without UI-SPEC re-approval.
+
+  Visual: /Users/qinyuan/Downloads/Mneme 3/Mneme.html L94-160 (shell) +
+                                              Mneme Settings.html (modal) +
+                                              Mneme Import Dialog.html +
+                                              Mneme Dropzone Overlay.html +
+                                              Mneme Import History.html
+       + 02-UI-SPEC.md §8.1-8.9 (Phase 2 surface contract)
+  Per D-18 visual SSOT pointer convention.
+
+  PHASE 2 INTEGRATION (Plan 02-12 — Wave 8 final wave):
+    - Mounts the four Phase 2 modals/overlays at template-root level
+      (OUTSIDE .stage / .window) so they overlay the matte frame too —
+      .window has overflow:hidden which would clip a child position:fixed
+      element to the window bounds. DropzoneOverlay / ImportDialog /
+      ImportHistoryModal / SettingsPanel all live at the template root.
+    - PostOnboardingBanner is INLINE inside `.window`, mounted immediately
+      after the `<div class="titlebar">` block so it joins the existing 3-row
+      grid as a new row (CYCLE-3 priority #8 + cycle-2 NEW HIGH 1 fix —
+      cycle-2 mounted at template root which would have rendered the banner
+      outside the visible chrome). The banner's CSS uses inline margin (NOT
+      position:fixed) so the grid auto-flows it.
+    - BLK-3 resolution: DropzoneOverlay subscribes to the window-global
+      Tauri onDragDropEvent. Mounted CONDITIONALLY on
+      `$page.route.id !== '/onboarding/[step]'` so the global listener
+      cannot register while onboarding is active. Defense-in-depth — the
+      /onboarding route has its own +layout.svelte that fully replaces the
+      three-pane shell, so this +page.svelte should not mount during
+      onboarding; the gate is the second layer (the first is Plan 09 Step 6
+      Browse-only — no DropzoneOverlay inside the wizard).
+    - Cmd+I → @tauri-apps/plugin-dialog `open()` (multiple files) → opens
+      ImportDialog with the chosen paths. Per D-13 this is the 5th narrow
+      exception to the mouse-first interaction paradigm (macOS standard
+      semantic; nothing else in mneme uses Cmd+I).
+    - mneme:open-settings + mneme:open-history window CustomEvents are
+      listened here and flip local boolean state. The same CustomEvents are
+      dispatched by TitlebarMeta (cog click / pill click), SettingsPanel's
+      internal Cmd+, hotkey, the +layout.svelte menu:open-settings bridge
+      (macOS native menu), and PostOnboardingBanner's Open Settings CTA.
+      Single downstream code path — no duplicate state machines.
 -->
 <script lang="ts">
+  import { onMount, onDestroy } from "svelte";
+  import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import { page } from "$app/stores";
+
+  // Phase 1 imports (preserved).
   import Splitter from "$lib/components/Splitter.svelte";
   import FileArea from "$lib/components/FileArea.svelte";
   import LectureVideo from "$lib/components/LectureVideo.svelte";
@@ -19,6 +65,80 @@
   import TitlebarMeta from "$lib/components/TitlebarMeta.svelte";
   import ChatPanel from "$lib/components/ChatPanel.svelte";
   import MindMapBar from "$lib/components/MindMapBar.svelte";
+
+  // Phase 2 imports.
+  import DropzoneOverlay from "$lib/components/dropzone/DropzoneOverlay.svelte";
+  import ImportDialog from "$lib/components/ImportDialog.svelte";
+  import ImportHistoryModal from "$lib/components/ImportHistoryModal.svelte";
+  import SettingsPanel from "$lib/components/SettingsPanel.svelte";
+  import PostOnboardingBanner from "$lib/components/PostOnboardingBanner.svelte";
+
+  // Phase 2 modal/overlay state — local to this route, owned at the page
+  // level so a single boolean drives each surface. SettingsPanel's prop-
+  // controlled contract (CYCLE-3 #3 locked) requires the parent to own the
+  // open boolean and listen for entry events.
+  let importDialogOpen = $state(false);
+  let importDialogPaths = $state<string[]>([]);
+  let historyOpen = $state(false);
+  let settingsOpen = $state(false);
+
+  function openImportDialogWith(paths: string[]): void {
+    if (paths.length === 0) return;
+    importDialogPaths = paths;
+    importDialogOpen = true;
+  }
+
+  function closeImportDialog(): void {
+    importDialogOpen = false;
+    importDialogPaths = [];
+  }
+
+  async function onCmdI(): Promise<void> {
+    try {
+      const chosen = await openDialog({
+        multiple: true,
+        directory: false,
+        filters: [
+          { name: "Documents", extensions: ["pdf", "docx", "pptx", "md", "txt", "epub"] },
+        ],
+      });
+      if (!chosen) return;
+      const paths = Array.isArray(chosen) ? chosen : [chosen];
+      openImportDialogWith(paths);
+    } catch (e) {
+      console.error("[+page:cmd-i]", e);
+    }
+  }
+
+  function onWindowKeydown(e: KeyboardEvent): void {
+    // Cmd+I (mac) / Ctrl+I (cross-platform fallback) per D-13.
+    // Avoid swallowing Cmd+Shift+I (devtools); the metaKey AND no-shift gate
+    // narrows the surface — Cmd+Shift+I + similar combos pass through.
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === "i" || e.key === "I")) {
+      e.preventDefault();
+      void onCmdI();
+    }
+  }
+
+  function onOpenSettingsEvent(): void {
+    settingsOpen = true;
+  }
+
+  function onOpenHistoryEvent(): void {
+    historyOpen = true;
+  }
+
+  onMount(() => {
+    window.addEventListener("keydown", onWindowKeydown);
+    window.addEventListener("mneme:open-settings", onOpenSettingsEvent);
+    window.addEventListener("mneme:open-history", onOpenHistoryEvent);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener("keydown", onWindowKeydown);
+    window.removeEventListener("mneme:open-settings", onOpenSettingsEvent);
+    window.removeEventListener("mneme:open-history", onOpenHistoryEvent);
+  });
 </script>
 
 <!-- Plan 01-09 Task 10: window chrome wrapper added so headless 1280×860
@@ -46,6 +166,11 @@
       <div class="titlebar-spacer" aria-hidden="true"></div>
       <TitlebarMeta />
     </div>
+    <!-- CYCLE-3 priority #8 + cycle-2 NEW HIGH 1: PostOnboardingBanner is
+         INLINE under the titlebar. The component self-gates visibility on
+         vaultState.vault_path + localStorage sentinel; it returns null
+         otherwise so the row has zero layout cost pre-onboarding. -->
+    <PostOnboardingBanner />
 
     <!-- Main 3-column row + 1px softrule + 120px bottom row (Splitter owns the grid) -->
     <Splitter>
@@ -79,6 +204,30 @@
   </div>
 </div>
 
+<!-- CYCLE-3 priority #8 — position:fixed overlays + modals mount at template
+     root (OUTSIDE .stage / .window) so they overlay the matte bezel too.
+     The .window has overflow:hidden which would clip a child position:fixed
+     surface. PostOnboardingBanner is the only Phase 2 surface mounted inline
+     (above) because it joins the .window grid as a new row. -->
+
+<!-- BLK-3: DropzoneOverlay subscribes to Tauri onDragDropEvent which is
+     window-global. Mounting unconditionally could race with Plan 09 Step 6
+     (Browse-only) if +page.svelte ever co-mounts under /onboarding. The
+     onboarding route's own +layout.svelte fully replaces this shell — the
+     gate is defense-in-depth (two-layer). -->
+{#if $page.route.id !== "/onboarding/[step]"}
+  <DropzoneOverlay onPathsDropped={openImportDialogWith} />
+{/if}
+
+<ImportDialog
+  open={importDialogOpen}
+  paths={importDialogPaths}
+  onClose={closeImportDialog}
+  onOpenSettings={() => { closeImportDialog(); settingsOpen = true; }}
+/>
+<ImportHistoryModal open={historyOpen} onClose={() => { historyOpen = false; }} />
+<SettingsPanel open={settingsOpen} onClose={() => { settingsOpen = false; }} />
+
 <style>
   /* SSOT: Mneme.html L94-117 (.stage + .window) + L119-160 (.titlebar +
      traffic lights). Plan 01-09 Task 10 — chrome wrapper added so the
@@ -105,12 +254,12 @@
       0 8px 24px rgba(0, 0, 0, 0.35),
       0 24px 60px rgba(0, 0, 0, 0.45);
     overflow: hidden;
-    /* Window grid: 36px titlebar | main row | 1px soft rule | 120px bottom.
-       Splitter owns the inner main + bottom rows directly (its .grid
-       sets height:100% and uses its own grid-template-rows). The titlebar
-       sits above. */
+    /* Window grid: 36px titlebar | (optional PostOnboardingBanner row — auto)
+       | main row | 1px soft rule | 120px bottom. The banner self-gates
+       visibility (returns null when not shown) so the auto row is collapsed
+       in the no-show case. Splitter owns the main + bottom rows. */
     display: grid;
-    grid-template-rows: var(--titlebar-height) 1fr;
+    grid-template-rows: var(--titlebar-height) auto 1fr;
     transform-origin: center center;
   }
 

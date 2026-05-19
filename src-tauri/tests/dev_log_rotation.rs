@@ -19,7 +19,7 @@ use std::fs;
 use std::time::Duration;
 use tempfile::TempDir;
 
-use app_lib::dev::{start_log_writer, LogChannel};
+use mneme_lib::dev::{start_log_writer, LogChannel};
 
 #[tokio::test(flavor = "current_thread")]
 async fn writer_rotates_at_10mb() {
@@ -39,7 +39,9 @@ async fn writer_rotates_at_10mb() {
     for _ in 0..120_000 {
         // Channel is bounded at 1024; awaiting `.send` provides backpressure
         // so the producer cannot get arbitrarily far ahead of the writer.
-        let _ = tx.send(format!("[FRONTEND_CONSOLE]TEST|{}\n", payload)).await;
+        let _ = tx
+            .send(format!("[FRONTEND_CONSOLE]TEST|{}\n", payload))
+            .await;
     }
     // Allow time for the writer task to drain + flush + rotate.
     tokio::time::sleep(Duration::from_millis(2_000)).await;
@@ -88,7 +90,10 @@ async fn writer_swallows_io_errors_per_dsf04() {
     // First write — file gets created normally.
     let _ = tx.send("ok\n".to_string()).await;
     tokio::time::sleep(Duration::from_millis(200)).await;
-    assert!(log_path.exists(), "first message should have created the file");
+    assert!(
+        log_path.exists(),
+        "first message should have created the file"
+    );
 
     // Force a permission error mid-stream. On Unix we chmod to read-only
     // (0o400); the next `OpenOptions::new().append(true).create(true)` call

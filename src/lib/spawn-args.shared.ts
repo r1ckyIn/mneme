@@ -96,6 +96,26 @@ export type BuildOpts = {
   appendSystemPrompt?: string;
 };
 
+// B3 fix (Phase 02.1 02.1-02) — `claude --version` subprocess probe args.
+//
+// The probe_claude_binary() Rust helper (src-tauri/src/lib.rs) invokes
+// `claude --version` at onboarding Step 2 to verify the CLI is usable
+// end-to-end (PATH ok + keychain ok + binary ok). This constant is the
+// SSOT for the Tauri capability surface that allows the spawn —
+// scripts/gen-capabilities.ts reads it and emits the matching
+// `claude-version-probe` entry in src-tauri/capabilities/default.json
+// (anchored regex per arg, no wildcard).
+//
+// Sibling of the chat-subprocess argv shapes built by buildClaudeArgs;
+// kept here in the .shared file so the audit gate's SSOT-drift check
+// (gate 1 in scripts/audit-capabilities.sh) can regenerate the JSON
+// deterministically from a single source.
+//
+// Length-1 is non-negotiable — widening this array widens the spawn
+// surface. If a future plan needs a different probe shape, add a new
+// const + a new capability entry; don't mutate this one.
+export const CLAUDE_VERSION_PROBE_ARGS = ["--version"] as const;
+
 export function buildClaudeArgs(
   promptText: string,
   scratchDir: string,
