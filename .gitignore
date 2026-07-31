@@ -36,8 +36,7 @@ npm-debug.log*
 # Husky
 .husky/_
 
-# Claude Code
-CLAUDE.md
+# (repo-level CLAUDE.md is committed — it is the session entrypoint, see ADR-0001)
 *_CN.md
 
 # Claude Code per-user local overrides

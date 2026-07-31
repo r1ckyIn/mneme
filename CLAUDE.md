@@ -1,4 +1,4 @@
-# Mneme — Agent 指南
+# Mneme — CLAUDE.md（session 入口）
 
 Mneme：本地桌面学习 app（Tauri 2 + SvelteKit 壳包裹用户自己的 Claude Code CLI），local-first markdown vault。身份与边界详 `docs/PRODUCT.md`。
 
