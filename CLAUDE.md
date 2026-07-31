@@ -37,3 +37,17 @@ bash scripts/audit-capabilities.sh   # capability 安全审计（每次 commit �
 - **capability 面**：Tauri capability 由 `scripts/gen-capabilities.ts` SSOT 生成，手改 JSON 无效；`audit-capabilities.sh` 是安全闸门。
 - **子进程合规**（KP-04）：spawn 参数走 `src/lib/spawn-args.shared.ts` SSOT；Cmd+Q 必须 drain 子进程。
 - **vault 写入**：一律经 `vault_writer.rs`（canonicalize + chmod 纪律），不得绕过。
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues（gh CLI）。见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+五个默认标签原样（needs-triage / needs-info / ready-for-agent / ready-for-human / wontfix）。见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+单 context：根 `CONTEXT.md` + `docs/adr/`。见 `docs/agents/domain.md`。
