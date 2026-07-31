@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.3.2
 milestone_name: milestone
-status: Phase 02.1 code-complete (13/13 plans); B3 dogfood ✓; code-review ✓ (3 iter clean); validate-phase ✓; verify-work ✓ (7 pass / G-01 fixed in a11e7c3 / G-02 seeded to v1.x / 8 Onboarding skipped — contracts pinned by unit tests, re-test on next fresh-vault dogfood); ready for ship (combined Phase 02 + 02.1 PR)
-last_updated: "2026-05-18T02:35:00Z"
+status: "Phase 03 (Multi-Session + Cmd Palette + Editor) DISCUSS ✓ + UI-SPEC ✓ — 03-UI-SPEC.md APPROVED (d8bbd3b; 6/6 dims PASS, a11y labels folded for icon-only controls). D-03a RESOLVED in ui-phase (2026-05-30): session sidebar = embedded INSIDE right ChatPanel, default-collapsed to a single 28px top toggle, PUSH-expand to 240px rail (New session→Recents→footer, Claude-desktop style), kept distinct from FileArea (D-03b); command palette = centered modal + dim scrim (Bits UI Command+fuzzysort, Cmd+P/O/Shift+P, ↑↓/Enter/Esc); editor = middle-pane type-routed + segmented Preview|Edit header toggle; Cmd+Shift+V RESERVED for REQ-19 voice. Discuss decisions still hold: (D-01) Bits UI Command+fuzzysort [cmdk/kbar React=stale], (D-04/05) rusqlite metadata+per-session-summary + lazy resume default-from-summary via --resume/-c, (D-09/10) PreToolUse-hook+lockfile soft-lock + Rust-SessionRegistry-count ceiling. NEXT: /gsd-plan-phase 3 --tdd (session state machine + soft-lock + ceiling = business logic). Phase 02 + 02.1 SHIPPED — PR #2 MERGED (fdc8027) — v1.x backlog: G-02 ImportToast, I1 size column, D-06 back button, REQ-19 voice input"
+last_updated: "2026-05-30T07:00:40.000Z"
 progress:
   total_phases: 14
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 54
-  completed_plans: 53
-  percent: 29
+  completed_plans: 54
+  percent: 36
 ---
 
 # mneme Project State
@@ -31,6 +31,12 @@ progress:
 
 ## Current Position
 
+**Phase 03 — DISCUSS complete (2026-05-30).** `/gsd-discuss-phase 3 --analyze` ran in advisor mode (calibration `minimal_decisive`) with 4 parallel research agents. `03-CONTEXT.md` + `03-DISCUSSION-LOG.md` written + committed (`e673fbb`). 4 gray areas decided (see CONTEXT D-01..D-10). Key verified facts captured: cmdk-sv is dead on Svelte 5 (Bits UI Command is successor); Claude Code session JSONL path `~/.claude/projects/<encoded-cwd>/<id>.jsonl` (non-alnum→`-`, up to 7.4MB → localStorage rejected); `--session-id` assigns UUID up front + cwd must match or `--resume` forks; PreToolUse hooks fire+block under `bypassPermissions` (exit 2 pre-empts permission eval). Residual UI-phase decision: exact session-sidebar dock (left-edge overlay vs right in-pane) — anchor = user's Claude-desktop screenshot. **Session ended here by user request after discuss (milestone goal cancelled).** NEXT: `/gsd-ui-phase 3` (lock sidebar dock + net-new surface visuals) → `/gsd-plan-phase 3 --tdd` (state-machine/persistence logic). No plans written yet.
+
+---
+
+### Prior — Phase 02.1 (shipped)
+
 Phase: 02.1 (ui-fixes-from-dogfood-and-audit) — **code-complete 13/13** (Wave 0 ✓ RED + Wave 1 ✓ 5 GREEN BLOCKER/WARNING + Wave 2 ✓ 7 polish/spec/doc + B3 live-dogfood ✓ Step 3)
 Plan: 13 of 13 (Wave 0 `3330e39` + Wave 1 merges `6dfdae9`/`3b82adf`/`0c99428`/`71a68d7`/`0b6dd3c` + Wave 1 token patch `4a75bf2` + Wave 1 tracking `ce8269e` + Wave 2 merges `66fd25e`/`50d7665`/<W3>/<W4>/<W7>/<W8>/`364e92f`)
 
@@ -41,6 +47,7 @@ Plan: 13 of 13 (Wave 0 `3330e39` + Wave 1 merges `6dfdae9`/`3b82adf`/`0c99428`/`
 **Combined Phase 02.1 final test delta** (across both waves vs Phase 02 ship baseline): cargo 66 → **73** (+7: B3 `inspector_keychain_detect` 2 + W6 `course_code_validation` 4 + small post-merge bump 1); vitest 282 → **290** (+8: W5 `import-error-fallback` 3 + 02.1-02 `capability-regex` 2 + W2 `motion.test` 4 — 1 overlap with prior count); svelte-check **0 errors / 0 warnings / 401 files** (+2 files motion.ts + motion.test.ts); `audit-capabilities.sh` PASS on every commit including new gate 9. Pre-existing R7 `visual-review-template.test.mjs` GSD-upstream template failure persists — out-of-scope per 02.1-CONTEXT.md L60.
 
 **Wave 2 documented deviations** (all Rule-1 / Rule-2 — agent doc'd in SUMMARY):
+
 - 02.1-07: plan-text drift "02.1-06-EXEC" reference (frontmatter + filename + dispatch all correctly 02.1-07; functional irrelevance).
 - 02.1-08: 3 Rule-1 auto-fixes (afterEach order in motion.test.ts; disposition-comment grep false positive; #3099 path-safety drift — main repo verified clean).
 - 02.1-10: plan-spec gate-drift on `'Choose another folder' == 1` — pre-existing UI copy at L120 already had the phrase; intent satisfied.
@@ -49,10 +56,12 @@ Plan: 13 of 13 (Wave 0 `3330e39` + Wave 1 merges `6dfdae9`/`3b82adf`/`0c99428`/`
 - 02.1-13: Rule-2 auto-addition — Step6DemoImport.svelte `--color-success` token leak closed in same atomic commit (mirrors 02.1-03 fix shape); I1 (file-size column) deferred to Phase 3 via backlog seed `.planning/seeds/2026-05-18-import-history-size-column.md`.
 
 **Dogfood-friction cost captured in 02-UI-SPEC.md §8.0** (added by W7 doc-sync 02.1-11): the 2026-05-17 B3 dogfood proved that D-02 (forward-only) + D-06 (no Cmd+R) combine to make Step 2 re-verification structurally impossible from inside the running app, AND that Tauri webview URL persistence across restart compounds this. Two backlog seeds capture the follow-ups:
+
 1. `.planning/seeds/2026-05-18-onboarding-back-button-v1x.md` — Back-button affordance on Steps 2-5 + Cmd+R re-introduction, paired with Phase 3 multi-session keyboard-nav contract.
 2. `.planning/seeds/2026-05-18-import-history-size-column.md` — I1 (history modal size column) backend persistence work, paired with Phase 3 vault_files → frontend store bridging.
 
 **Resume instruction**: Phase 02.1 + Phase 02 are now both code-complete + dogfood-verified (B3 live; W6 + W5 via passing tests). Ship sequence:
+
 ```
 /gsd-code-review 02.1 --fix --auto    # auto-fix CRITICAL/HIGH from review
 /gsd-verify-work 02.1                 # close-out 4-bucket verify (B1 dropzone + W8 drag + W2 fly transition will dominate "things-to-look-at-once" bucket because they need live UI dogfood)
@@ -71,12 +80,14 @@ Plan: 13 of 13 (Wave 0 `3330e39` + Wave 1 merges `6dfdae9`/`3b82adf`/`0c99428`/`
 **Test delta**: cargo 66 → **72** (+6: 2 from `inspector_keychain_detect` GREEN, 4 from `course_code_validation` GREEN); vitest 282 → **286** (+4: `import-error-fallback` 2/5 → 5/5 GREEN, 2 new structural test cases in `capability-regex.test.ts`); svelte-check **0 errors / 0 warnings** / 399 files; `audit-capabilities.sh` PASS on every commit including the new gate 9. Pre-existing R7 GSD-upstream `visual-review-template.test.mjs` failure persists — not Phase 02.1 scope (logged to multiple SUMMARY.md files).
 
 **Documented deviations (all Rule 1 — agent doc'd in SUMMARY)**:
+
 - 02.1-05: Updated `tests/import-error-classifier.test.ts` REGRESSION-source-clash assertion to align with W5 enriched-output contract.
 - 02.1-04: Swapped test inputs in `course_scaffold.rs` + `import_controller_validates_course_category.rs` from regex-overdefense triggers (`"abc"`, `"not-a-course"`) to a real path-poison sentinel (`"../etc"`) that rejects under both old and new validators.
 - 02.1-02: Updated 2 structural tests in `capability-regex.test.ts` (hard-coded 2-entry topology → 3-entry, plus new describe block pinning the version-probe entry shape). Recovered cleanly from a worktree-path-safety incident (#3099) on first Edit — main repo verified clean.
 - 02.1-06: Added `box-shadow: var(--shadow-2)` to `.hero` for depth lift; explicit `@media (prefers-reduced-motion)` animation:none for accessibility defense-in-depth.
 
 **Outstanding before next phase**:
+
 1. **02.1-02 Task 4 human-verify (BLOCKING checkpoint)** — live macOS Tauri dogfood of B3 fix: reset `~/Library/Application Support/dev.mneme.app/onboarding.json`, `npm run tauri dev`, walk Step 1 → Step 2 (EXPECT "Claude CLI detected" within ~300ms, Continue enables). WR-01 regression: `mv $(which claude) /tmp/claude-backup`, reload Step 2 (EXPECT "Claude CLI not detected"). Restore.
 2. **02.1-07..13 Wave 2** — 7 parallel polish/spec/doc plans (`/gsd-execute-phase 02.1 --wave 2`). All depend on 02.1-01; mutually file-disjoint per plan-checker. Parent ship-readiness still requires this wave to close all WARNING + INFO items.
 3. **Out-of-scope token leak surfaced by 02.1-03** — `Step6DemoImport.svelte:165` uses `--color-success` outside the UI-SPEC §4 reserved list. Not in B2 surface; defer to verify-work or 02.1-13 INFO polish review.

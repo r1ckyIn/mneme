@@ -3,7 +3,7 @@ slug: interaction-paradigm
 title: 鼠标优先 + Cmd+Q 唯一全局热键 + 窄场景例外跟踪
 status: open
 created: 2026-05-14
-updated: 2026-05-14
+updated: 2026-05-16
 ---
 
 # Thread: Interaction Paradigm
@@ -34,7 +34,10 @@ updated: 2026-05-14
 |------|------|------|
 | **Cmd+Q** | subprocess drain + KP-04 合规相关；macOS native | 永久启用 |
 | **Cmd+,** | macOS native settings 标准；OS 级约定不算"应用快捷键" | 永久启用（settings-ui §2）|
+| **Cmd+I** | macOS standard semantic for file picker invocation；mneme 内无其他用途 | Locked 2026-05-16（Phase 2 D-13 / external-import）|
 | **editor `/` slash menu** | context-specific（仅在 editor 内触发，非全局）| 允许（editor §2）|
+
+**2026-05-16 — Cmd+I added (Phase 2 D-13)**: Cmd+I 加入为"鼠标优先 + Cmd+Q 唯一全局热键"的第 5 条窄场景例外（含 Cmd+Q / Cmd+, / editor `/` 共 4 条 + 本次新增）。触发 `@tauri-apps/plugin-dialog::open({ multiple: true, directory: false })` 走 import 流程；mneme 内没有其他动作绑 Cmd+I，独占语义。监听者在 `src/routes/+page.svelte`（页面级，单一 owner — 不放 +layout.svelte 避免 onboarding 路由也吃到）。
 
 ### 窄场景例外候选（未启用，跟踪中）
 
@@ -77,8 +80,8 @@ updated: 2026-05-14
   4. fsrs-review Esc 退出
 - 每个新增 UI spec 落地前对照本 thread 确认无新增全局热键
 - 如 user 提"试试加 X 快捷键" → 先在本 thread Context 添新条目记录，不直接改 spec
-- 当窄场景例外累积到 ~5 个 → 重新评估是否要 mini command palette（不是回归 Cmd+P，是窄场景 surfaces 集合）
+- 当**已确立的例外**累积到 ~6-7 个 → 重新评估是否要 mini command palette（不是回归 Cmd+P，是窄场景 surfaces 集合）。当前 4 条（Cmd+Q / Cmd+, / Cmd+I / editor `/`），距阈值还有 2-3 条。
 
 ---
 
-*Thread created 2026-05-14 from OpenSpec stage-2 batch 7 decision (user chose thread over抽 spec for interaction-paradigm — keeps the rule evolvable rather than locked spec).*
+*Thread created 2026-05-14 from OpenSpec stage-2 batch 7 decision (user chose thread over抽 spec for interaction-paradigm — keeps the rule evolvable rather than locked spec). 2026-05-16 update — Phase 2 D-13 promoted Cmd+I from candidate to locked exception.*

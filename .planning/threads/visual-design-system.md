@@ -33,13 +33,26 @@ diff 对比 → 如有偏离 → 询问 user 确认 OR 调整复刻
 - 原型迭代多轮（如截图显示 "三都改好" 的迭代），每轮我跟着新原型 update 实现
 - 复刻成本 vs 美学保真之间 — 永远选美学保真（KP-09 视觉是 product 一致性的 anchor）
 
-### 当前 prototype 文件
+### 当前 prototype 文件（唯一视觉 SSOT — 锁定 2026-05-15）
 
-- **主原型**：`/Users/qinyuan/Downloads/mneme/project/Mneme.html`（Claude Design Lab 当前迭代）
-- **prototype 仓**：`/Users/qinyuan/Downloads/mneme/`
-- **prototype README**：`/Users/qinyuan/Downloads/mneme/README.md`
+- **prototype 仓 / 唯一 SSOT 入口**：`/Users/qinyuan/Downloads/Mneme 3/`（路径含空格，shell 引用需 `Mneme\ 3` 或加引号）
+- **bundle 内含 8 个 HTML**（全部按 KD-13 + tokens.css 渲染）：
+  - `Mneme.html` — 三栏主壳（1840 LOC，Phase 1 视觉原型）
+  - `Mneme Onboarding.html` — 6 步引导向导（Phase 2 REQ-08）
+  - `Mneme Settings.html` — 8 类目设置面板（Phase 2 REQ-10）
+  - `Mneme Import Dialog.html` — 导入对话框 + 重复子对话框（Phase 2 REQ-05/06/08）
+  - `Mneme Dropzone Overlay.html` — 整窗 dropzone（Phase 2 REQ-05）
+  - `Mneme Status Pill.html` — TitlebarMeta 状态 pill 4 态（Phase 2 REQ-09）
+  - `Mneme Import History.html` — 最近 20 条历史 modal（Phase 2 REQ-09）
+  - `Mneme Reconciliation.html` — 启动 indexing overlay（Phase 2 REQ-07 / D-14）
+- **bundle README**：`/Users/qinyuan/Downloads/Mneme 3/README.md`（README 在 zip 解包时与 `mneme/project/` 同级，handoff bundle 结构）
 
-每次 UI phase 启动前确认 Mneme.html 是否有更新 — user 可能在 Design Lab 又迭代了。
+**锁定规则**：
+- 这是 Phase 2 + 后续所有未明确换 SSOT 的 phase 的**唯一视觉参考源**。任何 spec / context / executor 实现的"美学参照"指针都指向这里。
+- 用户在 Claude Design Lab 再次迭代产出 `Mneme 4` / `Mneme 5` 时，**不要自动替换 SSOT 指针** — 用户显式确认 ratify 新版本后才能移指针，否则保留 Mneme 3 锁。
+- **冻结建议**（未做）：phase ship 前把当时锁的 bundle 拷贝到 `.planning/references/design/handoff-<phase>-<date>/`，避免 user Downloads 目录被清理后 SSOT 指针变 404。当前 Phase 2 还未 ship，按需启动该归档。
+
+每次 UI phase 启动前确认 SSOT bundle 是否更新 — user 通常会通知 / 在 chat 显式 ratify。
 
 ### KD-13 美学锁 quick reference
 
@@ -79,19 +92,20 @@ diff 对比 → 如有偏离 → 询问 user 确认 OR 调整复刻
 
 ## References
 
-- prototype 主文件：`/Users/qinyuan/Downloads/mneme/project/Mneme.html`
-- prototype 仓：`/Users/qinyuan/Downloads/mneme/`
+- **唯一视觉 SSOT bundle**：`/Users/qinyuan/Downloads/Mneme 3/`（锁定 2026-05-15 — 8 HTML，详见上面"当前 prototype 文件"段）
+- prototype 主壳：`/Users/qinyuan/Downloads/Mneme 3/Mneme.html`（1840 LOC，line ranges in tokens.css 仍有效 — 内容未变，只是路径换）
 - KP-09 + KD-13 全文：PROJECT.md（项目内）
-- 设计 SSOT：`.planning/references/design/anthropic-claude-aesthetic-deep-dive_zh.md`
+- 设计 SSOT 深度：`.planning/references/design/anthropic-claude-aesthetic-deep-dive_zh.md`
 - OSS gallery：`.planning/references/design/claude-aesthetic-ui-libraries-gallery.html`
 - Phase 1 D-22：`.planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-CONTEXT.md`
-- 用户反馈 memory：`reference_openspec_gsd_workflow.md`（关联 Mneme 美学复刻 workflow）
+- Phase 2 UI 设计契约：`.planning/phases/02-vault-canvas-ed-sync-onboarding/02-UI-SPEC.md`（spec 与 bundle 冲突时 spec 胜，见该文件顶部 Implementation Note 表）
+- 历史前身路径：`/Users/qinyuan/Downloads/mneme/project/Mneme.html`（Phase 1 时期 single-file 原型，2026-05-15 起被 Mneme 3 bundle 取代；不要再用）
 
 ## Next Steps
 
-- 每次 UI phase 启动前打开 Mneme.html 对照当前迭代版本（最新一轮叫"三都改好"）
+- 每次 UI phase 启动前打开 `/Users/qinyuan/Downloads/Mneme 3/` 下对应 surface HTML 对照当前迭代版本
 - 复刻完成后跑 visual diff（playwright screenshot vs prototype 截图）
-- 如 Mneme.html 在 Claude Design Lab 又迭代 → user 通知后我重新对照 → 增量更新实现
+- 如 user 在 Claude Design Lab 又迭代（产出 Mneme 4+） → user 显式 ratify 后，更新本文档的"当前 prototype 文件"段 + UI-SPEC.md / CONTEXT.md / tokens.css / CLAUDE.md 顶部 header 里的 SSOT 路径
 - 跟踪 D-22 `--error` semantic lock 是否被新组件破坏（visual-design-system rule）
 - 未来如要为 dark mode / 高对比模式扩展色板 — **不动 4 个 mandatory color**，只加扩展层
 
