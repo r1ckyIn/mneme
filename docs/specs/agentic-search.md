@@ -111,7 +111,7 @@ OOS-03（Custom-built vector database / RAG infrastructure）排除"自建 vecto
 - `--add-dir` 参数在 claude-subprocess 实施时已带入
 
 **关键文档**：
-- `.planning/notes/foundation-decisions.md` §3 — 搜索架构决策原文（"agentic search 为主，vector 只补热点"）
+- `docs/reference/notes/foundation-decisions.md` §3 — 搜索架构决策原文（"agentic search 为主，vector 只补热点"）
 - PROJECT.md REQ-10 + KD-07
 - STACK.md §10 — 本地 SQLite + sqlite-vec + Ollama（**未来**窄场景 vector 路径）
 

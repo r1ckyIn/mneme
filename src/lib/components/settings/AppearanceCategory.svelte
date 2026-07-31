@@ -9,7 +9,7 @@
 
   Phase 2 (Wave 7 / Plan 02-10). REQ-14 acceptance: "Appearance toggle no-ops
   but does not error." Dark mode is permanently deferred per KD-13 light-only
-  lock (see 02-CONTEXT.md D-17 + .planning/references/design/anthropic-claude-
+  lock (see 02-CONTEXT.md D-17 + docs/design/anthropic-claude-
   aesthetic-deep-dive_zh.md).
 -->
 <script lang="ts">

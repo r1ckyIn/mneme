@@ -1,8 +1,10 @@
-# Mneme OpenSpec Capability Index
+# Mneme Capability Spec Index
 
-> **状态：草案 v0.3（2026-05-11）。** 基于 v0.2 用户反馈追加调整：**command-palette 砍**（REQ-11 → OOS，鼠标优先）+ **claude-subprocess 加预热约束**（解决 Phase 1 实测的冷启动）+ **新增横切 C interaction-paradigm**。
+> **2026-07-31 修订**（GSD/OpenSpec 层删除，specs 迁至 `docs/specs/`，见 ADR-0001）：① **command-palette 复活**（REQ-11 restored，鼠标优先范式作废——下文所有"鼠标优先 / interaction-paradigm 约束"引用一律按作废读，横切 C 归档于 `docs/reference/notes/interaction-paradigm-2026-05.md`）；② 身份权威 = `docs/PRODUCT.md`（原 PROJECT.md）；③ phase 状态改由 `BACKLOG.md` 跟踪。
 >
-> **目的**：把 PROJECT.md 这本厚手册按"能力（capability）"切分。每个 spec 文件描述一个能跨 phase、独立演进的能力域，包含：现状 / 评估过的备选 / 否决理由 / 实施约束 / 重新评估触发条件。Phase 内部状态仍由 `.planning/` 负责；spec 负责"能力是什么、为什么这样、什么时候可以换"。
+> 旧状态：草案 v0.3（2026-05-11）。基于 v0.2 用户反馈追加调整：command-palette 砍（已被上方修订推翻）+ **claude-subprocess 加预热约束**（解决 Phase 1 实测的冷启动）+ **新增横切 C interaction-paradigm**（已归档）。
+>
+> **目的**：把 PROJECT.md 这本厚手册按"能力（capability）"切分。每个 spec 文件描述一个能跨 phase、独立演进的能力域，包含：现状 / 评估过的备选 / 否决理由 / 实施约束 / 重新评估触发条件。Phase/工单状态由 `BACKLOG.md` 负责；spec 负责"能力是什么、为什么这样、什么时候可以换"。
 
 ---
 
@@ -21,7 +23,7 @@
 | 5 | **document-ingestion** ⚡改 | REQ-18 · KP-02 | v1 | Phase 4 | hypothesis — **PDF 主选 MinerU** |
 | 6 | **editor** | KD-09 · REQ-06(书写侧) | v1 | Phase 3 | hypothesis |
 | 7 | **layout-shell** ⚡拆 | REQ-01 · 用户自定义可拖拽布局 | v1 | Phase 1 实装中 | partial |
-| 8 | ~~command-palette~~ ⛔ retired | REQ-11 → 移到 OOS | — | — | retired (2026-05-11) |
+| 8 | **command-palette** ♻️ 复活 2026-07-31 | REQ-11 restored | v1 | Phase 3 | 设计权威 = `docs/reference/phase03/03-UI-SPEC.md`（APPROVED）；spec 文件待写 |
 | 9 | **multi-session** ⚡拆 | REQ-12 | v1 | Phase 3 | hypothesis |
 | 10 | **settings-ui** ⚡拆 | REQ-14 | v1 | Phase 2 | hypothesis |
 | 11 | **onboarding** ⚡拆 | REQ-16 | v1 | Phase 2 | hypothesis |
@@ -57,7 +59,7 @@
 | 候选 | 为什么不切 |
 |------|-----------|
 | **voice-input** | REQ-19 v1.x 候选，STT 库 / phase 都未定，等 Intel Mac CPU latency spike |
-| **oss-dependency-tracking** | KP-08 已有 `.planning/dependencies.md`，是 ops 流程不是产品能力 |
+| **oss-dependency-tracking** | KP-08 已有 `docs/dependencies.md`，是 ops 流程不是产品能力 |
 
 ---
 
@@ -112,7 +114,7 @@
 **覆盖**：
 - REQ-03（**待改写** — 不再是"Canvas/Ed 拉取 + 增量同步"，改为"手动 import + UniBoard 桥"）
 - REQ-13（**待改写** — 不再是"sync status"，改为"手动 import 进度 / UniBoard 桥状态"）
-- 接入 STATE.md 已有 todo `.planning/todos/pending/2026-05-09-cross-project-handoff-from-uniboard-to-mneme-via-claude-code.md`
+- 接入 STATE.md 已有 todo `docs/reference/seeds/2026-05-09-cross-project-handoff-from-uniboard-to-mneme-via-claude-code.md`
 
 **为啥这样改**：
 - 用户已有 UniBoard 项目（web 端 GPA 看板），轻量在线消费 ↔ Mneme 本地重加工 形成闭环
@@ -344,7 +346,7 @@
 
 **Phase 1 进展**：前端切换按钮已实装（用户图中 ↘ / 📋 那对图标就是这俩模式的 toggle）。Phase 9 完成后端 Citations API 接入 + sources panel + 引用点击跳转。
 
-**关联待办**：free 模式 source 展示 + 三源冲突场景化（todo `.planning/todos/pending/2026-05-07-spec-claude-free-mode-source-display-and-conflict-resolution-req-08.md`）
+**关联待办**：free 模式 source 展示 + 三源冲突场景化（todo `docs/reference/seeds/2026-05-07-spec-claude-free-mode-source-display-and-conflict-resolution-req-08.md`）
 
 **评估过的备选**：自建 RAG + vector（违反 KD-07）· 只做 anchored 不做 free（需 free 教师模式）
 
@@ -378,7 +380,7 @@
 
 ### 横切 A：visual-design-system（无变化）
 
-**Anthropic / Claude 美学家族**。SSOT `.planning/references/design/`。
+**Anthropic / Claude 美学家族**。SSOT `docs/design/`。
 
 **Mandatory locks**：`#d97757` 橙 + `#faf9f5` 米 + `#141413` 文字 + `#2b2a27` 暖深 · serif body / 禁 Arial+Inter · ease `cubic-bezier(0.165, 0.85, 0.45, 1)` · active:scale 0.96 · 8% 软边 + 多层软影
 
@@ -416,7 +418,7 @@
 
 **它是什么**：自动化 `/gsd-verify-work` 的 UI 验证流——把"open DevTools / paste log / 跑 cargo / inspect DOM"路由用户的旧路径替换为 SDK-handler 驱动的自动化。**不是产品能力**，是 mneme 开发流程本身的工具基础设施。
 
-**覆盖**：R1-R9（见 `openspec/specs/dev-feedback-loop/spec.md`）
+**覆盖**：R1-R9（见 `docs/specs/dev-feedback-loop/spec.md`）
 - R1: 全谱 Svelte console-forwarder（8 信号类，DEV-only，prod 完全 strip）
 - R2: 5 个 Tauri Rust dev commands（`#[cfg(debug_assertions)]` gated，release-binary clean）
 - R3: 3 个 npm-script 桥（gsd-dev-screenshot/snapshot/scan-logs，D-BR-02 错误信封）
@@ -428,13 +430,13 @@
 - R9: 渲染输出经 verify.validate-html 通过（4 桶 whitelist + forbidden phrasing 黑名单）
 
 **关键产物**：
-- mneme 侧：`src/lib/dev/` (forwarder + selectors)、`src-tauri/src/dev.rs` + `bin/dev_invoke.rs`、`scripts/gsd-dev-*.mjs`、`.dev-logs/` 标准、`.planning/references/design/living-visual-contract.md`
+- mneme 侧：`src/lib/dev/` (forwarder + selectors)、`src-tauri/src/dev.rs` + `bin/dev_invoke.rs`、`scripts/gsd-dev-*.mjs`、`.dev-logs/` 标准、`docs/design/living-visual-contract.md`
 - GSD upstream 侧：`~/.claude/get-shit-done/workflows/verify-work.md` 3 patches、`~/.claude/get-shit-done/templates/visual-review.html`、`@gsd-build/sdk` 8 个 verify.* handlers + CJS shim
 - 开发流程标准：dogfood self-test → audit notes → followup table → upstream PR draft
 
-**E1-E6 errata**（实施过程中发现 v3 design 假设错误，已修正）：见 `.planning/changes/archive/2026-05-14-automate-dev-feedback-loop/design.md` v3.1 errata block。
+**E1-E6 errata**（实施过程中发现 v3 design 假设错误，已修正）：见 `git-history:.planning/changes/archive/2026-05-14-automate-dev-feedback-loop/design.md` v3.1 errata block。
 
-**Living 视觉契约（cycle 2 引入）**：详见 `.planning/references/design/living-visual-contract.md`。Scope = "工具型 HTML only"（决定: option **b 双轨永久**，2026-05-14 用户拍板）。mneme 主 App UI 仍走 KD-13 / visual-design-system 横切 spec。
+**Living 视觉契约（cycle 2 引入）**：详见 `docs/design/living-visual-contract.md`。Scope = "工具型 HTML only"（决定: option **b 双轨永久**，2026-05-14 用户拍板）。mneme 主 App UI 仍走 KD-13 / visual-design-system 横切 spec。
 
 **Followup（不阻塞 archive，已记在各自文件）**：
 - F1 SDK regex 跳 HTML 注释 → upstream PR 待发（`upstream-pr-gsd-build-followup.md`）

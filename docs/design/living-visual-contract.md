@@ -572,4 +572,4 @@ Hero `<section>` 必须 `contain: paint`（**不要** `contain: layout`——配
 6. 用 `open` 在用户默认浏览器打开（不走 playwright 截图）
 7. 用户审查通过
 
-参考：`.planning/notes/dev-feedback-loop-audit-202605.md` Finding F2、`.planning/phases/01.1-dev-feedback-loop-infrastructure/01.1-09-SUMMARY.md` 第二轮记录。
+参考：`git-history:.planning/notes/dev-feedback-loop-audit-202605.md` Finding F2、`git-history:.planning/phases/01.1-dev-feedback-loop-infrastructure/01.1-09-SUMMARY.md` 第二轮记录。

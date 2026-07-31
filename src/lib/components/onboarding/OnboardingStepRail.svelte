@@ -16,7 +16,7 @@
 
   KD-13 palette note (CYCLE-2 cluster #12 disposition): `--color-orange`
   is the locked KD-13 active-state fill. The olive accent in Living visual
-  contract (`.planning/references/design/living-visual-contract.md`) is
+  contract (`docs/design/living-visual-contract.md`) is
   reserved for tool HTML (review / dogfood / handoff) — NOT the main app
   UI. Do not swap to olive here.
 -->

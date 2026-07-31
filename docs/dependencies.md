@@ -154,8 +154,8 @@ These are NOT code dependencies — they are **authoritative reference materials
 
 | Reference | Type | Local path / source | Authority |
 |---|---|---|---|
-| Anthropic / Claude aesthetic deep-dive (zh) | Curated 7-chapter analysis | `.planning/references/design/anthropic-claude-aesthetic-deep-dive_zh.md` | Secondary — research synthesis from public sources, design team interviews, Geist Behance, Anthropic GitHub |
-| Claude aesthetic OSS UI libraries gallery | Curated HTML gallery (9 libs across 3 categories) | `.planning/references/design/claude-aesthetic-ui-libraries-gallery.html` | Secondary — community curation; CSS preview tokens are accurate per Anthropic spec |
+| Anthropic / Claude aesthetic deep-dive (zh) | Curated 7-chapter analysis | `docs/design/anthropic-claude-aesthetic-deep-dive_zh.md` | Secondary — research synthesis from public sources, design team interviews, Geist Behance, Anthropic GitHub |
+| Claude aesthetic OSS UI libraries gallery | Curated HTML gallery (9 libs across 3 categories) | `docs/design/claude-aesthetic-ui-libraries-gallery.html` | Secondary — community curation; CSS preview tokens are accurate per Anthropic spec |
 | `anthropics/skills/brand-guidelines` | Official Anthropic brand skill | https://github.com/anthropics/skills/tree/main/skills/brand-guidelines | **PRIMARY (first-party SSOT)** — when other sources disagree on hex values / typography, this wins |
 
 **Maintenance rule for these references**: bump `Last-checked` if user provides updated reference materials, or if `anthropics/skills/brand-guidelines` releases a new version. Sub-version drift (e.g. `#d97757` vs `#da7756`) is documented in deep-dive Section 1; tolerate within Anthropic's own hue range.
@@ -205,7 +205,7 @@ authoritative spec for tool selection. Key decisions: design.md D-DEP-01
 `WebviewWindow::capture()`, hence `screencapture -l`) + errata E4 (strict-port
 not fallback, hence `lsof` probe). After the OpenSpec change archives via
 `/opsx:archive`, the canonical capability spec moves to
-`openspec/specs/dev-feedback-loop/spec.md`.
+`docs/specs/dev-feedback-loop/spec.md`.
 
 **Maintenance note**: rows in this group have `Monitor: n/a (OS)` because
 macOS / POSIX-bundled tools track the OS upgrade cadence, not their own
@@ -220,7 +220,7 @@ when Claude Code itself updates. No active mneme-side action required.
 | Date | Action |
 |---|---|
 | 2026-05-07 | Registry created per KP-08 (added 2026-05-07 in `/gsd-explore` session). Initial population from PROJECT.md KD-01 through KD-12 + STACK research artifacts. Pre-v1 maintenance rule active. |
-| 2026-05-07 | Added Group 9 (Design system references — KP-09 + KD-13 SSOT) and Group 10 (KD-13 recommended starting libraries) per user direction "软件 ui 文化, 设计, 美学都按照这两个文件走". Reference files copied into `.planning/references/design/`. |
+| 2026-05-07 | Added Group 9 (Design system references — KP-09 + KD-13 SSOT) and Group 10 (KD-13 recommended starting libraries) per user direction "软件 ui 文化, 设计, 美学都按照这两个文件走". Reference files copied into `docs/design/`. |
 
 ---
 

@@ -127,7 +127,7 @@
 - STACK.md §3 Mind-map / Graph Visualization
 
 **关联 OSS 依赖**：
-- `.planning/dependencies.md` Group 1 — Cytoscape.js + extensions
+- `docs/dependencies.md` Group 1 — Cytoscape.js + extensions
 
 **关联横切 spec**：
 - **visual-design-system**（thread）

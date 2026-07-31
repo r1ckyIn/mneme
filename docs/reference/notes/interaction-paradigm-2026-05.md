@@ -1,10 +1,12 @@
 ---
 slug: interaction-paradigm
 title: 鼠标优先 + Cmd+Q 唯一全局热键 + 窄场景例外跟踪
-status: open
+status: superseded (2026-07-31)
 created: 2026-05-14
-updated: 2026-05-16
+updated: 2026-07-31
 ---
+
+> **⚰️ 2026-07-31 作废归档**：鼠标优先范式整体作废，REQ-11 命令面板复活，键盘快捷键按 macOS/品类惯例设计（受众扩展决定，见 `docs/PRODUCT.md` 修订块 + `docs/adr/0001`）。仍然有效的仅剩：**Cmd+Q 必须 drain 子进程**（KP-04 合规，权威在 `docs/specs/claude-subprocess.md`）。下文全部为历史记录。
 
 # Thread: Interaction Paradigm
 

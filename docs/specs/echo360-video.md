@@ -127,7 +127,7 @@
 **关键文档**：
 - PROJECT.md REQ-04 + KD-04 + KD-11
 - STACK.md §8 Echo360 lecture video integration
-- `.planning/research/PITFALLS.md` Pitfall 7（Echo360 cookie/iframe + USYD SSO 失败）
+- `docs/reference/research/PITFALLS.md` Pitfall 7（Echo360 cookie/iframe + USYD SSO 失败）
 
 **关联 OSS 依赖**：
 - 无第三方 Echo360 库（无现成 OSS） — 自实现 webview 集成

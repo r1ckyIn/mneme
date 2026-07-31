@@ -17,7 +17,7 @@
 
   KD-13 token-only — no hardcoded hex / px / ms. The orange fill is the
   KD-13 main-app palette per CYCLE-2 cluster #12 (NOT Living olive — that
-  is reserved for tool HTML per .planning/references/design/living-visual-contract.md).
+  is reserved for tool HTML per docs/design/living-visual-contract.md).
 -->
 <script lang="ts">
   interface Props {

@@ -113,14 +113,14 @@
 
 **当前实施 phase**：
 - Phase 1 — Tauri Shell Foundation + Subprocess Hardening
-- `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-CONTEXT.md` D-01 layout 决策原文
-- `.planning/phases/01-tauri-shell-foundation-subprocess-hardening/.continue-here.md` — window-drag blocker 4 hypotheses
+- `git-history:.planning/phases/01-tauri-shell-foundation-subprocess-hardening/01-CONTEXT.md` D-01 layout 决策原文
+- `git-history:.planning/phases/01-tauri-shell-foundation-subprocess-hardening/.continue-here.md` — window-drag blocker 4 hypotheses
 
 **关联待办**：
-- `.planning/todos/pending/2026-05-09-auto-collapse-pdf-and-video-panes-when-no-file-or-video-sele.md` — pane 自动折叠（无文件/无视频时）
+- `docs/reference/seeds/2026-05-09-auto-collapse-pdf-and-video-panes-when-no-file-or-video-sele.md` — pane 自动折叠（无文件/无视频时）
 
 **关联 OSS 依赖**：
-- `.planning/dependencies.md` Group 1（frontend）— vanilla CSS Grid（无第三方布局库）
+- `docs/dependencies.md` Group 1（frontend）— vanilla CSS Grid（无第三方布局库）
 
 **关联横切 spec**：
 - **visual-design-system**（thread）— 设计 token + Mneme.html prototype 复刻契约

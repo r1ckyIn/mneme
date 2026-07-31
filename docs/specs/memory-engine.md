@@ -166,12 +166,12 @@ AI 不只是"你问→它答"。在每 chat session 开始 + 对话拐点（new 
 
 **关键文档**：
 - PROJECT.md REQ-07 + KD-10 + KP-03 + KP-07
-- `.planning/research/questions.md` RQ-01 完整 gate criteria
+- `docs/reference/research/questions.md` RQ-01 完整 gate criteria
 - STACK.md §2 Persistent Agent Memory + Knowledge Graph
 - CLAUDE.md Authoritative Overrides "Memory / Knowledge Graph library — NOT LOCKED"
 
 **关联 OSS 依赖**：
-- `.planning/dependencies.md` 待 RQ-01 决定后填入
+- `docs/dependencies.md` 待 RQ-01 决定后填入
 
 **关联横切 spec**：
 - **visual-design-system**（thread）— mindmap-viz 渲染遵守（虽然 mindmap-viz 是独立 spec）

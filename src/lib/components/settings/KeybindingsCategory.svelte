@@ -8,7 +8,7 @@
     - FileArea.svelte static-array-to-table pattern (02-PATTERNS.md L441-458)
 
   Phase 2 (Wave 7 / Plan 02-10). REQ-14 acceptance: read-only display only —
-  override capability deferred to Phase 3+ per .planning/threads/
+  override capability deferred to Phase 3+ per docs/reference/notes/
   interaction-paradigm.md (5 narrow exceptions to mouse-first).
 -->
 <script lang="ts">

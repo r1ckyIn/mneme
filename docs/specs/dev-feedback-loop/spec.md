@@ -1,5 +1,7 @@
 # dev-feedback-loop
 
+> **2026-07-31 半作废**（ADR-0001）：本 spec 的 **GSD workflow 半**（`/gsd-execute-phase`、`/gsd-verify-work`、`verify.*` SDK handlers、Visual Review HTML 流程）随 GSD 层删除而作废。**代码半仍在服役**：dev-only Svelte forwarder（`src/lib/dev/`）、Tauri dev commands（`src-tauri/src/dev.rs` + `dev_invoke`）、npm-script bridge（`gsd-dev-*`，改名 `dev-*` 在 BACKLOG）、`.dev-logs/` 约定——这些是任何工作流下都可用的调试基础设施。
+
 ## Purpose
 
 开发循环自动化能力域 — Claude 在 `/gsd-execute-phase` 与 `/gsd-verify-work` 全程通过 dev-only frontend forwarder + Tauri commands + GSD SDK `verify.*` handlers 自助获取 console / network / perf / 截图 / DOM 状态，将人类问答严格收敛到 4 桶（visual / window / motion / perf）单一 Visual Review HTML。**消除"请你打开 DevTools / 跑 cargo test / 粘日志"这类违反 instinct 的回环**。
@@ -137,7 +139,7 @@ During `/gsd-execute-phase <N>`, Claude SHALL NOT present any verification quest
 `~/.claude/get-shit-done/workflows/verify-work.md` SHALL be patched at three discrete locations:
 
 1. **Expand `automated_ui_verification` step** to detect Tauri-shell capability (via `npm run gsd-dev-screenshot --dry-run` or equivalent existence probe) and add a Tauri branch calling `verify.scan-signals` + `verify.capture-screenshot --surface tauri` + `verify.query-dom-state --surface tauri` in addition to the existing Chromium / Playwright-MCP branch.
-2. **Insert new step `package_manual_review`** between `automated_ui_verification` and `present_test`. This step takes the "queued for manual review" items, groups by 4-bucket (visual / window / motion / perf), calls `verify.render-review-html` to produce a single HTML at `.planning/handoff/<date>-phase-<N>-verify.html`, calls `verify.validate-html` to enforce structure, presents the path to the user, waits for response, and routes the response through `verify.parse-review-response`.
+2. **Insert new step `package_manual_review`** between `automated_ui_verification` and `present_test`. This step takes the "queued for manual review" items, groups by 4-bucket (visual / window / motion / perf), calls `verify.render-review-html` to produce a single HTML at `git-history:.planning/handoff/<date>-phase-<N>-verify.html`, calls `verify.validate-html` to enforce structure, presents the path to the user, waits for response, and routes the response through `verify.parse-review-response`.
 3. **Add a new `<critical_rules>` block** at the top of the workflow with 5 rules: (a) no asking user to open DevTools / read console / run terminal commands / paste logs / inspect DOM during verify-work; (b) HTML `data-bucket` values limited to `visual / window / motion / perf`, forbidden tags `hybrid / terminal / console / dom-check / log-paste / command-run`; (c) HTML questions must have concrete anchors (screenshot / GIF / selector / locked-value comparison); (d) HTML header must include "Claude has auto-verified" reassurance checklist; (e) each verify run produces a fresh HTML — never amend prior.
 
 The original `present_test` conversational path remains as a fallback for edge cases (no UI surface, MCP-unavailable degradation, very small phase with one or zero items).
@@ -150,7 +152,7 @@ The original `present_test` conversational path remains as a fallback for edge c
 #### Scenario: verify-work generates Visual Review HTML for batched judgment
 
 - **WHEN** `automated_ui_verification` completes with 5 items "queued for manual review" (e.g. 3 visual concerns, 1 window-chrome concern, 1 perceived-perf concern)
-- **THEN** patch 2's `package_manual_review` step calls `verify.render-review-html` → file at `.planning/handoff/<2026-05-12>-phase-01.1-verify.html` containing 3 `data-bucket="visual"` sections + 1 `data-bucket="window"` + 1 `data-bucket="perf"`, then presents the path to the user
+- **THEN** patch 2's `package_manual_review` step calls `verify.render-review-html` → file at `git-history:.planning/handoff/<2026-05-12>-phase-01.1-verify.html` containing 3 `data-bucket="visual"` sections + 1 `data-bucket="window"` + 1 `data-bucket="perf"`, then presents the path to the user
 
 #### Scenario: verify-work rejects forbidden question phrasing
 
@@ -166,7 +168,7 @@ The original `present_test` conversational path remains as a fallback for edge c
 3. `verify.scan-signals [--since <iso-ts>]` — grep `.dev-logs/{console,network,perf}.log` and `tauri.log`, return structured issue list (severity-tagged)
 4. `verify.capture-screenshot --surface <s>` — for Chromium: call `chrome-devtools-mcp__take_screenshot`; for Tauri: shell out to `npm run gsd-dev-screenshot`; return PNG path
 5. `verify.query-dom-state --surface <s>` — analogous, return DOM/perf JSON snapshot
-6. `verify.render-review-html --phase <N> --auto-verified <yaml> --buckets <yaml>` — render `templates/visual-review.html` with the provided data, write to `.planning/handoff/<date>-phase-<N>-verify.html`, return path
+6. `verify.render-review-html --phase <N> --auto-verified <yaml> --buckets <yaml>` — render `templates/visual-review.html` with the provided data, write to `git-history:.planning/handoff/<date>-phase-<N>-verify.html`, return path
 7. `verify.parse-review-response --path <p>` — extract structured issues from the user's reply (free-form text accepted)
 8. `verify.validate-html --path <p>` — assert that every `<section>` has `data-bucket` in `visual / window / motion / perf` and no forbidden tag appears
 
@@ -177,7 +179,7 @@ The original `present_test` conversational path remains as a fallback for edge c
 
 #### Scenario: `verify.validate-html` rejects forbidden bucket
 
-- **WHEN** a Visual Review HTML at `.planning/handoff/.../X.html` contains a `<section data-bucket="terminal">`
+- **WHEN** a Visual Review HTML at `git-history:.planning/handoff/.../X.html` contains a `<section data-bucket="terminal">`
 - **THEN** `verify.validate-html --path X.html` exits non-zero with structured error `{ "error": "forbidden_bucket", "found": ["terminal"], "allowed": ["visual","window","motion","perf"] }`; the `package_manual_review` step halts and Claude must rewrite the HTML
 
 ### Requirement: Visual Review HTML template at GSD upstream (GSD upstream)
@@ -196,7 +198,7 @@ The original `present_test` conversational path remains as a fallback for edge c
 
 ### Requirement: Visual Review HTML is ephemeral
 
-Each `/gsd-verify-work <N>` run SHALL produce a fresh Visual Review HTML at `.planning/handoff/<date>-phase-<N>-verify.html`. The file MUST be gitignored (via the pre-existing `.planning/handoff/` rules or a specific entry added by this change). After the user responds and the workflow records the response, the file MAY be retained on disk for debugging but MUST NOT be treated as part of the project record. Prior verify runs' HTML files MUST NOT accumulate as baselines — every run starts fresh.
+Each `/gsd-verify-work <N>` run SHALL produce a fresh Visual Review HTML at `git-history:.planning/handoff/<date>-phase-<N>-verify.html`. The file MUST be gitignored (via the pre-existing `git-history:.planning/handoff/` rules or a specific entry added by this change). After the user responds and the workflow records the response, the file MAY be retained on disk for debugging but MUST NOT be treated as part of the project record. Prior verify runs' HTML files MUST NOT accumulate as baselines — every run starts fresh.
 
 #### Scenario: Second verify run produces a new HTML, does not amend prior
 
@@ -206,7 +208,7 @@ Each `/gsd-verify-work <N>` run SHALL produce a fresh Visual Review HTML at `.pl
 #### Scenario: HTML file not committed to git
 
 - **WHEN** `git status` runs after a verify cycle
-- **THEN** the new `.planning/handoff/<date>-phase-NN-verify.html` appears as untracked (or is matched by an existing `.gitignore` entry); it does not appear in `git add -A` proposals as a tracked change
+- **THEN** the new `git-history:.planning/handoff/<date>-phase-NN-verify.html` appears as untracked (or is matched by an existing `.gitignore` entry); it does not appear in `git add -A` proposals as a tracked change
 
 ### Requirement: Human handoff bounded to four buckets (cross-cutting)
 

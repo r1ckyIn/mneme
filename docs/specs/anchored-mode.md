@@ -126,10 +126,10 @@
 
 **关键文档**：
 - PROJECT.md REQ-08 + KD-05
-- `.planning/todos/pending/2026-05-07-spec-claude-free-mode-source-display-and-conflict-resolution-req-08.md` — free 模式 source 展示 + 三源冲突场景化（进 Phase 9 plan 时细化）
+- `docs/reference/seeds/2026-05-07-spec-claude-free-mode-source-display-and-conflict-resolution-req-08.md` — free 模式 source 展示 + 三源冲突场景化（进 Phase 9 plan 时细化）
 
 **关联 OSS 依赖**：
-- Anthropic SDK（如有 npm 包） — `.planning/dependencies.md` 待填入
+- Anthropic SDK（如有 npm 包） — `docs/dependencies.md` 待填入
 
 **关联横切 spec**：
 - **visual-design-system**（thread）— Phase 1 已按 Mneme.html prototype 落地

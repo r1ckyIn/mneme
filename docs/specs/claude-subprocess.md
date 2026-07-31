@@ -149,7 +149,7 @@ claude --print \
 
 **当前实施 phase**：
 - Phase 1 — Tauri Shell Foundation + Subprocess Hardening
-- 计划目录：`.planning/phases/01-tauri-shell-foundation-subprocess-hardening/`
+- 计划目录：`git-history:.planning/phases/01-tauri-shell-foundation-subprocess-hardening/`
 - 5-piece contract：SPEC + CONTEXT + AI-SPEC + UI-SPEC + AMENDMENT-2026-05-09
 - 8/9 plans 完成（01-07 dogfood paused）
 
@@ -160,7 +160,7 @@ claude --print \
 - REVIEWS.md cycle 1+2 (codex) — cross-AI plan review converged HIGH=0
 - `.continue-here.md` — window-drag blocker + 4 hypotheses 续上下文
 
-**关联 OSS 依赖**：`.planning/dependencies.md` Group 1（frontend）+ Group 3（Rust backend）+ Group 5（vendored claude-code-parser）
+**关联 OSS 依赖**：`docs/dependencies.md` Group 1（frontend）+ Group 3（Rust backend）+ Group 5（vendored claude-code-parser）
 
 **关联横切 spec**：
 - visual-design-system — UI 流式渲染遵守 KP-09 + KD-13 美学

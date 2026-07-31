@@ -147,10 +147,10 @@ import 触发（external-import 入口）：
 **关键文档**：
 - PROJECT.md REQ-18
 - STACK.md §1 PDF → markdown（原主选 Marker，已被 user 翻转）
-- `.planning/research/PITFALLS.md`（如有，关于 Marker `--use_llm` 成本）
+- `docs/reference/research/PITFALLS.md`（如有，关于 Marker `--use_llm` 成本）
 
 **关联 OSS 依赖**：
-- `.planning/dependencies.md` Group 4（subprocess CLIs）— MinerU + Marker + markitdown
+- `docs/dependencies.md` Group 4（subprocess CLIs）— MinerU + Marker + markitdown
 
 **关联横切 spec**：
 - 无（这是数据处理契约，无 UI）

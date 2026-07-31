@@ -131,7 +131,7 @@
 - STACK.md §6 — Tiptap 完整 extension 清单
 
 **关联 OSS 依赖**：
-- `.planning/dependencies.md` Group 2（editor）
+- `docs/dependencies.md` Group 2（editor）
 
 **关联横切 spec**：
 - **visual-design-system**（thread）— 编辑器视觉
