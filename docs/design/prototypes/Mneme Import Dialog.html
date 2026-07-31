@@ -1,0 +1,1215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mneme — Import dialog</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --color-cream:        #faf9f5;
+    --color-cream-deep:   #f3f1ea;
+    --color-cream-edge:   #ede9de;
+    --color-orange:       #d97757;
+    --color-orange-soft:  rgba(217, 119, 87, 0.12);
+    --color-error:        #c15f3c;
+    --color-success:      #4ea36b;
+    --color-warm-dark:    #141413;
+    --color-warm-mute:    #7a766d;
+    --color-warm-soft:    #4a4843;
+    --border-soft:        rgba(20, 20, 19, 0.08);
+    --border-softer:      rgba(20, 20, 19, 0.05);
+    --veil:               rgba(20, 16, 13, 0.32);
+
+    --font-serif: "Tiempos Text", "Source Serif Pro", "Source Serif 4",
+                  "Charter", "Iowan Old Style", "Palatino Linotype",
+                  Palatino, "Book Antiqua", Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "IBM Plex Mono", "Menlo",
+                 "Consolas", monospace;
+
+    --duration-fast: 160ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
+    --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #ddd9cd;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0ms !important;
+      transition-duration: 0ms !important;
+    }
+  }
+
+  .doc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 0 64px;
+  }
+  .doc-meta {
+    width: 1280px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .doc-meta .label { color: var(--color-warm-soft); }
+  .doc-meta .crumb { font-size: 10.5px; }
+
+  .frame-caption {
+    width: 1280px;
+    padding: 28px 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .frame-caption .num { color: var(--color-orange); }
+  .frame-caption .title { color: var(--color-warm-soft); }
+  .frame-caption .rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+
+  /* ================================================================
+     SHELL CONTEXT (1280 × 860) - abbreviated, for in-context modals
+     ================================================================ */
+  .shell-frame {
+    position: relative;
+    width: 1280px;
+    height: 860px;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .shell-titlebar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    z-index: 5;
+  }
+  .traffic-lights { display: flex; gap: 8px; padding: 4px 4px 4px 0; }
+  .tl {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+  .titlebar-meta-mute {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warm-mute);
+  }
+  .titlebar-meta-mute .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 0 2px rgba(78,163,107,0.18);
+  }
+  .shell-cols {
+    position: absolute;
+    inset: 36px 0 120px 0;
+    display: grid;
+    grid-template-columns: 30% 4px 1fr 4px 30%;
+  }
+  .shell-splitter { border-left: 1px solid var(--border-softer); border-right: 1px solid var(--border-softer); }
+  .shell-pane { padding: 16px 22px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+  .greek-head { height: 14px; background: rgba(20,20,19,0.08); width: 30%; border-radius: 3px; }
+  .greek-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-softer);
+  }
+  .greek-row .ico { width: 30px; height: 30px; border-radius: 4px; background: var(--color-cream-deep); flex: 0 0 auto; }
+  .greek-row .ico.folder { background: rgba(217,119,87,0.10); }
+  .greek-row .name { flex: 1 1 auto; height: 11px; background: var(--color-cream-deep); border-radius: 3px; }
+  .greek-row .meta { width: 44px; height: 9px; background: var(--color-cream-deep); border-radius: 3px; }
+  .shell-mindmap {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
+    background: var(--color-cream); border-top: 1px solid var(--border-softer);
+    padding: 12px 18px; display: flex; align-items: center; gap: 16px;
+  }
+  .shell-mindmap .label-block { width: 200px; display: flex; flex-direction: column; gap: 4px; }
+  .shell-mindmap .kicker {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-warm-mute);
+  }
+  .shell-mindmap .canvas { flex: 1 1 auto; height: 100%; border-left: 1px solid var(--border-softer); padding-left: 16px; }
+  .shell-mindmap .canvas svg { display: block; width: 100%; height: 100%; }
+
+  .veil {
+    position: absolute; inset: 0;
+    background: var(--veil);
+    z-index: 10;
+    animation: veil-in var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-anchor {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    z-index: 11; pointer-events: none;
+  }
+
+  /* ================================================================
+     IMPORT DIALOG
+     ================================================================ */
+  .dlg {
+    pointer-events: auto;
+    width: 480px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 12px 32px rgba(20,20,19,0.10),
+      0 24px 48px rgba(20,20,19,0.06);
+    animation: modal-in var(--duration-base) var(--ease-out) both;
+    display: flex;
+    flex-direction: column;
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .dlg-header {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--color-cream-edge);
+  }
+  .dlg-header .title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--color-warm-dark);
+  }
+  .dlg-header .close {
+    margin-left: auto;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    display: grid; place-items: center;
+    color: var(--color-warm-soft);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .dlg-header .close:hover { background: var(--color-cream-edge); color: var(--color-warm-dark); }
+
+  /* FILES section */
+  .files-block {
+    background: var(--color-cream-deep);
+    padding: 16px 20px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .section-label {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-warm-soft);
+    margin-bottom: 8px;
+  }
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 32px;
+    padding: 0 0;
+    border-bottom: 1px solid var(--color-cream-edge);
+    animation: row-in 320ms var(--ease-out) both;
+  }
+  .file-row:last-child { border-bottom: 0; }
+  .file-row:nth-child(1) { animation-delay: 0ms; }
+  .file-row:nth-child(2) { animation-delay: 60ms; }
+  .file-row:nth-child(3) { animation-delay: 120ms; }
+  .file-row:nth-child(4) { animation-delay: 180ms; }
+  .file-row:nth-child(5) { animation-delay: 240ms; }
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .file-ico {
+    width: 24px; height: 24px;
+    color: var(--color-warm-soft);
+    flex: 0 0 auto;
+  }
+  .file-name {
+    flex: 1 1 auto;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .file-size {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    flex: 0 0 auto;
+  }
+
+  /* COURSE section */
+  .course-block {
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-cream-edge);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Variant C: dropdown */
+  .dropdown {
+    height: 44px;
+    background: var(--color-cream-deep);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    cursor: pointer;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    transition: border-color var(--duration-base) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out);
+  }
+  .dropdown:hover { border-color: rgba(20,20,19,0.14); }
+  .dropdown.placeholder { color: var(--color-warm-mute); }
+  .dropdown .code {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    flex: 0 0 auto;
+  }
+  .dropdown .sep { color: var(--color-warm-mute); flex: 0 0 auto; }
+  .dropdown .name {
+    color: var(--color-warm-mute);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dropdown .chev {
+    margin-left: auto;
+    color: var(--color-warm-mute);
+    flex: 0 0 auto;
+  }
+
+  /* Variant B: radio stack */
+  .course-radio-row {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 4px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .course-radio-row:hover { background: var(--color-cream-edge); }
+  .course-radio-row.selected { background: var(--color-cream-deep); }
+  .radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--color-cream-edge);
+    background: var(--color-cream);
+    display: grid; place-items: center;
+    flex: 0 0 auto;
+  }
+  .radio.selected {
+    border-color: var(--color-orange);
+  }
+  .radio.selected::after {
+    content: "";
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-orange);
+  }
+  .course-radio-row .code {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+  }
+  .course-radio-row .name {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+
+  /* Variant D: typeahead */
+  .typeahead {
+    height: 44px;
+    background: var(--color-cream-deep);
+    border: 1px solid rgba(217,119,87,0.45);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    box-shadow: 0 0 0 3px rgba(217,119,87,0.10);
+  }
+  .typeahead input {
+    flex: 1 1 auto;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    padding: 0;
+    min-width: 0;
+  }
+  .typeahead input::placeholder { color: var(--color-warm-mute); }
+  .typeahead-panel {
+    margin-top: 4px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow:
+      0 4px 12px rgba(20,20,19,0.06),
+      0 8px 24px rgba(20,20,19,0.04);
+  }
+  .typeahead-row {
+    position: relative;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    cursor: pointer;
+  }
+  .typeahead-row.highlighted {
+    background: var(--color-cream-deep);
+  }
+  .typeahead-row.highlighted::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--color-orange);
+  }
+  .typeahead-row .code {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+  }
+  .typeahead-row .name {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+  .typeahead-row mark {
+    background: rgba(217, 119, 87, 0.18);
+    color: var(--color-warm-dark);
+    padding: 0;
+    border-radius: 2px;
+  }
+
+  /* CATEGORY radios */
+  .category-block {
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-cream-edge);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .category-block .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    row-gap: 4px;
+    margin-left: -4px;       /* offset cat-radio left padding so 'lectures' aligns under the label */
+  }
+  .cat-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    transition: background var(--duration-fast) var(--ease-out);
+    white-space: nowrap;
+  }
+  .cat-radio .radio { width: 14px; height: 14px; }
+  .cat-radio .radio.selected::after { width: 6px; height: 6px; }
+  .cat-radio:hover { background: var(--color-cream-edge); }
+  .cat-radio.selected { background: var(--color-cream-deep); }
+  .cat-radio .label-mono { font-family: var(--font-mono); font-size: 13px; }
+
+  /* FOOTER */
+  .footer-block {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    border-top: 1px solid var(--color-cream-edge);
+  }
+  .footer-block .note {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+  .footer-block .right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ghost-link {
+    background: transparent;
+    border: 0;
+    padding: 4px 0;
+    color: var(--color-warm-soft);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+  }
+  .ghost-link:hover { color: var(--color-warm-dark); border-bottom-color: var(--color-warm-dark); }
+
+  .cta {
+    appearance: none;
+    height: 36px;
+    padding: 0 16px;
+    background: var(--color-orange);
+    border: 0;
+    border-radius: 9999px;
+    color: var(--color-cream);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out),
+                opacity var(--duration-base) var(--ease-out);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.18) inset,
+      0 1px 2px rgba(20,20,19,0.05),
+      0 4px 12px rgba(217,119,87,0.18);
+  }
+  .cta:hover { transform: translateY(-1px); }
+  .cta:active { transform: scale(0.96); }
+  .cta[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .cta[disabled]:hover { transform: none; }
+
+  /* ================================================================
+     VARIANT A — replacement state (0 courses)
+     ================================================================ */
+  .empty-courses {
+    padding: 32px 24px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .empty-courses h2 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+  }
+  .empty-courses p {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-mute);
+    max-width: 320px;
+    text-wrap: pretty;
+  }
+  .empty-courses .footer {
+    margin-top: 4px;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--color-cream-edge);
+  }
+
+  /* ================================================================
+     VARIANT THUMB STRIP — 70% scale
+     ================================================================ */
+  .variant-strip {
+    width: 1280px;
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .variant-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .variant-scale {
+    width: 336px;        /* 480 × 0.7 */
+    overflow: hidden;
+    border-radius: 7px;  /* 10 × 0.7 */
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 4px 10px rgba(20,20,19,0.06);
+  }
+  .variant-scale.vA { height: 224px; }
+  .variant-scale.vB { height: 422px; }
+  .variant-scale.vCp { height: 432px; }
+  .variant-scale.vD { height: 492px; }
+  .variant-scale .dlg {
+    transform: scale(0.7);
+    transform-origin: top left;
+    width: 480px;
+    border-radius: 10px;
+    box-shadow: none;
+    animation: none;
+  }
+  .variant-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--color-warm-soft);
+  }
+  .variant-label .meta { color: var(--color-warm-mute); margin-left: 6px; }
+
+  /* ================================================================
+     DUPLICATE SUB-DIALOG
+     ================================================================ */
+  .dup-frame {
+    width: 1280px;
+    height: 540px;
+    position: relative;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .dup-frame .veil { z-index: 1; }
+  .dup-frame .modal-anchor { z-index: 2; }
+
+  .dup-bg-shell {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(135deg, rgba(20,20,19,0.018) 0 12px, transparent 12px 24px),
+      var(--color-cream);
+  }
+
+  .dup-dlg {
+    pointer-events: auto;
+    width: 440px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 12px 32px rgba(20,20,19,0.10),
+      0 24px 48px rgba(20,20,19,0.06);
+    animation: body-swap var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes body-swap {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .dup-body {
+    padding: 24px 24px 0;
+  }
+  .dup-body h2 {
+    margin: 0 0 12px;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--color-warm-dark);
+  }
+  .dup-body .lead {
+    margin: 0 0 20px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .dup-body .lead .mono {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: rgba(20,20,19,0.05);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .dup-radios { display: flex; flex-direction: column; gap: 0; }
+  .dup-radio {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    column-gap: 12px;
+    padding: 12px 0;
+    cursor: pointer;
+    align-items: start;
+    border-bottom: 1px solid var(--color-cream-edge);
+  }
+  .dup-radio:last-of-type { border-bottom: 0; }
+  .dup-radio .radio { margin-top: 2px; }
+  .dup-radio .label {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+  }
+  .dup-radio .secondary {
+    margin-top: 2px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .dup-radio .secondary .mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-warm-soft);
+  }
+
+  .dup-batch {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-cream-edge);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    cursor: pointer;
+  }
+  .checkbox {
+    appearance: none;
+    width: 14px; height: 14px;
+    border: 1.25px solid rgba(20,20,19,0.25);
+    border-radius: 3px;
+    background: var(--color-cream);
+    cursor: pointer;
+    display: inline-grid; place-items: center;
+    margin: 0;
+  }
+  .checkbox:checked {
+    background: var(--color-orange);
+    border-color: var(--color-orange);
+  }
+  .checkbox:checked::after {
+    content: "";
+    width: 7px; height: 4px;
+    border-left: 1.5px solid var(--color-cream);
+    border-bottom: 1.5px solid var(--color-cream);
+    transform: rotate(-45deg) translate(1px, -1px);
+  }
+
+  .dup-footer {
+    margin-top: 16px;
+    height: 56px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--color-cream-edge);
+  }
+  .dup-footer .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-meta">
+    <span class="label">Mneme · Import dialog</span>
+    <span class="crumb">Cmd+I or drag-drop · per-import flow</span>
+  </header>
+
+  <!-- ============================================================
+       MAIN — Variant C (4–10 courses dropdown) full fidelity
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">●</span><span class="title">Variant C · 4–10 courses · dropdown · most-common case</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="shell-frame" data-screen-label="01 Import dialog · Variant C dropdown">
+    <div class="shell-titlebar">
+      <div class="traffic-lights"><span class="tl close"></span><span class="tl min"></span><span class="tl max"></span></div>
+      <div class="titlebar-meta-mute">
+        <span class="dot"></span>
+        <span>claude-code · connected</span>
+        <span style="opacity:.4">·</span>
+        <span>vault: ~/StudyVault</span>
+      </div>
+    </div>
+    <div class="shell-cols">
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px;"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px;"></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="align-self:flex-end; max-width: 75%; background: var(--color-cream-deep); border-radius: 14px; padding: 12px 14px;">
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;margin-bottom:6px;width:80%"></div>
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;width:60%"></div>
+        </div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:90%"></div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:85%"></div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:70%"></div>
+      </div>
+    </div>
+    <div class="shell-mindmap">
+      <div class="label-block">
+        <span class="kicker">Mind map</span>
+        <div style="height:11px; width:60%; background: var(--color-cream-deep); border-radius: 3px;"></div>
+      </div>
+      <div class="canvas">
+        <svg viewBox="0 0 800 90" preserveAspectRatio="none">
+          <circle cx="60" cy="45" r="6" fill="rgba(20,20,19,0.18)"></circle>
+          <line x1="66" y1="45" x2="180" y2="20" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <line x1="66" y1="45" x2="180" y2="70" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <circle cx="180" cy="20" r="4" fill="rgba(20,20,19,0.12)"></circle>
+          <circle cx="180" cy="70" r="4" fill="rgba(20,20,19,0.12)"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <div class="veil"></div>
+
+    <div class="modal-anchor">
+      <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+
+        <header class="dlg-header">
+          <span class="title" id="dlg-title">Import 3 files</span>
+          <button class="close" type="button" aria-label="Close import dialog">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </header>
+
+        <!-- FILES -->
+        <div class="files-block">
+          <div class="section-label">Files</div>
+          <div class="file-row">
+            <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/>
+              <text x="7" y="17" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="5.5" fill="currentColor" stroke="none" font-weight="700">PDF</text>
+            </svg>
+            <span class="file-name">Week06_DynamicProgramming.pdf</span>
+            <span class="file-size">2.4 MB</span>
+          </div>
+          <div class="file-row">
+            <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/>
+              <polygon points="10 12.5 14 14.5 10 16.5" fill="currentColor" stroke="none"/>
+            </svg>
+            <span class="file-name">L06 — Dynamic Programming.mp4</span>
+            <span class="file-size">184 MB</span>
+          </div>
+          <div class="file-row">
+            <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="16" x2="14" y2="16"/>
+            </svg>
+            <span class="file-name">tutorial-06.md</span>
+            <span class="file-size">12 KB</span>
+          </div>
+        </div>
+
+        <!-- COURSE picker — Variant C -->
+        <div class="course-block">
+          <div class="section-label">Course</div>
+          <div class="dropdown" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+            <span class="code">COMP3221</span>
+            <span class="sep">—</span>
+            <span class="name">Distributed Systems</span>
+            <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+
+        <!-- CATEGORY radios -->
+        <div class="category-block">
+          <div class="section-label">Category</div>
+            <div class="cat-row">
+              <span class="cat-radio"><span class="radio"></span>lectures</span>
+          <span class="cat-radio"><span class="radio"></span>tutorials</span>
+          <span class="cat-radio"><span class="radio"></span>assignments</span>
+          <span class="cat-radio"><span class="radio"></span>announcements</span>
+          <span class="cat-radio selected"><span class="radio selected"></span><span class="label-mono">_inbox</span></span>
+            </div></div>
+
+        <!-- FOOTER -->
+        <div class="footer-block">
+          <span class="note">Default course resets every import.</span>
+          <div class="right">
+            <button class="ghost-link" type="button">Cancel</button>
+            <button class="cta" type="button">Import 3 files</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       VARIANT STRIP — A, B, D at 70% scale
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">○</span><span class="title">Variants A · B · D · 70% scale</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="variant-strip">
+
+    <!-- Variant A — 0 courses, dialog replaced -->
+    <div class="variant-wrap">
+      <div class="variant-scale vA" id="vsA">
+        <div class="dlg" style="width:480px">
+          <header class="dlg-header">
+            <span class="title">Import 3 files</span>
+            <button class="close" type="button" aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+          <div class="empty-courses">
+            <h2>No courses yet.</h2>
+            <p>Add a course in Settings → Vault, then re-drop your files.</p>
+            <div class="footer">
+              <button class="ghost-link" type="button">Close</button>
+              <button class="cta" type="button" style="min-width:120px">Open Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="variant-label">Variant A<span class="meta">0 courses · entire dialog replaced</span></span>
+    </div>
+
+    <!-- Variant B — 1–3 courses radio stack -->
+    <div class="variant-wrap">
+      <div class="variant-scale vB">
+        <div class="dlg" style="width:480px">
+          <header class="dlg-header">
+            <span class="title">Import 3 files</span>
+            <button class="close" type="button" aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+          <div class="files-block">
+            <div class="section-label">Files</div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><text x="7" y="17" font-family="ui-monospace,Menlo,monospace" font-size="5.5" fill="currentColor" stroke="none" font-weight="700">PDF</text></svg>
+              <span class="file-name">Week06_DynamicProgramming.pdf</span>
+              <span class="file-size">2.4 MB</span>
+            </div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><polygon points="10 12.5 14 14.5 10 16.5" fill="currentColor" stroke="none"/></svg>
+              <span class="file-name">L06 — Dynamic Programming.mp4</span>
+              <span class="file-size">184 MB</span>
+            </div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="16" x2="14" y2="16"/></svg>
+              <span class="file-name">tutorial-06.md</span>
+              <span class="file-size">12 KB</span>
+            </div>
+          </div>
+          <div class="course-block">
+            <div class="section-label">Course</div>
+            <div class="course-radio-row">
+              <span class="radio"></span><span class="code">COMP3027</span><span class="name">Algorithms</span>
+            </div>
+            <div class="course-radio-row selected">
+              <span class="radio selected"></span><span class="code">COMP3221</span><span class="name">Distributed Systems</span>
+            </div>
+            <div class="course-radio-row">
+              <span class="radio"></span><span class="code">MATH1062</span><span class="name">Discrete Mathematics</span>
+            </div>
+          </div>
+          <div class="category-block">
+            <div class="section-label">Category</div>
+            <div class="cat-row">
+              <span class="cat-radio"><span class="radio"></span>lectures</span>
+            <span class="cat-radio"><span class="radio"></span>tutorials</span>
+            <span class="cat-radio"><span class="radio"></span>assignments</span>
+            <span class="cat-radio"><span class="radio"></span>announcements</span>
+            <span class="cat-radio selected"><span class="radio selected"></span><span class="label-mono">_inbox</span></span>
+            </div></div>
+          <div class="footer-block">
+            <span class="note">Default course resets every import.</span>
+            <div class="right">
+              <button class="ghost-link" type="button">Cancel</button>
+              <button class="cta" type="button">Import 3 files</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="variant-label">Variant B<span class="meta">1–3 courses · radio stack</span></span>
+    </div>
+
+    <!-- Variant D — typeahead -->
+    <div class="variant-wrap">
+      <div class="variant-scale vD">
+        <div class="dlg" style="width:480px">
+          <header class="dlg-header">
+            <span class="title">Import 3 files</span>
+            <button class="close" type="button" aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+          <div class="files-block">
+            <div class="section-label">Files</div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><text x="7" y="17" font-family="ui-monospace,Menlo,monospace" font-size="5.5" fill="currentColor" stroke="none" font-weight="700">PDF</text></svg>
+              <span class="file-name">Week06_DynamicProgramming.pdf</span>
+              <span class="file-size">2.4 MB</span>
+            </div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><polygon points="10 12.5 14 14.5 10 16.5" fill="currentColor" stroke="none"/></svg>
+              <span class="file-name">L06 — Dynamic Programming.mp4</span>
+              <span class="file-size">184 MB</span>
+            </div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="16" x2="14" y2="16"/></svg>
+              <span class="file-name">tutorial-06.md</span>
+              <span class="file-size">12 KB</span>
+            </div>
+          </div>
+          <div class="course-block">
+            <div class="section-label">Course</div>
+            <div class="typeahead">
+              <input type="text" value="comp3" aria-label="Search courses">
+            </div>
+            <div class="typeahead-panel" role="listbox">
+              <div class="typeahead-row highlighted" role="option">
+                <span class="code"><mark>COMP3</mark>027</span><span class="name">Algorithms</span>
+              </div>
+              <div class="typeahead-row" role="option">
+                <span class="code"><mark>COMP3</mark>221</span><span class="name">Distributed Systems</span>
+              </div>
+              <div class="typeahead-row" role="option">
+                <span class="code"><mark>COMP3</mark>308</span><span class="name">Intro to AI</span>
+              </div>
+              <div class="typeahead-row" role="option">
+                <span class="code"><mark>COMP3</mark>419</span><span class="name">Multimedia Systems</span>
+              </div>
+            </div>
+          </div>
+          <div class="category-block">
+            <div class="section-label">Category</div>
+            <div class="cat-row">
+              <span class="cat-radio"><span class="radio"></span>lectures</span>
+            <span class="cat-radio"><span class="radio"></span>tutorials</span>
+            <span class="cat-radio"><span class="radio"></span>assignments</span>
+            <span class="cat-radio"><span class="radio"></span>announcements</span>
+            <span class="cat-radio selected"><span class="radio selected"></span><span class="label-mono">_inbox</span></span>
+            </div></div>
+          <div class="footer-block">
+            <span class="note">Default course resets every import.</span>
+            <div class="right">
+              <button class="ghost-link" type="button">Cancel</button>
+              <button class="cta" type="button" disabled aria-disabled="true">Import 3 files</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="variant-label">Variant D<span class="meta">10+ courses · typeahead</span></span>
+    </div>
+
+    <!-- Variant C — placeholder state (before selection) -->
+    <div class="variant-wrap">
+      <div class="variant-scale vCp">
+        <div class="dlg" style="width:480px">
+          <header class="dlg-header">
+            <span class="title">Import 3 files</span>
+            <button class="close" type="button" aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+          <div class="files-block">
+            <div class="section-label">Files</div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><text x="7" y="17" font-family="ui-monospace,Menlo,monospace" font-size="5.5" fill="currentColor" stroke="none" font-weight="700">PDF</text></svg>
+              <span class="file-name">Week06_DynamicProgramming.pdf</span>
+              <span class="file-size">2.4 MB</span>
+            </div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><polygon points="10 12.5 14 14.5 10 16.5" fill="currentColor" stroke="none"/></svg>
+              <span class="file-name">L06 — Dynamic Programming.mp4</span>
+              <span class="file-size">184 MB</span>
+            </div>
+            <div class="file-row">
+              <svg class="file-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14 3 14 8 19 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="16" x2="14" y2="16"/></svg>
+              <span class="file-name">tutorial-06.md</span>
+              <span class="file-size">12 KB</span>
+            </div>
+          </div>
+          <div class="course-block">
+            <div class="section-label">Course</div>
+            <div class="dropdown placeholder" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+              <span style="flex:1 1 auto;">Choose a course…</span>
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="category-block">
+            <div class="section-label">Category</div>
+            <div class="cat-row">
+              <span class="cat-radio"><span class="radio"></span>lectures</span>
+              <span class="cat-radio"><span class="radio"></span>tutorials</span>
+              <span class="cat-radio"><span class="radio"></span>assignments</span>
+              <span class="cat-radio"><span class="radio"></span>announcements</span>
+              <span class="cat-radio selected"><span class="radio selected"></span><span class="label-mono">_inbox</span></span>
+            </div>
+          </div>
+          <div class="footer-block">
+            <span class="note">Default course resets every import.</span>
+            <div class="right">
+              <button class="ghost-link" type="button">Cancel</button>
+              <button class="cta" type="button" disabled aria-disabled="true">Import 3 files</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="variant-label">Variant C · placeholder<span class="meta">before selection · CTA disabled</span></span>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       DUPLICATE SUB-DIALOG · batch case
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">◐</span><span class="title">Duplicate sub-dialog · same shell, body swap</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="dup-frame" data-screen-label="02 Import dialog · duplicate sub-dialog batch">
+    <div class="dup-bg-shell"></div>
+    <div class="veil"></div>
+    <div class="modal-anchor">
+      <div class="dup-dlg">
+
+        <div class="dup-body">
+          <h2>File already exists</h2>
+          <p class="lead"><span class="mono">Week06_DynamicProgramming.pdf</span> exists in <span class="mono">courses/COMP3221/_source/lectures/</span>. What would you like to do?</p>
+
+          <div class="dup-radios">
+            <label class="dup-radio">
+              <span class="radio selected" aria-hidden="true"></span>
+              <span>
+                <span class="label">Replace</span>
+                <div class="secondary">Overwrite the existing file. The current contents will be lost.</div>
+              </span>
+            </label>
+            <label class="dup-radio">
+              <span class="radio" aria-hidden="true"></span>
+              <span>
+                <span class="label">Skip</span>
+                <div class="secondary">Keep the existing file. The dragged file is discarded.</div>
+              </span>
+            </label>
+            <label class="dup-radio">
+              <span class="radio" aria-hidden="true"></span>
+              <span>
+                <span class="label">Rename</span>
+                <div class="secondary">Add a suffix and import as a new file (e.g. <span class="mono">Week06_DynamicProgramming-1.pdf</span>).</div>
+              </span>
+            </label>
+          </div>
+
+          <label class="dup-batch">
+            <input type="checkbox" class="checkbox" aria-label="Apply to remaining duplicates">
+            <span>Apply to all 4 remaining duplicates</span>
+          </label>
+        </div>
+
+        <div class="dup-footer">
+          <button class="ghost-link" type="button">Back to file list</button>
+          <div class="right">
+            <button class="cta" type="button">Continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

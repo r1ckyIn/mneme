@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mneme — Onboarding Wizard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    /* color — locked tokens */
+    --color-cream:        #faf9f5;
+    --color-cream-deep:   #f3f1ea;
+    --color-cream-edge:   #ede9de;
+    --color-orange:       #d97757;
+    --color-orange-soft:  rgba(217, 119, 87, 0.10);
+    --color-error:        #c15f3c;
+    --color-success:      #4ea36b;
+    --color-warm-dark:    #141413;
+    --color-warm-mute:    #7a766d;
+    --color-warm-soft:    #4a4843;
+    --border-soft:        rgba(20, 20, 19, 0.08);
+    --border-softer:      rgba(20, 20, 19, 0.05);
+
+    /* type */
+    --font-serif: "Tiempos Text", "Source Serif Pro", "Source Serif 4",
+                  "Charter", "Iowan Old Style", "Palatino Linotype",
+                  Palatino, "Book Antiqua", Georgia,
+                  "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "IBM Plex Mono", "Menlo",
+                 "Consolas", monospace;
+
+    /* spacing */
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+
+    /* radii */
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 10px;
+
+    /* motion */
+    --duration-fast: 160ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
+    --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+
+    /* titlebar */
+    --titlebar-height: 36px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #ddd9cd;          /* page matte — slightly darker than cream-edge so frame edges read */
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .doc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 0;
+    gap: 0;
+  }
+  .doc-meta {
+    width: 1280px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .doc-meta .label { color: var(--color-warm-soft); }
+  .doc-meta .crumb { color: var(--color-warm-mute); font-size: 10.5px; }
+
+  /* horizontal hairline between frames */
+  .divider {
+    width: 1280px;
+    height: 1px;
+    background: var(--color-cream-edge);
+  }
+
+  /* per-frame caption (subtle, mono kicker above each frame) */
+  .frame-caption {
+    width: 1280px;
+    padding: 28px 0 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .frame-caption .num { color: var(--color-orange); }
+  .frame-caption .title { color: var(--color-warm-soft); }
+  .frame-caption .rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+  .frame-caption .dims { color: var(--color-warm-mute); }
+
+  /* the 1280×860 webview frame */
+  .frame {
+    position: relative;
+    width: 1280px;
+    height: 860px;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+
+  /* macOS overlay titlebar — only traffic lights, no meta on right */
+  .titlebar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: var(--titlebar-height);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-4);
+    z-index: 5;
+    pointer-events: none;
+  }
+  .traffic-lights {
+    display: flex;
+    gap: 8px;
+    padding: 4px 4px 4px 0;
+  }
+  .tl {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+
+  /* canvas sits beneath the titlebar */
+  .canvas {
+    position: absolute;
+    inset: var(--titlebar-height) 0 0 0;
+    overflow: hidden;
+  }
+
+  /* ---------- shared content primitives ---------- */
+
+  .wordmark {
+    position: absolute;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+  }
+  .wordmark::after {
+    /* tiny under-mark to give the wordmark a touch of identity without slop */
+    content: "";
+    display: block;
+    width: 24px; height: 2px;
+    background: var(--color-orange);
+    border-radius: 2px;
+    margin: 12px auto 0;
+  }
+
+  /* hero stack — centered horizontally, anchored ~38% from top.
+     IMPORTANT: animation lives on the inner h1 / p children, NOT on .hero,
+     because animating transform on .hero would override its centering
+     translate(-50%, -50%) once the animation lands. */
+  .hero {
+    position: absolute;
+    top: 38%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 100%;
+    max-width: 720px;
+    padding: 0 40px;
+  }
+  .hero h1 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+    color: var(--color-warm-dark);
+    max-width: 540px;     /* ~30 characters at 28px serif */
+    margin-left: auto; margin-right: auto;
+    text-wrap: pretty;
+    animation: fade-up var(--duration-slow) var(--ease-out) both;
+  }
+  .hero p.subtitle {
+    margin: 32px auto 0;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--color-warm-mute);
+    max-width: 480px;     /* ~56-60ch */
+    text-wrap: pretty;
+    animation: fade-up var(--duration-slow) var(--ease-out) both;
+    animation-delay: 80ms;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0ms !important;
+      transition-duration: 0ms !important;
+    }
+  }
+
+  /* hero variant: positioned higher when there's stacked content below */
+  .hero.anchor-high {
+    top: 28%;
+  }
+
+  /* content stack below hero */
+  .stack {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  /* primary CTA — orange pill, bottom-right */
+  .cta {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    min-width: 88px;
+    padding: 0 20px;
+    background: var(--color-orange);
+    border: 0;
+    border-radius: 9999px;
+    color: var(--color-cream);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.18) inset,
+      0 1px 2px rgba(20,20,19,0.05),
+      0 4px 12px rgba(217,119,87,0.18);
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out),
+                opacity var(--duration-base) var(--ease-out);
+  }
+  .cta:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.20) inset,
+      0 2px 4px rgba(20,20,19,0.06),
+      0 6px 16px rgba(217,119,87,0.22);
+  }
+  .cta:active { transform: scale(0.96); }
+  .cta[disabled] {
+    opacity: 0.45;
+    cursor: default;
+    box-shadow: none;
+  }
+  .cta[disabled]:hover { transform: none; box-shadow: none; }
+
+  .cta-wide { min-width: 120px; }
+
+  /* secondary ghost-link CTA — sits to the LEFT of the primary, no fill */
+  .ghost-link {
+    position: absolute;
+    bottom: 52px;          /* aligned to CTA text-baseline (40 + 12) */
+    right: 168px;          /* ~ primary cta width + gap */
+    background: transparent;
+    border: 0;
+    padding: 4px 0;
+    color: var(--color-warm-soft);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+  }
+  .ghost-link:hover {
+    color: var(--color-warm-dark);
+    border-bottom-color: var(--color-warm-dark);
+  }
+  .ghost-link.wide { right: 200px; }
+
+  /* step rail — bottom-left, 6 numbered chips */
+  .rail {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .rail-dot {
+    width: 32px;
+    height: 32px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 9999px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    font-feature-settings: "tnum" 1;
+    border: 1px solid var(--color-cream-edge);
+    background: transparent;
+    color: var(--color-cream-edge);
+    transition: all var(--duration-base) var(--ease-out);
+  }
+  .rail-dot.completed {
+    color: var(--color-warm-dark);
+    border-color: rgba(20,20,19,0.18);
+  }
+  .rail-dot.active {
+    color: var(--color-orange);
+    border-color: rgba(217,119,87,0.35);
+    background: var(--color-cream-deep);
+  }
+
+  /* ---------- step-2 sub-state grid ---------- */
+  .substates {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: 40px;       /* offset below hero band */
+    display: grid;
+    grid-template-columns: repeat(3, 332px);
+    gap: 20px;
+  }
+  .substate {
+    background: var(--color-cream-deep);
+    border: 1px solid var(--border-softer);
+    border-radius: var(--radius-xl);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 220px;
+  }
+  .substate .kicker {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-warm-mute);
+    margin-bottom: 4px;
+  }
+  .substate .status-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .substate .status-sub {
+    color: var(--color-warm-mute);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .substate .status-sub code {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    background: rgba(20,20,19,0.05);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .substate .link {
+    margin-top: auto;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    border-bottom: 1px solid var(--color-warm-mute);
+    align-self: flex-start;
+    padding-bottom: 1px;
+    cursor: pointer;
+  }
+  .substate .link:hover { border-bottom-color: var(--color-warm-dark); }
+
+  /* spinner — cream-edge track + orange arc, 1.2s rotation */
+  .spinner {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-cream-edge);
+    border-top-color: var(--color-orange);
+    animation: spin 1200ms linear infinite;
+    flex: 0 0 auto;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* status dots */
+  .dot-success {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-success);
+    flex: 0 0 auto;
+  }
+  .dot-error-ring {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-error);
+    background: transparent;
+    flex: 0 0 auto;
+  }
+  /* "configured" indicator — warm-dark with white inner pip */
+  .dot-config {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-warm-dark);
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+  .dot-config::after {
+    content: "";
+    width: 2px; height: 2px;
+    border-radius: 50%;
+    background: var(--color-cream);
+  }
+
+  /* ---------- step-3 path picker ---------- */
+  .input-row {
+    width: 480px;
+    height: 44px;
+    background: var(--color-cream-deep);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    padding: 0 4px 0 16px;
+    gap: 12px;
+    transition: border-color var(--duration-base) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out);
+  }
+  .input-row:focus-within {
+    border-color: rgba(217,119,87,0.45);
+    box-shadow: 0 0 0 3px rgba(217,119,87,0.10);
+  }
+  .input-row .path {
+    flex: 1 1 auto;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    background: transparent;
+    border: 0;
+    outline: 0;
+    padding: 0;
+    min-width: 0;
+    letter-spacing: 0;
+  }
+  .input-row .path-placeholder { color: var(--color-warm-mute); }
+  .input-row .browse {
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--color-warm-soft);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
+  }
+  .input-row .browse:hover {
+    background: rgba(20,20,19,0.04);
+    color: var(--color-warm-dark);
+  }
+
+  .validation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    text-wrap: pretty;
+  }
+  .validation.valid { color: var(--color-warm-mute); }
+  .validation.invalid { color: var(--color-error); }
+
+  /* ---------- step-5 course chip list ---------- */
+  .course-input {
+    width: 320px;
+    height: 44px;
+    background: var(--color-cream-deep);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    padding: 0 12px 0 16px;
+    gap: 8px;
+    transition: border-color var(--duration-base) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out);
+  }
+  .course-input:focus-within {
+    border-color: rgba(217,119,87,0.45);
+    box-shadow: 0 0 0 3px rgba(217,119,87,0.10);
+  }
+  .course-input input {
+    flex: 1 1 auto;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    min-width: 0;
+    padding: 0;
+  }
+  .course-input input::placeholder { color: var(--color-warm-mute); }
+  .course-input .check {
+    flex: 0 0 auto;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--color-success);
+    display: grid; place-items: center;
+    color: var(--color-cream);
+  }
+
+  .chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 320px;
+    min-height: 28px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 4px 8px 4px 10px;
+    background: var(--color-cream-deep);
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .chip .x {
+    width: 14px; height: 14px;
+    display: inline-grid; place-items: center;
+    border-radius: 50%;
+    color: var(--color-warm-mute);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
+  }
+  .chip:hover .x { color: var(--color-warm-dark); }
+  .chip .x:hover { background: rgba(20,20,19,0.06); }
+
+  /* ---------- step-6 drop zone ---------- */
+  .dropzone {
+    width: 200px;
+    height: 200px;
+    background: var(--color-cream-deep);
+    border: 2px dashed var(--color-orange);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.2;
+  }
+  .dropzone svg {
+    color: var(--color-warm-dark);
+  }
+
+  /* helper text — narrow gray serif */
+  .helper {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    text-align: center;
+    line-height: 1.5;
+    max-width: 480px;
+    text-wrap: pretty;
+  }
+  .helper.center { text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-meta">
+    <span class="label">Mneme · Onboarding wizard</span>
+    <span class="crumb">/onboarding/[step] · 1280 × 860 · light theme</span>
+  </header>
+
+  <!-- ============================================================
+       STEP 1 — WELCOME
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">01</span><span class="title">Welcome</span>
+    <span class="rule"></span>
+    <span class="dims">1280 × 860</span>
+  </div>
+  <section class="frame" data-screen-label="01 Onboarding · Welcome">
+    <div class="titlebar">
+      <div class="traffic-lights" aria-label="Window controls">
+        <span class="tl close"></span>
+        <span class="tl min"></span>
+        <span class="tl max"></span>
+      </div>
+    </div>
+    <div class="canvas">
+
+      <div class="wordmark">mneme</div>
+
+      <div class="hero">
+        <h1>Let's set up your study vault.</h1>
+        <p class="subtitle">A local-first place for your coursework, lecture notes, and AI conversations.</p>
+      </div>
+
+      <nav class="rail" aria-label="Onboarding progress">
+        <span class="rail-dot active">01</span>
+        <span class="rail-dot">02</span>
+        <span class="rail-dot">03</span>
+        <span class="rail-dot">04</span>
+        <span class="rail-dot">05</span>
+        <span class="rail-dot">06</span>
+      </nav>
+
+      <button class="cta" type="button">Continue</button>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============================================================
+       STEP 2 — CLAUDE CODE AUTH CHECK  (with 3 sub-states)
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">02</span><span class="title">Claude Code auth check · 3 sub-states</span>
+    <span class="rule"></span>
+    <span class="dims">1280 × 860</span>
+  </div>
+  <section class="frame" data-screen-label="02 Onboarding · Claude auth check">
+    <div class="titlebar">
+      <div class="traffic-lights" aria-label="Window controls">
+        <span class="tl close"></span>
+        <span class="tl min"></span>
+        <span class="tl max"></span>
+      </div>
+    </div>
+    <div class="canvas">
+
+      <div class="hero anchor-high">
+        <h1>Verifying Claude Code authentication.</h1>
+      </div>
+
+      <div class="substates" role="group" aria-label="Three sub-states of the auth check">
+
+        <!-- CHECKING -->
+        <div class="substate" aria-label="Checking state">
+          <div class="kicker">Checking</div>
+          <div class="status-line">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Checking Claude CLI…</span>
+          </div>
+          <div class="status-sub">Reading <code>~/.claude/</code> sentinel files. No network.</div>
+        </div>
+
+        <!-- FOUND -->
+        <div class="substate" aria-label="Found state">
+          <div class="kicker">Found</div>
+          <div class="status-line">
+            <span class="dot-success" aria-hidden="true"></span>
+            <span>Claude Code is ready.</span>
+          </div>
+          <div class="status-sub">Detected <code>claude</code> on your PATH. Continue when ready.</div>
+        </div>
+
+        <!-- NOT FOUND -->
+        <div class="substate" aria-label="Not found state">
+          <div class="kicker">Not found</div>
+          <div class="status-line">
+            <span class="dot-error-ring" aria-hidden="true"></span>
+            <span>Claude CLI not detected.</span>
+          </div>
+          <div class="status-sub">Run <code>claude --version</code> in Terminal first, then return here.</div>
+          <span class="link">Open Claude CLI guide</span>
+        </div>
+
+      </div>
+
+      <nav class="rail" aria-label="Onboarding progress">
+        <span class="rail-dot completed">01</span>
+        <span class="rail-dot active">02</span>
+        <span class="rail-dot">03</span>
+        <span class="rail-dot">04</span>
+        <span class="rail-dot">05</span>
+        <span class="rail-dot">06</span>
+      </nav>
+
+      <button class="cta" type="button" disabled aria-disabled="true">Continue</button>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============================================================
+       STEP 3 — VAULT PATH PICKER
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">03</span><span class="title">Vault path picker</span>
+    <span class="rule"></span>
+    <span class="dims">1280 × 860</span>
+  </div>
+  <section class="frame" data-screen-label="03 Onboarding · Vault path picker">
+    <div class="titlebar">
+      <div class="traffic-lights" aria-label="Window controls">
+        <span class="tl close"></span>
+        <span class="tl min"></span>
+        <span class="tl max"></span>
+      </div>
+    </div>
+    <div class="canvas">
+
+      <div class="hero anchor-high">
+        <h1>Where should your vault live?</h1>
+        <p class="subtitle">Your vault is one folder. All your courses and notes go inside. You can move it later.</p>
+      </div>
+
+      <div class="stack" style="top: 56%;">
+        <div class="input-row" role="textbox" aria-label="Vault path">
+          <span class="path">~/StudyVault</span>
+          <button class="browse" type="button">Browse…</button>
+        </div>
+        <div class="validation valid">
+          <span class="dot-success" aria-hidden="true"></span>
+          <span>Ready to create.</span>
+        </div>
+      </div>
+
+      <nav class="rail" aria-label="Onboarding progress">
+        <span class="rail-dot completed">01</span>
+        <span class="rail-dot completed">02</span>
+        <span class="rail-dot active">03</span>
+        <span class="rail-dot">04</span>
+        <span class="rail-dot">05</span>
+        <span class="rail-dot">06</span>
+      </nav>
+
+      <button class="ghost-link wide" type="button">Choose another folder</button>
+      <button class="cta cta-wide" type="button">Use this path</button>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============================================================
+       STEP 4 — MCP DETECTION
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">04</span><span class="title">MCP detection · self-ecosystem mode</span>
+    <span class="rule"></span>
+    <span class="dims">1280 × 860</span>
+  </div>
+  <section class="frame" data-screen-label="04 Onboarding · MCP detection">
+    <div class="titlebar">
+      <div class="traffic-lights" aria-label="Window controls">
+        <span class="tl close"></span>
+        <span class="tl min"></span>
+        <span class="tl max"></span>
+      </div>
+    </div>
+    <div class="canvas">
+
+      <div class="hero anchor-high">
+        <h1>No external integrations.</h1>
+      </div>
+
+      <div class="stack" style="top: 52%;">
+        <div class="status-line" style="display:flex;align-items:center;gap:10px;font-family:var(--font-serif);font-size:16px;color:var(--color-warm-dark);">
+          <span class="dot-config" aria-hidden="true"></span>
+          <span>mneme runs in self-ecosystem mode.</span>
+        </div>
+        <p class="helper" style="max-width:560px;">No Canvas, no Ed, no external university APIs. Coursework enters via manual import (next step). This is intentional — your data stays local.</p>
+      </div>
+
+      <nav class="rail" aria-label="Onboarding progress">
+        <span class="rail-dot completed">01</span>
+        <span class="rail-dot completed">02</span>
+        <span class="rail-dot completed">03</span>
+        <span class="rail-dot active">04</span>
+        <span class="rail-dot">05</span>
+        <span class="rail-dot">06</span>
+      </nav>
+
+      <button class="cta" type="button">Continue</button>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============================================================
+       STEP 5 — ADD FIRST COURSE
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">05</span><span class="title">Add first course</span>
+    <span class="rule"></span>
+    <span class="dims">1280 × 860</span>
+  </div>
+  <section class="frame" data-screen-label="05 Onboarding · Add first course">
+    <div class="titlebar">
+      <div class="traffic-lights" aria-label="Window controls">
+        <span class="tl close"></span>
+        <span class="tl min"></span>
+        <span class="tl max"></span>
+      </div>
+    </div>
+    <div class="canvas">
+
+      <div class="hero anchor-high">
+        <h1>Add your first course.</h1>
+        <p class="subtitle helper" style="font-size:14px;">Use the course code from your university — e.g. COMP3221, MATH1062, INFO1110.</p>
+      </div>
+
+      <div class="stack" style="top: 54%; gap: 20px;">
+        <div class="course-input">
+          <input type="text" value="INFO1110" aria-label="Course code" autocomplete="off" spellcheck="false">
+          <span class="check" aria-hidden="true">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+        </div>
+
+        <div class="chip-list" aria-label="Courses added so far">
+          <span class="chip">COMP3027<span class="x" aria-label="Remove course COMP3027">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </span></span>
+          <span class="chip">MATH1062<span class="x" aria-label="Remove course MATH1062">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </span></span>
+        </div>
+      </div>
+
+      <nav class="rail" aria-label="Onboarding progress">
+        <span class="rail-dot completed">01</span>
+        <span class="rail-dot completed">02</span>
+        <span class="rail-dot completed">03</span>
+        <span class="rail-dot completed">04</span>
+        <span class="rail-dot active">05</span>
+        <span class="rail-dot">06</span>
+      </nav>
+
+      <button class="ghost-link wide" type="button">Skip — add later</button>
+      <button class="cta cta-wide" type="button">Add course</button>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============================================================
+       STEP 6 — DEMO IMPORT
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">06</span><span class="title">Demo import</span>
+    <span class="rule"></span>
+    <span class="dims">1280 × 860</span>
+  </div>
+  <section class="frame" data-screen-label="06 Onboarding · Demo import">
+    <div class="titlebar">
+      <div class="traffic-lights" aria-label="Window controls">
+        <span class="tl close"></span>
+        <span class="tl min"></span>
+        <span class="tl max"></span>
+      </div>
+    </div>
+    <div class="canvas">
+
+      <div class="hero anchor-high">
+        <h1>Try the import flow.</h1>
+        <p class="subtitle helper" style="font-size:14px;">Drag a file from Finder onto the window, or just skip and import later.</p>
+      </div>
+
+      <div class="stack" style="top: 56%; gap: 20px;">
+        <div class="dropzone" aria-label="Drop zone">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="19 12 12 19 5 12"></polyline>
+          </svg>
+          <span>Drop a file here</span>
+        </div>
+        <p class="helper" style="font-size:14px;">Or press <span style="font-family:var(--font-mono);font-size:12.5px;background:rgba(20,20,19,0.05);padding:1px 5px;border-radius:3px;">Cmd+I</span> anytime to open the file picker.</p>
+      </div>
+
+      <nav class="rail" aria-label="Onboarding progress">
+        <span class="rail-dot completed">01</span>
+        <span class="rail-dot completed">02</span>
+        <span class="rail-dot completed">03</span>
+        <span class="rail-dot completed">04</span>
+        <span class="rail-dot completed">05</span>
+        <span class="rail-dot active">06</span>
+      </nav>
+
+      <button class="ghost-link" type="button">Skip</button>
+      <button class="cta" type="button">Finish</button>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

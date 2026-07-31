@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mneme — Import history modal</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --color-cream:        #faf9f5;
+    --color-cream-deep:   #f3f1ea;
+    --color-cream-edge:   #ede9de;
+    --color-orange:       #d97757;
+    --color-orange-soft:  rgba(217, 119, 87, 0.12);
+    --color-error:        #c15f3c;
+    --color-success:      #4ea36b;
+    --color-warm-dark:    #141413;
+    --color-warm-mute:    #7a766d;
+    --color-warm-soft:    #4a4843;
+    --border-soft:        rgba(20, 20, 19, 0.08);
+    --border-softer:      rgba(20, 20, 19, 0.05);
+    --veil:               rgba(20, 16, 13, 0.32);
+
+    --font-serif: "Tiempos Text", "Source Serif Pro", "Charter", Palatino, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+
+    --duration-fast: 160ms;
+    --duration-base: 200ms;
+    --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #ddd9cd;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0ms !important; transition-duration: 0ms !important; }
+  }
+
+  .doc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 0 64px;
+  }
+  .doc-meta {
+    width: 1280px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .doc-meta .label { color: var(--color-warm-soft); }
+
+  .frame-caption {
+    width: 1280px;
+    padding: 28px 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .frame-caption .num { color: var(--color-orange); }
+  .frame-caption .title { color: var(--color-warm-soft); }
+  .frame-caption .rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+
+  /* ================================================================
+     SHELL CONTEXT
+     ================================================================ */
+  .shell-frame {
+    position: relative;
+    width: 1280px;
+    height: 860px;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .shell-titlebar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    z-index: 5;
+  }
+  .traffic-lights { display: flex; gap: 8px; padding: 4px 4px 4px 0; }
+  .tl {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+  .titlebar-meta {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+  .titlebar-meta .dot-conn {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 0 2px rgba(78,163,107,0.18);
+  }
+  .pill-mini {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: var(--color-orange-soft);
+    color: var(--color-orange);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1;
+  }
+  .pill-mini .dot-pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-orange);
+    margin-left: 6px;
+    animation: pulse 1200ms ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .shell-cols {
+    position: absolute;
+    inset: 36px 0 120px 0;
+    display: grid;
+    grid-template-columns: 30% 4px 1fr 4px 30%;
+  }
+  .shell-splitter { border-left: 1px solid var(--border-softer); border-right: 1px solid var(--border-softer); }
+  .shell-pane { padding: 16px 22px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+  .greek-head { height: 14px; background: rgba(20,20,19,0.08); width: 30%; border-radius: 3px; }
+  .greek-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-softer);
+  }
+  .greek-row .ico { width: 30px; height: 30px; border-radius: 4px; background: var(--color-cream-deep); flex: 0 0 auto; }
+  .greek-row .ico.folder { background: rgba(217,119,87,0.10); }
+  .greek-row .name { flex: 1 1 auto; height: 11px; background: var(--color-cream-deep); border-radius: 3px; }
+  .greek-row .meta { width: 44px; height: 9px; background: var(--color-cream-deep); border-radius: 3px; }
+  .shell-mindmap {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
+    background: var(--color-cream); border-top: 1px solid var(--border-softer);
+    padding: 12px 18px; display: flex; align-items: center; gap: 16px;
+  }
+  .shell-mindmap .label-block { width: 200px; display: flex; flex-direction: column; gap: 4px; }
+  .shell-mindmap .kicker {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-warm-mute);
+  }
+  .shell-mindmap .canvas { flex: 1 1 auto; height: 100%; border-left: 1px solid var(--border-softer); padding-left: 16px; }
+
+  .veil {
+    position: absolute; inset: 0;
+    background: var(--veil);
+    z-index: 10;
+    animation: veil-in var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-anchor {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    z-index: 11; pointer-events: none;
+  }
+
+  /* ================================================================
+     IMPORT HISTORY MODAL — 640 × 540
+     ================================================================ */
+  .modal {
+    pointer-events: auto;
+    width: 640px;
+    height: 540px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: 10px;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 12px 32px rgba(20,20,19,0.10),
+      0 24px 48px rgba(20,20,19,0.06);
+    animation: modal-in var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--color-cream-edge);
+    gap: 12px;
+  }
+  .modal-header .title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+  }
+  .modal-header .meta-sub {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+  .modal-header .close {
+    margin-left: auto;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    display: grid; place-items: center;
+    color: var(--color-warm-soft);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .modal-header .close:hover { background: var(--color-cream-edge); color: var(--color-warm-dark); }
+
+  .modal-body {
+    overflow-y: auto;
+    border-top: 0;
+  }
+  .modal-body::-webkit-scrollbar { width: 10px; }
+  .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(20,20,19,0.10);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 10px;
+  }
+
+  /* row */
+  .row {
+    display: grid;
+    grid-template-columns: 80px 1fr 120px;
+    column-gap: 16px;
+    min-height: 72px;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--color-cream-edge);
+  }
+  .row:last-child { border-bottom: 0; }
+
+  .row .time {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .row .time .clock {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+  }
+  .row .time .rel {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+
+  .row .summary {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .row .summary .line {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .row .summary .line .target {
+    color: var(--color-warm-soft);
+  }
+  .row .summary .chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .row .summary .chips .chip {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 4px 8px;
+    background: var(--color-cream-deep);
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    white-space: nowrap;
+  }
+  .row .summary .chips .chip.more {
+    color: var(--color-warm-mute);
+  }
+
+  .row .status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
+  }
+  .badge {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-warm-mute);
+    cursor: default;
+  }
+  .badge.cancelled { font-style: italic; }
+  .badge.importing {
+    color: var(--color-orange);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge.importing .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-orange);
+    animation: pulse 1200ms ease-in-out infinite;
+  }
+  .badge.error {
+    color: var(--color-warm-mute);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .badge.error .num {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-error);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+  .badge.error .word {
+    color: var(--color-error);
+  }
+  .chev {
+    width: 16px; height: 16px;
+    display: inline-grid; place-items: center;
+    color: var(--color-warm-mute);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background var(--duration-fast) var(--ease-out),
+                transform var(--duration-base) var(--ease-out);
+  }
+  .chev:hover { background: var(--color-cream-edge); }
+  .chev.expanded { transform: rotate(180deg); }
+
+  /* error expansion */
+  .row-failures {
+    padding: 16px 20px 16px 116px;       /* indent past the time column */
+    background: var(--color-cream-edge);
+    border-top: 1px solid var(--color-cream-edge);
+    border-bottom: 1px solid var(--color-cream-edge);
+    animation: fail-in var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes fail-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .row-failures .fail-line {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    line-height: 1.5;
+  }
+  .row-failures .fail-line + .fail-line { margin-top: 4px; }
+  .row-failures .fail-line .filename {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+  }
+  .row-failures .fail-line .reason {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+
+  /* ================================================================
+     EMPTY STATE THUMBNAIL
+     ================================================================ */
+  .empty-frame {
+    position: relative;
+    width: 640px;
+    height: 540px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: 10px;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .empty-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .empty-card {
+    width: 360px;
+    min-height: 140px;
+    background: var(--color-cream-deep);
+    border-radius: 10px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .empty-card h3 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+  }
+  .empty-card p {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-mute);
+    max-width: 320px;
+    text-wrap: pretty;
+  }
+  .empty-cta {
+    background: transparent;
+    border: 0;
+    padding: 4px 0;
+    color: var(--color-warm-dark);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-warm-soft);
+  }
+
+  .frame-label-bottom {
+    width: 640px;
+    padding: 10px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warm-soft);
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  .frame-label-bottom .meta { color: var(--color-warm-mute); margin-left: 6px; }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-meta">
+    <span class="label">Mneme · Import history modal</span>
+    <span class="crumb">opens from titlebar status pill · 640 × 540 · last 20 operations</span>
+  </header>
+
+  <!-- ============================================================
+       MAIN — populated history
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">●</span><span class="title">Populated · 5 operations · row 3 expanded</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="shell-frame" data-screen-label="01 Import history · populated">
+    <div class="shell-titlebar">
+      <div class="traffic-lights"><span class="tl close"></span><span class="tl min"></span><span class="tl max"></span></div>
+      <div class="titlebar-meta">
+        <span class="dot-conn"></span>
+        <span>claude-code · connected</span>
+        <span style="opacity:.4">·</span>
+        <span class="pill-mini">importing 3 files…<span class="dot-pulse"></span></span>
+        <span style="margin-left:4px">vault: ~/StudyVault</span>
+      </div>
+    </div>
+    <div class="shell-cols">
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px;"></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="align-self:flex-end; max-width: 75%; background: var(--color-cream-deep); border-radius: 14px; padding: 12px 14px;">
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;margin-bottom:6px;width:80%"></div>
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;width:60%"></div>
+        </div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:90%"></div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:70%"></div>
+      </div>
+    </div>
+    <div class="shell-mindmap">
+      <div class="label-block">
+        <span class="kicker">Mind map</span>
+        <div style="height:11px; width:60%; background: var(--color-cream-deep); border-radius: 3px;"></div>
+      </div>
+      <div class="canvas">
+        <svg viewBox="0 0 800 90" preserveAspectRatio="none">
+          <circle cx="60" cy="45" r="6" fill="rgba(20,20,19,0.18)"></circle>
+          <line x1="66" y1="45" x2="180" y2="20" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <line x1="66" y1="45" x2="180" y2="70" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <circle cx="180" cy="20" r="4" fill="rgba(20,20,19,0.12)"></circle>
+          <circle cx="180" cy="70" r="4" fill="rgba(20,20,19,0.12)"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <div class="veil"></div>
+
+    <div class="modal-anchor">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="history-title">
+
+        <header class="modal-header">
+          <span class="title" id="history-title">Import history</span>
+          <span class="meta-sub">Last 20 operations</span>
+          <button class="close" type="button" aria-label="Close import history">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </header>
+
+        <div class="modal-body">
+
+          <!-- ROW 1 — IMPORTING -->
+          <div class="row">
+            <div class="time">
+              <span class="clock">12:47 PM</span>
+              <span class="rel">in progress</span>
+            </div>
+            <div class="summary">
+              <span class="line">Importing 3 files to <span class="target">COMP3221 / lectures</span></span>
+              <div class="chips">
+                <span class="chip">Week06_DynamicProgramming.pdf</span>
+                <span class="chip">L06.mp4</span>
+                <span class="chip">tutorial-06.md</span>
+              </div>
+            </div>
+            <div class="status">
+              <span class="badge importing">Importing… <span class="dot" aria-hidden="true"></span></span>
+            </div>
+          </div>
+
+          <!-- ROW 2 — IMPORTED -->
+          <div class="row">
+            <div class="time">
+              <span class="clock">12:46 PM</span>
+              <span class="rel">just now</span>
+            </div>
+            <div class="summary">
+              <span class="line">Imported 5 files to <span class="target">MATH1062 / lectures</span></span>
+              <div class="chips">
+                <span class="chip">L05_VectorSpaces.pdf</span>
+                <span class="chip">L05.mp4</span>
+                <span class="chip">notes-w5.md</span>
+                <span class="chip more">+ 2 more</span>
+              </div>
+            </div>
+            <div class="status">
+              <span class="badge">Imported</span>
+            </div>
+          </div>
+
+          <!-- ROW 3 — ERROR (expanded) -->
+          <div class="row">
+            <div class="time">
+              <span class="clock">12:42 PM</span>
+              <span class="rel">5 minutes ago</span>
+            </div>
+            <div class="summary">
+              <span class="line">Imported 3 of 4 files to <span class="target">COMP3221 / tutorials</span></span>
+              <div class="chips">
+                <span class="chip">tut-06.pdf</span>
+                <span class="chip">tut-06-soln.pdf</span>
+                <span class="chip">tut-06-extra.md</span>
+                <span class="chip more">+ 1 more</span>
+              </div>
+            </div>
+            <div class="status">
+              <span class="badge error" aria-expanded="true">
+                <span class="num">1</span><span class="word">Error</span>
+              </span>
+              <span class="chev expanded" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </div>
+          </div>
+          <!-- failure expansion -->
+          <div class="row-failures" role="region" aria-label="Failures for tutorials import">
+            <div class="fail-line">
+              <span class="filename">COMP3221_Lec06.pdf</span>
+              <span style="color:var(--color-warm-mute)"> — </span>
+              <span class="reason">File already exists, skipped.</span>
+            </div>
+            <div class="fail-line">
+              <span class="filename">COMP3221_Tut06.pdf</span>
+              <span style="color:var(--color-warm-mute)"> — </span>
+              <span class="reason">Permission denied.</span>
+            </div>
+          </div>
+
+          <!-- ROW 4 — IMPORTED -->
+          <div class="row">
+            <div class="time">
+              <span class="clock">Yesterday</span>
+              <span class="rel">17 hours ago</span>
+            </div>
+            <div class="summary">
+              <span class="line">Imported 2 files to <span class="target">INFO1110 / assignments</span></span>
+              <div class="chips">
+                <span class="chip">a2-spec.pdf</span>
+                <span class="chip">a2-starter.zip</span>
+              </div>
+            </div>
+            <div class="status">
+              <span class="badge">Imported</span>
+            </div>
+          </div>
+
+          <!-- ROW 5 — CANCELLED -->
+          <div class="row">
+            <div class="time">
+              <span class="clock">Yesterday</span>
+              <span class="rel">19 hours ago</span>
+            </div>
+            <div class="summary">
+              <span class="line">Imported 2 of 5 files to <span class="target">COMP3221 / lectures · cancelled</span></span>
+              <div class="chips">
+                <span class="chip">L04.pdf</span>
+                <span class="chip">L04.mp4</span>
+              </div>
+            </div>
+            <div class="status">
+              <span class="badge cancelled">Cancelled</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       EMPTY STATE THUMBNAIL
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">○</span><span class="title">Empty state · no imports this session</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="empty-frame" data-screen-label="02 Import history · empty state">
+    <header class="modal-header">
+      <span class="title">Import history</span>
+      <span class="meta-sub">Last 20 operations</span>
+      <button class="close" type="button" aria-label="Close import history">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </header>
+    <div class="empty-body">
+      <div class="empty-card">
+        <h3>No imports yet.</h3>
+        <p>Drop files on the window, press Cmd+I, or use Settings → Vault.</p>
+      </div>
+      <button class="empty-cta" type="button">Got it</button>
+    </div>
+  </div>
+
+  <span class="frame-label-bottom">Empty state<span class="meta">cream-deep card with path-out copy · ghost-link "Got it" closes the modal</span></span>
+
+</div>
+
+</body>
+</html>

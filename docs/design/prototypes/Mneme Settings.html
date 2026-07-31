@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mneme — Settings panel</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    /* color — locked tokens */
+    --color-cream:        #faf9f5;
+    --color-cream-deep:   #f3f1ea;
+    --color-cream-edge:   #ede9de;
+    --color-orange:       #d97757;
+    --color-orange-soft:  rgba(217, 119, 87, 0.10);
+    --color-error:        #c15f3c;
+    --color-success:      #4ea36b;
+    --color-warm-dark:    #141413;
+    --color-warm-mute:    #7a766d;
+    --color-warm-soft:    #4a4843;
+    --border-soft:        rgba(20, 20, 19, 0.08);
+    --border-softer:      rgba(20, 20, 19, 0.05);
+    --veil:               rgba(20, 16, 13, 0.32);
+
+    /* type */
+    --font-serif: "Tiempos Text", "Source Serif Pro", "Source Serif 4",
+                  "Charter", "Iowan Old Style", "Palatino Linotype",
+                  Palatino, "Book Antiqua", Georgia,
+                  "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "IBM Plex Mono", "Menlo",
+                 "Consolas", monospace;
+
+    /* spacing */
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+
+    /* radii */
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 10px;
+
+    /* motion */
+    --duration-fast: 160ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
+    --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+
+    --titlebar-height: 36px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #ddd9cd;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0ms !important;
+      transition-duration: 0ms !important;
+    }
+  }
+
+  .doc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 0 64px;
+    gap: 0;
+  }
+  .doc-meta {
+    width: 1944px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 32px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .doc-meta .label { color: var(--color-warm-soft); }
+  .doc-meta .crumb { color: var(--color-warm-mute); font-size: 10.5px; }
+
+  .frame-caption {
+    width: 1944px;
+    padding: 32px 32px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .frame-caption .num { color: var(--color-orange); }
+  .frame-caption .title { color: var(--color-warm-soft); }
+  .frame-caption .rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+  .frame-caption .dims { color: var(--color-warm-mute); }
+
+  /* ================================================================
+     SHELL CONTEXT (1280 × 860) behind the modal, dimmed by veil
+     ================================================================ */
+  .shell-frame {
+    position: relative;
+    width: 1280px;
+    height: 860px;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .shell-titlebar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: var(--titlebar-height);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    z-index: 5;
+  }
+  .traffic-lights { display: flex; gap: 8px; padding: 4px 4px 4px 0; }
+  .tl {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+  .titlebar-meta-mute {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warm-mute);
+  }
+  .titlebar-meta-mute .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 0 2px rgba(78,163,107,0.18);
+  }
+  .titlebar-meta-mute svg { color: var(--color-warm-mute); opacity: 0.7; }
+
+  .shell-cols {
+    position: absolute;
+    inset: 36px 0 120px 0;
+    display: grid;
+    grid-template-columns: 30% 4px 1fr 4px 30%;
+    background: var(--color-cream);
+  }
+  .shell-splitter {
+    border-left: 1px solid var(--border-softer);
+    border-right: 1px solid var(--border-softer);
+  }
+  .shell-pane {
+    padding: 16px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+  }
+  .greek {
+    background: var(--color-cream-deep);
+    border-radius: var(--radius-sm);
+    height: 12px;
+  }
+  .greek.wide { width: 80%; }
+  .greek.full { width: 100%; }
+  .greek.short { width: 50%; }
+  .greek.head {
+    height: 14px;
+    background: rgba(20,20,19,0.08);
+    width: 30%;
+  }
+  .greek-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-softer);
+  }
+  .greek-row .ico {
+    width: 30px; height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--color-cream-deep);
+    flex: 0 0 auto;
+  }
+  .greek-row .ico.folder { background: rgba(217,119,87,0.10); }
+  .greek-row .name {
+    flex: 1 1 auto;
+    height: 11px;
+    background: var(--color-cream-deep);
+    border-radius: 3px;
+  }
+  .greek-row .meta {
+    width: 44px; height: 9px;
+    background: var(--color-cream-deep);
+    border-radius: 3px;
+  }
+  .shell-msg-user {
+    align-self: flex-end;
+    max-width: 75%;
+    background: var(--color-cream-deep);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .shell-msg-user .line {
+    height: 11px;
+    background: rgba(20,20,19,0.08);
+    border-radius: 3px;
+  }
+  .shell-msg-asst {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .shell-msg-asst .line {
+    height: 11px;
+    background: var(--color-cream-deep);
+    border-radius: 3px;
+  }
+  .shell-mindmap {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 120px;
+    background: var(--color-cream);
+    border-top: 1px solid var(--border-softer);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .shell-mindmap .label-block {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .shell-mindmap .kicker {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-warm-mute);
+  }
+  .shell-mindmap .canvas {
+    flex: 1 1 auto;
+    height: 100%;
+    border-left: 1px solid var(--border-softer);
+    padding-left: 16px;
+    position: relative;
+  }
+  .shell-mindmap .canvas svg { display: block; width: 100%; height: 100%; }
+
+  /* ================================================================
+     VEIL + MODAL
+     ================================================================ */
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: var(--veil);
+    z-index: 10;
+    animation: veil-in var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes veil-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal-anchor {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 11;
+    pointer-events: none;
+  }
+  .modal {
+    pointer-events: auto;
+    width: 880px;
+    height: 600px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 12px 32px rgba(20,20,19,0.10),
+      0 24px 48px rgba(20,20,19,0.06);
+    animation: modal-in var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  /* ============== LEFT RAIL ============== */
+  .modal-rail {
+    background: var(--color-cream);
+    border-right: 1px solid var(--color-cream-edge);
+    padding-top: 12px;
+  }
+  .rail-row {
+    position: relative;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .rail-row:hover { background: var(--color-cream-edge); }
+  .rail-row.active {
+    background: var(--color-cream-deep);
+  }
+  .rail-row.active:hover { background: var(--color-cream-deep); }
+  .rail-row.active::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--color-orange);
+  }
+
+  /* ============== RIGHT BODY ============== */
+  .modal-body {
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    min-height: 0;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--color-cream-edge);
+  }
+  .modal-header .title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+  }
+  .modal-header .close {
+    margin-left: auto;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    width: 24px; height: 24px;
+    border-radius: var(--radius-sm);
+    display: grid; place-items: center;
+    color: var(--color-warm-soft);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
+  }
+  .modal-header .close:hover {
+    background: var(--color-cream-edge);
+    color: var(--color-warm-dark);
+  }
+  .modal-header .close:active { transform: scale(0.96); }
+
+  .modal-content {
+    overflow-y: auto;
+    padding: 24px 24px 32px;
+    animation: body-in var(--duration-fast) var(--ease-out) both;
+  }
+  @keyframes body-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .modal-content::-webkit-scrollbar { width: 10px; }
+  .modal-content::-webkit-scrollbar-thumb {
+    background: rgba(20,20,19,0.10);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 10px;
+  }
+
+  /* ============== SHARED SECTION PRIMITIVES ============== */
+  .section { margin-bottom: 24px; }
+  .section:last-child { margin-bottom: 0; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--color-cream-edge);
+    margin-bottom: 16px;
+  }
+  .section-head .label {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-warm-soft);
+  }
+  .section-head .meta {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warm-mute);
+    letter-spacing: 0.04em;
+  }
+
+  /* ============== VAULT BODY ============== */
+  .row-line {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 32px;
+  }
+  .row-line .path {
+    flex: 1 1 auto;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ghost-btn {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--color-cream-edge);
+    color: var(--color-warm-soft);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out),
+                transform var(--duration-fast) var(--ease-out);
+  }
+  .ghost-btn:hover {
+    background: var(--color-cream-edge);
+    color: var(--color-warm-dark);
+    border-color: rgba(20,20,19,0.14);
+  }
+  .ghost-btn:active { transform: scale(0.96); }
+
+  .ghost-link-btn {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    padding: 4px 0;
+    color: var(--color-warm-soft);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+  }
+  .ghost-link-btn:hover {
+    color: var(--color-warm-dark);
+    border-bottom-color: var(--color-warm-dark);
+  }
+
+  .chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 4px 8px 4px 10px;
+    background: var(--color-cream-deep);
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .chip .x {
+    width: 14px; height: 14px;
+    display: inline-grid; place-items: center;
+    border-radius: 50%;
+    color: var(--color-warm-mute);
+    cursor: pointer;
+    opacity: 0;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out),
+                opacity var(--duration-fast) var(--ease-out);
+  }
+  .chip:hover .x { opacity: 1; color: var(--color-warm-soft); }
+  .chip .x:hover { background: rgba(20,20,19,0.06); color: var(--color-warm-dark); }
+  /* persistent x on the demo chip so the affordance reads in the doc */
+  .chip.show-x .x { opacity: 0.75; }
+
+  .add-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .add-input {
+    height: 36px;
+    width: 200px;
+    background: var(--color-cream-deep);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    transition: border-color var(--duration-base) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out);
+  }
+  .add-input:focus-within {
+    border-color: rgba(217,119,87,0.45);
+    box-shadow: 0 0 0 3px rgba(217,119,87,0.10);
+  }
+  .add-input input {
+    flex: 1 1 auto;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    min-width: 0;
+    padding: 0;
+  }
+  .add-input input::placeholder { color: var(--color-warm-mute); }
+  .check {
+    flex: 0 0 auto;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--color-success);
+    display: grid; place-items: center;
+    color: var(--color-cream);
+  }
+  .pill {
+    appearance: none;
+    height: 36px;
+    padding: 0 16px;
+    background: var(--color-orange);
+    border: 0;
+    border-radius: 9999px;
+    color: var(--color-cream);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.18) inset,
+      0 1px 2px rgba(20,20,19,0.05),
+      0 4px 12px rgba(217,119,87,0.18);
+  }
+  .pill:hover { transform: translateY(-1px); }
+  .pill:active { transform: scale(0.96); }
+
+  .stat-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 2px 0;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+  .stat-row .k { color: var(--color-warm-soft); min-width: 110px; }
+  .stat-row .v { color: var(--color-warm-dark); font-family: var(--font-mono); font-size: 13px; }
+
+  /* ============== APPEARANCE BODY ============== */
+  .radio-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+    cursor: pointer;
+  }
+  .radio-row.disabled {
+    color: var(--color-warm-mute);
+    font-size: 14px;
+    cursor: default;
+  }
+  .radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(20,20,19,0.25);
+    background: var(--color-cream);
+    display: grid; place-items: center;
+    flex: 0 0 auto;
+  }
+  .radio.selected {
+    border-color: var(--color-orange);
+  }
+  .radio.selected::after {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--color-orange);
+  }
+  .radio.disabled {
+    border-color: rgba(20,20,19,0.14);
+    background: var(--color-cream-deep);
+  }
+  .radio-row .note {
+    color: var(--color-warm-mute);
+    font-size: 13px;
+    margin-left: 4px;
+  }
+
+  .density-line {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+    padding: 4px 0;
+  }
+  .density-line .muted { color: var(--color-warm-mute); }
+
+  /* ============== KEYBINDINGS BODY ============== */
+  .kb-table {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 24px;
+    row-gap: 0;
+  }
+  .kb-row {
+    display: contents;
+  }
+  .kb-row .action {
+    padding: 12px 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-dark);
+    border-bottom: 1px solid var(--color-cream-edge);
+  }
+  .kb-row .keys {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-cream-edge);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .kb-row:last-child .action,
+  .kb-row:last-child .keys {
+    border-bottom: 0;
+  }
+  .kb-key {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 4px 8px;
+    background: var(--color-cream-deep);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-dark);
+    line-height: 1;
+  }
+  .kb-plus {
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 0 2px;
+  }
+  .kb-foot {
+    margin-top: 16px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+
+  /* ============== PLACEHOLDER BODY ============== */
+  .placeholder-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    gap: 12px;
+    padding: 0 24px;
+  }
+  .placeholder-body .heading {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+    line-height: 1.2;
+  }
+  .placeholder-body .body {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-mute);
+    line-height: 1.5;
+    max-width: 32ch;       /* ~44 visible characters */
+    text-wrap: pretty;
+  }
+
+  /* ================================================================
+     THUMBNAIL STRIP
+     ================================================================ */
+  .thumb-strip {
+    display: flex;
+    gap: 24px;
+    padding: 0 32px;
+    align-items: flex-start;
+    width: 1944px;
+    overflow: visible;
+  }
+  .thumb-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    flex: 0 0 264px;
+  }
+  .thumb {
+    width: 264px;
+    height: 180px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 4px 10px rgba(20,20,19,0.06);
+  }
+  .thumb .modal {
+    transform: scale(0.3);
+    transform-origin: top left;
+    animation: none;
+    width: 880px;
+    height: 600px;
+    border-radius: 20px;
+    border-width: 3px;
+    box-shadow: none;
+  }
+  .thumb-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--color-warm-soft);
+  }
+  .thumb-label .meta {
+    color: var(--color-warm-mute);
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-meta">
+    <span class="label">Mneme · Settings panel</span>
+    <span class="crumb">Cmd+, · 880 × 600 modal over three-pane shell</span>
+  </header>
+
+  <!-- ============================================================
+       MAIN — Vault category at full fidelity
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">●</span><span class="title">Vault category · active</span>
+    <span class="rule"></span>
+    <span class="dims">Modal 880 × 600 · veil rgba(20,16,13,0.32)</span>
+  </div>
+
+  <div class="shell-frame" data-screen-label="01 Settings · Vault · over three-pane shell">
+
+    <!-- abbreviated three-pane shell behind veil -->
+    <div class="shell-titlebar">
+      <div class="traffic-lights">
+        <span class="tl close"></span><span class="tl min"></span><span class="tl max"></span>
+      </div>
+      <div class="titlebar-meta-mute">
+        <span class="dot"></span>
+        <span>claude-code · connected</span>
+        <span style="opacity:.4">·</span>
+        <span>vault: ~/StudyVault</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </div>
+    </div>
+
+    <div class="shell-cols">
+      <div class="shell-pane">
+        <div class="greek head"></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek head"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px; min-height: 240px;"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px; min-height: 200px;"></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek head"></div>
+        <div class="shell-msg-user"><div class="line" style="width:80%"></div><div class="line" style="width:60%"></div></div>
+        <div class="shell-msg-asst">
+          <div class="line" style="width:90%"></div>
+          <div class="line" style="width:85%"></div>
+          <div class="line" style="width:70%"></div>
+        </div>
+        <div class="shell-msg-asst">
+          <div class="line" style="width:80%"></div>
+          <div class="line" style="width:88%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shell-mindmap">
+      <div class="label-block">
+        <span class="kicker">Mind map</span>
+        <div style="height:11px; width:60%; background: var(--color-cream-deep); border-radius: 3px;"></div>
+        <div style="height:9px; width:80%; background: var(--color-cream-deep); border-radius: 3px;"></div>
+      </div>
+      <div class="canvas">
+        <svg viewBox="0 0 800 90" preserveAspectRatio="none">
+          <circle cx="60" cy="45" r="6" fill="rgba(20,20,19,0.18)"></circle>
+          <line x1="66" y1="45" x2="180" y2="20" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <line x1="66" y1="45" x2="180" y2="70" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <line x1="66" y1="45" x2="220" y2="45" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <circle cx="180" cy="20" r="4" fill="rgba(20,20,19,0.12)"></circle>
+          <circle cx="180" cy="70" r="4" fill="rgba(20,20,19,0.12)"></circle>
+          <circle cx="220" cy="45" r="4" fill="rgba(20,20,19,0.12)"></circle>
+          <line x1="184" y1="20" x2="320" y2="14" stroke="rgba(20,20,19,0.08)" stroke-width="1"/>
+          <line x1="184" y1="70" x2="340" y2="80" stroke="rgba(20,20,19,0.08)" stroke-width="1"/>
+          <line x1="224" y1="45" x2="360" y2="40" stroke="rgba(20,20,19,0.08)" stroke-width="1"/>
+          <circle cx="320" cy="14" r="3" fill="rgba(20,20,19,0.10)"></circle>
+          <circle cx="340" cy="80" r="3" fill="rgba(20,20,19,0.10)"></circle>
+          <circle cx="360" cy="40" r="3" fill="rgba(20,20,19,0.10)"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <!-- VEIL -->
+    <div class="veil"></div>
+
+    <!-- MODAL -->
+    <div class="modal-anchor">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+
+        <!-- LEFT RAIL -->
+        <nav class="modal-rail" aria-label="Settings categories">
+          <div class="rail-row">General</div>
+          <div class="rail-row active" aria-current="page">Vault</div>
+          <div class="rail-row">Sync</div>
+          <div class="rail-row">Claude</div>
+          <div class="rail-row">Privacy</div>
+          <div class="rail-row">Appearance</div>
+          <div class="rail-row">Keybindings</div>
+          <div class="rail-row">Advanced</div>
+        </nav>
+
+        <!-- RIGHT BODY -->
+        <div class="modal-body">
+          <header class="modal-header">
+            <span class="title" id="settings-title">Vault</span>
+            <button class="close" type="button" aria-label="Close settings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </header>
+
+          <div class="modal-content">
+
+            <!-- VAULT PATH -->
+            <section class="section">
+              <div class="section-head">
+                <span class="label">Vault path</span>
+              </div>
+              <div class="row-line">
+                <span class="path">~/StudyVault</span>
+                <button class="ghost-btn" type="button">Move…</button>
+              </div>
+            </section>
+
+            <!-- COURSES -->
+            <section class="section">
+              <div class="section-head">
+                <span class="label">Courses</span>
+                <span class="meta">3 added</span>
+              </div>
+              <div class="chip-list">
+                <span class="chip show-x">COMP3027<span class="x" aria-label="Remove course COMP3027">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span></span>
+                <span class="chip">MATH1062<span class="x" aria-label="Remove course MATH1062">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span></span>
+                <span class="chip">INFO1110<span class="x" aria-label="Remove course INFO1110">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span></span>
+              </div>
+              <div class="add-row" aria-label="Add a new course">
+                <div class="add-input">
+                  <input type="text" value="COMP3221" aria-label="Course code" autocomplete="off" spellcheck="false">
+                  <span class="check" aria-hidden="true">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </span>
+                </div>
+                <button class="pill" type="button">Add course</button>
+                <button class="ghost-link-btn" type="button">Cancel</button>
+              </div>
+            </section>
+
+            <!-- STORAGE -->
+            <section class="section">
+              <div class="section-head">
+                <span class="label">Storage</span>
+              </div>
+              <div class="stat-row"><span class="k">Total files</span><span class="v">47</span></div>
+              <div class="stat-row"><span class="k">Total size</span><span class="v">12.3 MB</span></div>
+              <div class="stat-row"><span class="k">Last indexed</span><span class="v">2 minutes ago</span></div>
+            </section>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       THUMBNAIL STRIP — 7 other categories at 30% scale
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">○</span><span class="title">Other categories · 30% scale</span>
+    <span class="rule"></span>
+    <span class="dims">7 × (264 × 180)</span>
+  </div>
+
+  <div class="thumb-strip">
+
+    <!-- General -->
+    <div class="thumb-wrap">
+      <div class="thumb">
+        <div class="modal">
+          <nav class="modal-rail">
+            <div class="rail-row active">General</div>
+            <div class="rail-row">Vault</div>
+            <div class="rail-row">Sync</div>
+            <div class="rail-row">Claude</div>
+            <div class="rail-row">Privacy</div>
+            <div class="rail-row">Appearance</div>
+            <div class="rail-row">Keybindings</div>
+            <div class="rail-row">Advanced</div>
+          </nav>
+          <div class="modal-body">
+            <header class="modal-header">
+              <span class="title">General</span>
+              <button class="close" type="button" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </header>
+            <div class="modal-content"><div class="placeholder-body"><div class="heading">Coming in Phase 3.</div><div class="body">General settings — window size, startup behavior, language — arrive when Phase 3 introduces multi-session.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <span class="thumb-label">General<span class="meta">phase 3</span></span>
+    </div>
+
+    <!-- Sync -->
+    <div class="thumb-wrap">
+      <div class="thumb">
+        <div class="modal">
+          <nav class="modal-rail">
+            <div class="rail-row">General</div>
+            <div class="rail-row">Vault</div>
+            <div class="rail-row active">Sync</div>
+            <div class="rail-row">Claude</div>
+            <div class="rail-row">Privacy</div>
+            <div class="rail-row">Appearance</div>
+            <div class="rail-row">Keybindings</div>
+            <div class="rail-row">Advanced</div>
+          </nav>
+          <div class="modal-body">
+            <header class="modal-header">
+              <span class="title">Sync</span>
+              <button class="close" type="button" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </header>
+            <div class="modal-content"><div class="placeholder-body"><div class="heading">Coming in v2.</div><div class="body">Sync between devices is a v2 feature. Mneme is single-device-first by design.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <span class="thumb-label">Sync<span class="meta">v2</span></span>
+    </div>
+
+    <!-- Claude -->
+    <div class="thumb-wrap">
+      <div class="thumb">
+        <div class="modal">
+          <nav class="modal-rail">
+            <div class="rail-row">General</div>
+            <div class="rail-row">Vault</div>
+            <div class="rail-row">Sync</div>
+            <div class="rail-row active">Claude</div>
+            <div class="rail-row">Privacy</div>
+            <div class="rail-row">Appearance</div>
+            <div class="rail-row">Keybindings</div>
+            <div class="rail-row">Advanced</div>
+          </nav>
+          <div class="modal-body">
+            <header class="modal-header">
+              <span class="title">Claude</span>
+              <button class="close" type="button" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </header>
+            <div class="modal-content"><div class="placeholder-body"><div class="heading">Coming in Phase 3.</div><div class="body">Model selection, system-prompt config, and per-session limits arrive when Phase 3 wires multi-session.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <span class="thumb-label">Claude<span class="meta">phase 3</span></span>
+    </div>
+
+    <!-- Privacy -->
+    <div class="thumb-wrap">
+      <div class="thumb">
+        <div class="modal">
+          <nav class="modal-rail">
+            <div class="rail-row">General</div>
+            <div class="rail-row">Vault</div>
+            <div class="rail-row">Sync</div>
+            <div class="rail-row">Claude</div>
+            <div class="rail-row active">Privacy</div>
+            <div class="rail-row">Appearance</div>
+            <div class="rail-row">Keybindings</div>
+            <div class="rail-row">Advanced</div>
+          </nav>
+          <div class="modal-body">
+            <header class="modal-header">
+              <span class="title">Privacy</span>
+              <button class="close" type="button" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </header>
+            <div class="modal-content"><div class="placeholder-body"><div class="heading">Coming in Phase 7.</div><div class="body">Data residency controls and conversation retention arrive when Phase 7 ships the knowledge graph.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <span class="thumb-label">Privacy<span class="meta">phase 7</span></span>
+    </div>
+
+    <!-- Appearance -->
+    <div class="thumb-wrap">
+      <div class="thumb">
+        <div class="modal">
+          <nav class="modal-rail">
+            <div class="rail-row">General</div>
+            <div class="rail-row">Vault</div>
+            <div class="rail-row">Sync</div>
+            <div class="rail-row">Claude</div>
+            <div class="rail-row">Privacy</div>
+            <div class="rail-row active">Appearance</div>
+            <div class="rail-row">Keybindings</div>
+            <div class="rail-row">Advanced</div>
+          </nav>
+          <div class="modal-body">
+            <header class="modal-header">
+              <span class="title">Appearance</span>
+              <button class="close" type="button" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </header>
+            <div class="modal-content">
+              <section class="section">
+                <div class="section-head"><span class="label">Theme</span></div>
+                <div class="radio-row">
+                  <span class="radio selected" aria-hidden="true"></span>
+                  <span>Light</span>
+                </div>
+                <div class="radio-row disabled">
+                  <span class="radio disabled" aria-hidden="true"></span>
+                  <span>Dark</span>
+                  <span class="note">(coming in a future phase)</span>
+                </div>
+              </section>
+              <section class="section">
+                <div class="section-head"><span class="label">Density</span></div>
+                <div class="density-line">Default <span class="muted">— matches macOS.</span></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="thumb-label">Appearance<span class="meta">v1</span></span>
+    </div>
+
+    <!-- Keybindings -->
+    <div class="thumb-wrap">
+      <div class="thumb">
+        <div class="modal">
+          <nav class="modal-rail">
+            <div class="rail-row">General</div>
+            <div class="rail-row">Vault</div>
+            <div class="rail-row">Sync</div>
+            <div class="rail-row">Claude</div>
+            <div class="rail-row">Privacy</div>
+            <div class="rail-row">Appearance</div>
+            <div class="rail-row active">Keybindings</div>
+            <div class="rail-row">Advanced</div>
+          </nav>
+          <div class="modal-body">
+            <header class="modal-header">
+              <span class="title">Keybindings</span>
+              <button class="close" type="button" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </header>
+            <div class="modal-content">
+              <div class="kb-table">
+                <div class="kb-row">
+                  <div class="action">Quit app</div>
+                  <div class="keys"><span class="kb-key">Cmd</span><span class="kb-plus">+</span><span class="kb-key">Q</span></div>
+                </div>
+                <div class="kb-row">
+                  <div class="action">Open Settings</div>
+                  <div class="keys"><span class="kb-key">Cmd</span><span class="kb-plus">+</span><span class="kb-key">,</span></div>
+                </div>
+                <div class="kb-row">
+                  <div class="action">Import file picker</div>
+                  <div class="keys"><span class="kb-key">Cmd</span><span class="kb-plus">+</span><span class="kb-key">I</span></div>
+                </div>
+                <div class="kb-row">
+                  <div class="action">Send message</div>
+                  <div class="keys"><span class="kb-key">Enter</span></div>
+                </div>
+                <div class="kb-row">
+                  <div class="action">Newline in input</div>
+                  <div class="keys"><span class="kb-key">Shift</span><span class="kb-plus">+</span><span class="kb-key">Enter</span></div>
+                </div>
+              </div>
+              <div class="kb-foot">Custom bindings coming in Phase 3.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="thumb-label">Keybindings<span class="meta">v1</span></span>
+    </div>
+
+    <!-- Advanced -->
+    <div class="thumb-wrap">
+      <div class="thumb">
+        <div class="modal">
+          <nav class="modal-rail">
+            <div class="rail-row">General</div>
+            <div class="rail-row">Vault</div>
+            <div class="rail-row">Sync</div>
+            <div class="rail-row">Claude</div>
+            <div class="rail-row">Privacy</div>
+            <div class="rail-row">Appearance</div>
+            <div class="rail-row">Keybindings</div>
+            <div class="rail-row active">Advanced</div>
+          </nav>
+          <div class="modal-body">
+            <header class="modal-header">
+              <span class="title">Advanced</span>
+              <button class="close" type="button" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </header>
+            <div class="modal-content"><div class="placeholder-body"><div class="heading">Coming in Phase 4+.</div><div class="body">Power-user toggles (vault index reset, log export, MCP overrides) arrive incrementally.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <span class="thumb-label">Advanced<span class="meta">phase 4+</span></span>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

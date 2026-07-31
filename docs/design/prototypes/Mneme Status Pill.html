@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mneme — Status pill states</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --color-cream:        #faf9f5;
+    --color-cream-deep:   #f3f1ea;
+    --color-cream-edge:   #ede9de;
+    --color-orange:       #d97757;
+    --color-orange-soft:  rgba(217, 119, 87, 0.12);
+    --color-error:        #c15f3c;
+    --color-success:      #4ea36b;
+    --color-warm-dark:    #141413;
+    --color-warm-mute:    #7a766d;
+    --color-warm-soft:    #4a4843;
+
+    --font-serif: "Tiempos Text", "Source Serif Pro", "Charter", Palatino, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+
+    --duration-fast: 160ms;
+    --duration-base: 200ms;
+    --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #ddd9cd;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0ms !important;
+      transition-duration: 0ms !important;
+    }
+  }
+
+  .doc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 0 64px;
+  }
+  .doc-meta {
+    width: 1280px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .doc-meta .label { color: var(--color-warm-soft); }
+
+  .frame-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+  .frame-row:last-child { margin-bottom: 0; }
+
+  /* TITLEBAR FRAME — 1280 × 36 */
+  .titlebar {
+    width: 1280px;
+    height: 36px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-cream-edge);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04);
+  }
+  .traffic-lights {
+    display: flex;
+    gap: 8px;
+    padding: 4px 4px 4px 0;
+  }
+  .tl {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+
+  .meta {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+  }
+  .meta .dot-conn {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 0 2px rgba(78,163,107,0.18);
+  }
+  .meta .sep { opacity: 0.4; }
+  .meta .vault { color: var(--color-warm-mute); }
+  .meta .vault .colon { opacity: 0.7; }
+  .meta .vault .path { color: var(--color-warm-soft); }
+  .meta .cog {
+    margin-left: 4px;
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    border-radius: 4px;
+    color: var(--color-warm-soft);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+  .meta .cog:hover { background: var(--color-cream-edge); color: var(--color-warm-dark); }
+
+  /* STATUS PILL */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 12px;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1;
+    background: var(--color-cream-deep);
+    color: var(--color-warm-dark);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
+    margin-left: 4px;     /* spec: 16px gap each side via outer wrapper */
+    margin-right: 4px;
+  }
+  .pill-wrap {
+    display: inline-flex;
+    align-items: center;
+    /* 16px gap on each side of pill, in addition to the 12px gap inside .meta */
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+  /* state — importing */
+  .pill.importing {
+    background: var(--color-orange-soft);
+    color: var(--color-orange);
+  }
+  .pill.importing .pill-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-orange);
+    margin-left: 6px;
+    animation: pulse 1200ms ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  /* state — imported (default + hover) */
+  .pill.imported {
+    background: var(--color-cream-deep);
+    color: var(--color-warm-dark);
+  }
+  .pill.imported.hover {
+    background: var(--color-cream-edge);
+    color: var(--color-warm-dark);
+  }
+
+  /* state — error */
+  .pill.error .err {
+    color: var(--color-error);
+    margin-left: 4px;
+  }
+  .pill.error .mid {
+    color: var(--color-warm-mute);
+    margin: 0 4px;
+    opacity: 0.6;
+  }
+
+  /* state — cancelled */
+  .pill.cancelled {
+    color: var(--color-warm-mute);
+    font-style: italic;
+  }
+
+  .frame-label {
+    width: 1280px;
+    padding: 8px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warm-soft);
+    letter-spacing: 0.06em;
+  }
+  .frame-label .lead { color: var(--color-orange); margin-right: 8px; }
+  .frame-label .meta-note { color: var(--color-warm-mute); margin-left: 8px; }
+
+  .group-caption {
+    width: 1280px;
+    padding: 24px 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .group-caption .title { color: var(--color-warm-soft); }
+  .group-caption .rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-meta">
+    <span class="label">Mneme · Status pill · TitlebarMeta updates</span>
+    <span class="crumb">36px titlebar · 20px pill · 4 states + idle + hover</span>
+  </header>
+
+  <!-- ============================================================
+       IDLE
+       ============================================================ -->
+  <div class="group-caption">
+    <span class="title">Idle · no import activity this session · pill hidden</span>
+    <span class="rule"></span>
+  </div>
+  <div class="frame-row">
+    <div class="titlebar" data-screen-label="01 Status pill · Idle (hidden)">
+      <div class="traffic-lights">
+        <span class="tl close"></span><span class="tl min"></span><span class="tl max"></span>
+      </div>
+      <div class="meta">
+        <span class="dot-conn" aria-hidden="true"></span>
+        <span>claude-code · connected</span>
+        <span class="sep">·</span>
+        <span class="vault">vault<span class="colon">:</span> <span class="path">~/StudyVault</span></span>
+        <button class="cog" type="button" aria-label="Open settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </div>
+    <span class="frame-label"><span class="lead">01</span>Idle <span class="meta-note">pill absent · titlebar collapses to Phase 1 baseline</span></span>
+  </div>
+
+  <!-- ============================================================
+       STATE 1 — IMPORTING
+       ============================================================ -->
+  <div class="group-caption">
+    <span class="title">State 1 · Importing · in-flight</span>
+    <span class="rule"></span>
+  </div>
+  <div class="frame-row">
+    <div class="titlebar" data-screen-label="02 Status pill · Importing">
+      <div class="traffic-lights">
+        <span class="tl close"></span><span class="tl min"></span><span class="tl max"></span>
+      </div>
+      <div class="meta">
+        <span class="dot-conn" aria-hidden="true"></span>
+        <span>claude-code · connected</span>
+        <span class="pill-wrap">
+          <span class="pill importing">
+            importing 3 files…<span class="pill-dot" aria-hidden="true"></span>
+          </span>
+        </span>
+        <span class="vault">vault<span class="colon">:</span> <span class="path">~/StudyVault</span></span>
+        <button class="cog" type="button" aria-label="Open settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </div>
+    <span class="frame-label"><span class="lead">02</span>Importing <span class="meta-note">orange-soft bg · orange text · 8px pulsing dot @ 1.2s</span></span>
+  </div>
+
+  <!-- ============================================================
+       STATE 2 — IMPORTED (default)
+       ============================================================ -->
+  <div class="group-caption">
+    <span class="title">State 2 · Imported · recently finished</span>
+    <span class="rule"></span>
+  </div>
+  <div class="frame-row">
+    <div class="titlebar" data-screen-label="03 Status pill · Imported (default)">
+      <div class="traffic-lights">
+        <span class="tl close"></span><span class="tl min"></span><span class="tl max"></span>
+      </div>
+      <div class="meta">
+        <span class="dot-conn" aria-hidden="true"></span>
+        <span>claude-code · connected</span>
+        <span class="pill-wrap">
+          <span class="pill imported">imported 3 files · just now</span>
+        </span>
+        <span class="vault">vault<span class="colon">:</span> <span class="path">~/StudyVault</span></span>
+        <button class="cog" type="button" aria-label="Open settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </div>
+    <span class="frame-label"><span class="lead">03</span>Imported · default <span class="meta-note">cream-deep bg · warm-dark text · relative time updates every minute</span></span>
+  </div>
+
+  <!-- STATE 2 — HOVER -->
+  <div class="frame-row">
+    <div class="titlebar" data-screen-label="04 Status pill · Imported (hover)">
+      <div class="traffic-lights">
+        <span class="tl close"></span><span class="tl min"></span><span class="tl max"></span>
+      </div>
+      <div class="meta">
+        <span class="dot-conn" aria-hidden="true"></span>
+        <span>claude-code · connected</span>
+        <span class="pill-wrap">
+          <span class="pill imported hover">imported 3 files · just now</span>
+        </span>
+        <span class="vault">vault<span class="colon">:</span> <span class="path">~/StudyVault</span></span>
+        <button class="cog" type="button" aria-label="Open settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </div>
+    <span class="frame-label"><span class="lead">04</span>Imported · hover <span class="meta-note">cream-edge bg tint · cursor: pointer · click opens history</span></span>
+  </div>
+
+  <!-- ============================================================
+       STATE 3 — ERROR
+       ============================================================ -->
+  <div class="group-caption">
+    <span class="title">State 3 · Error · partial failures</span>
+    <span class="rule"></span>
+  </div>
+  <div class="frame-row">
+    <div class="titlebar" data-screen-label="05 Status pill · Error">
+      <div class="traffic-lights">
+        <span class="tl close"></span><span class="tl min"></span><span class="tl max"></span>
+      </div>
+      <div class="meta">
+        <span class="dot-conn" aria-hidden="true"></span>
+        <span>claude-code · connected</span>
+        <span class="pill-wrap">
+          <span class="pill error">2 of 3 imported<span class="mid">·</span><span class="err">1 error</span></span>
+        </span>
+        <span class="vault">vault<span class="colon">:</span> <span class="path">~/StudyVault</span></span>
+        <button class="cog" type="button" aria-label="Open settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </div>
+    <span class="frame-label"><span class="lead">05</span>Error <span class="meta-note">cream-deep bg · "1 error" in orange-red #c15f3c text only (no fill)</span></span>
+  </div>
+
+  <!-- ============================================================
+       STATE 4 — CANCELLED
+       ============================================================ -->
+  <div class="group-caption">
+    <span class="title">State 4 · Cancelled</span>
+    <span class="rule"></span>
+  </div>
+  <div class="frame-row">
+    <div class="titlebar" data-screen-label="06 Status pill · Cancelled">
+      <div class="traffic-lights">
+        <span class="tl close"></span><span class="tl min"></span><span class="tl max"></span>
+      </div>
+      <div class="meta">
+        <span class="dot-conn" aria-hidden="true"></span>
+        <span>claude-code · connected</span>
+        <span class="pill-wrap">
+          <span class="pill cancelled">2 / 3 imported · cancelled</span>
+        </span>
+        <span class="vault">vault<span class="colon">:</span> <span class="path">~/StudyVault</span></span>
+        <button class="cog" type="button" aria-label="Open settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </div>
+    <span class="frame-label"><span class="lead">06</span>Cancelled <span class="meta-note">cream-deep bg · gray italic text · no dot, no pulse</span></span>
+  </div>
+
+</div>
+
+</body>
+</html>

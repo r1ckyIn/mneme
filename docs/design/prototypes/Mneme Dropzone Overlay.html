@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mneme — Dropzone overlay</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --color-cream:        #faf9f5;
+    --color-cream-deep:   #f3f1ea;
+    --color-cream-edge:   #ede9de;
+    --color-orange:       #d97757;
+    --color-warm-dark:    #141413;
+    --color-warm-mute:    #7a766d;
+    --color-warm-soft:    #4a4843;
+    --color-success:      #4ea36b;
+    --border-soft:        rgba(20, 20, 19, 0.08);
+    --border-softer:      rgba(20, 20, 19, 0.05);
+
+    --font-serif: "Tiempos Text", "Source Serif Pro", "Charter",
+                  "Iowan Old Style", Palatino, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+
+    --duration-fast: 160ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
+    --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #ddd9cd;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0ms !important;
+      transition-duration: 0ms !important;
+    }
+    .arrow-glyph { animation: none !important; transform: none !important; }
+  }
+
+  .doc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 0 64px;
+  }
+  .doc-meta {
+    width: 1280px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .doc-meta .label { color: var(--color-warm-soft); }
+
+  .frame-caption {
+    width: 1280px;
+    padding: 28px 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .frame-caption .num { color: var(--color-orange); }
+  .frame-caption .title { color: var(--color-warm-soft); }
+  .frame-caption .rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+
+  /* ================================================================
+     SHELL FRAME (1280 × 860)
+     ================================================================ */
+  .shell-frame {
+    position: relative;
+    width: 1280px;
+    height: 860px;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .shell-titlebar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    z-index: 20;
+  }
+  .traffic-lights { display: flex; gap: 8px; padding: 4px 4px 4px 0; }
+  .tl {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+  .titlebar-meta-mute {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warm-mute);
+  }
+  .titlebar-meta-mute .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 0 2px rgba(78,163,107,0.18);
+  }
+
+  .shell-cols {
+    position: absolute;
+    inset: 36px 0 120px 0;
+    display: grid;
+    grid-template-columns: 30% 4px 1fr 4px 30%;
+  }
+  .shell-splitter { border-left: 1px solid var(--border-softer); border-right: 1px solid var(--border-softer); }
+  .shell-pane { padding: 16px 22px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+  .greek-head { height: 14px; background: rgba(20,20,19,0.08); width: 30%; border-radius: 3px; }
+  .greek-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-softer);
+  }
+  .greek-row .ico { width: 30px; height: 30px; border-radius: 4px; background: var(--color-cream-deep); flex: 0 0 auto; }
+  .greek-row .ico.folder { background: rgba(217,119,87,0.10); }
+  .greek-row .name { flex: 1 1 auto; height: 11px; background: var(--color-cream-deep); border-radius: 3px; }
+  .greek-row .meta { width: 44px; height: 9px; background: var(--color-cream-deep); border-radius: 3px; }
+  .shell-mindmap {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
+    background: var(--color-cream); border-top: 1px solid var(--border-softer);
+    padding: 12px 18px; display: flex; align-items: center; gap: 16px;
+  }
+  .shell-mindmap .label-block { width: 200px; display: flex; flex-direction: column; gap: 4px; }
+  .shell-mindmap .kicker {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-warm-mute);
+  }
+  .shell-mindmap .canvas { flex: 1 1 auto; height: 100%; border-left: 1px solid var(--border-softer); padding-left: 16px; }
+  .shell-mindmap .canvas svg { display: block; width: 100%; height: 100%; }
+
+  /* ================================================================
+     DROPZONE OVERLAY — full webview below titlebar (1280 × 824)
+     ================================================================ */
+  .dropzone {
+    position: absolute;
+    top: 36px; left: 0; right: 0; bottom: 0;
+    background: rgba(250, 249, 245, 0.92);   /* cream at 92% — no backdrop-filter */
+    z-index: 15;
+    display: grid;
+    place-items: center;
+    animation: dz-in var(--duration-base) var(--ease-out) both;
+  }
+  .dropzone.exiting {
+    opacity: 0.5;
+    animation: none;
+  }
+  .dropzone::before {
+    /* dashed orange border, inset 32px, 16px radius */
+    content: "";
+    position: absolute;
+    inset: 32px;
+    border: 2px dashed var(--color-orange);
+    border-radius: 16px;
+    pointer-events: none;
+    animation: dz-radius-in var(--duration-base) var(--ease-out) both;
+  }
+  @keyframes dz-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes dz-radius-in {
+    from { border-radius: 32px; }
+    to   { border-radius: 16px; }
+  }
+
+  .dz-content {
+    position: relative;
+    top: -8%;            /* ~42% from top of overlay area, so push above mid */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+  }
+  .arrow-glyph {
+    width: 64px;
+    height: 64px;
+    color: var(--color-warm-dark);
+    animation: float 1200ms ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+  .dz-hero {
+    margin-top: 32px;
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-warm-dark);
+    line-height: 1.2;
+  }
+  .dz-sub {
+    margin-top: 12px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--color-warm-mute);
+  }
+
+  /* Smaller frame for exit state */
+  .frame-half {
+    width: 1280px;
+    height: 540px;
+    position: relative;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .frame-half .shell-titlebar { z-index: 20; }
+  .frame-half .shell-cols { bottom: 0; }
+  .frame-half .shell-mindmap { display: none; }
+
+  .state-label-bottom {
+    width: 1280px;
+    padding: 10px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warm-soft);
+    letter-spacing: 0.06em;
+  }
+  .state-label-bottom .meta { color: var(--color-warm-mute); margin-left: 6px; }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-meta">
+    <span class="label">Mneme · Dropzone overlay</span>
+    <span class="crumb">DataTransfer.types includes "Files" · 1280 × 824 below titlebar</span>
+  </header>
+
+  <!-- ============================================================
+       MAIN — Full drag-over state, shell faded behind
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">●</span><span class="title">Dragging files over window · overlay at full opacity</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="shell-frame" data-screen-label="01 Dropzone · drag-over">
+    <div class="shell-titlebar">
+      <div class="traffic-lights"><span class="tl close"></span><span class="tl min"></span><span class="tl max"></span></div>
+      <div class="titlebar-meta-mute">
+        <span class="dot"></span>
+        <span>claude-code · connected</span>
+        <span style="opacity:.4">·</span>
+        <span>vault: ~/StudyVault</span>
+      </div>
+    </div>
+
+    <!-- Faded ghost of three-pane shell behind the overlay -->
+    <div class="shell-cols">
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px;"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px;"></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="align-self:flex-end; max-width: 75%; background: var(--color-cream-deep); border-radius: 14px; padding: 12px 14px;">
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;margin-bottom:6px;width:80%"></div>
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;width:60%"></div>
+        </div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:90%"></div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:85%"></div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:70%"></div>
+      </div>
+    </div>
+    <div class="shell-mindmap">
+      <div class="label-block">
+        <span class="kicker">Mind map</span>
+        <div style="height:11px; width:60%; background: var(--color-cream-deep); border-radius: 3px;"></div>
+      </div>
+      <div class="canvas">
+        <svg viewBox="0 0 800 90" preserveAspectRatio="none">
+          <circle cx="60" cy="45" r="6" fill="rgba(20,20,19,0.18)"></circle>
+          <line x1="66" y1="45" x2="180" y2="20" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <line x1="66" y1="45" x2="180" y2="70" stroke="rgba(20,20,19,0.10)" stroke-width="1"/>
+          <circle cx="180" cy="20" r="4" fill="rgba(20,20,19,0.12)"></circle>
+          <circle cx="180" cy="70" r="4" fill="rgba(20,20,19,0.12)"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <!-- THE OVERLAY -->
+    <div class="dropzone">
+      <div class="dz-content">
+        <svg class="arrow-glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <!-- arrow-down-into-tray -->
+          <line x1="32" y1="8" x2="32" y2="40"></line>
+          <polyline points="20 28 32 40 44 28"></polyline>
+          <path d="M10 44 L10 54 A2 2 0 0 0 12 56 L52 56 A2 2 0 0 0 54 54 L54 44"></path>
+        </svg>
+        <div class="dz-hero">Drop to import</div>
+        <div class="dz-sub">You'll choose course and category next.</div>
+      </div>
+    </div>
+  </div>
+
+  <span class="state-label-bottom">State: drag-over<span class="meta">overlay opacity 1 · dashed border radius 16px · icon floating 4px / 1.2s</span></span>
+
+  <!-- ============================================================
+       MID-FADE EXIT STATE — overlay at 50% opacity
+       ============================================================ -->
+  <div class="frame-caption">
+    <span class="num">○</span><span class="title">Drag-out · mid-fade exit · overlay 50% opacity</span>
+    <span class="rule"></span>
+  </div>
+
+  <div class="frame-half" data-screen-label="02 Dropzone · drag-out mid-fade">
+    <div class="shell-titlebar">
+      <div class="traffic-lights"><span class="tl close"></span><span class="tl min"></span><span class="tl max"></span></div>
+      <div class="titlebar-meta-mute">
+        <span class="dot"></span>
+        <span>claude-code · connected</span>
+        <span style="opacity:.4">·</span>
+        <span>vault: ~/StudyVault</span>
+      </div>
+    </div>
+    <div class="shell-cols">
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico folder"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+        <div class="greek-row"><div class="ico"></div><div class="name"></div><div class="meta"></div></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="flex:1 1 auto; background: repeating-linear-gradient(135deg, rgba(20,20,19,0.04) 0 8px, transparent 8px 16px), var(--color-cream-deep); border-radius: 8px;"></div>
+      </div>
+      <div class="shell-splitter"></div>
+      <div class="shell-pane">
+        <div class="greek-head"></div>
+        <div style="align-self:flex-end; max-width: 75%; background: var(--color-cream-deep); border-radius: 14px; padding: 12px 14px;">
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;margin-bottom:6px;width:80%"></div>
+          <div style="height:11px;background:rgba(20,20,19,0.08);border-radius:3px;width:60%"></div>
+        </div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:90%"></div>
+        <div style="height:11px;background:var(--color-cream-deep);border-radius:3px;width:70%"></div>
+      </div>
+    </div>
+
+    <div class="dropzone exiting">
+      <div class="dz-content">
+        <svg class="arrow-glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="animation:none">
+          <line x1="32" y1="8" x2="32" y2="40"></line>
+          <polyline points="20 28 32 40 44 28"></polyline>
+          <path d="M10 44 L10 54 A2 2 0 0 0 12 56 L52 56 A2 2 0 0 0 54 54 L54 44"></path>
+        </svg>
+        <div class="dz-hero">Drop to import</div>
+        <div class="dz-sub">You'll choose course and category next.</div>
+      </div>
+    </div>
+  </div>
+
+  <span class="state-label-bottom">State: drag-out · mid-fade<span class="meta">opacity 0.5 mid-transition · exit duration 160ms ease-out</span></span>
+
+</div>
+
+</body>
+</html>

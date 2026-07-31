@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mneme — Reconciliation overlay</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --color-cream:        #faf9f5;
+    --color-cream-deep:   #f3f1ea;
+    --color-cream-edge:   #ede9de;
+    --color-orange:       #d97757;
+    --color-warm-dark:    #141413;
+    --color-warm-mute:    #7a766d;
+    --color-warm-soft:    #4a4843;
+    --color-success:      #4ea36b;
+
+    --font-serif: "Tiempos Text", "Source Serif Pro", "Charter",
+                  "Iowan Old Style", Palatino, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+
+    --duration-fast: 160ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
+    --ease-out: cubic-bezier(0.165, 0.85, 0.45, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #ddd9cd;
+    color: var(--color-warm-dark);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0ms !important; transition-duration: 0ms !important; }
+    .spinner { animation: none !important; }
+  }
+
+  .doc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 0 64px;
+  }
+  .doc-meta {
+    width: 1280px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .doc-meta .label { color: var(--color-warm-soft); }
+
+  .frame-caption {
+    width: 1280px;
+    padding: 28px 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .frame-caption .num { color: var(--color-orange); }
+  .frame-caption .title { color: var(--color-warm-soft); }
+  .frame-caption .rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+
+  /* ================================================================
+     FRAME — 1280 × 860 (titlebar + reconciliation overlay)
+     ================================================================ */
+  .frame {
+    position: relative;
+    width: 1280px;
+    height: 860px;
+    background: var(--color-cream);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 1px 2px rgba(20,20,19,0.04),
+      0 6px 18px rgba(20,20,19,0.05);
+  }
+  .titlebar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    z-index: 5;
+  }
+  .traffic-lights { display: flex; gap: 8px; padding: 4px 4px 4px 0; }
+  .tl {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.35);
+  }
+  .tl.close { background: #ff5f57; }
+  .tl.min   { background: #febc2e; }
+  .tl.max   { background: #28c840; }
+
+  /* The opaque reconciliation surface — nothing meaningful behind */
+  .recon {
+    position: absolute;
+    top: 36px; left: 0; right: 0; bottom: 0;
+    background: var(--color-cream);
+    overflow: hidden;
+  }
+
+  .recon-stack {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 38%;                       /* golden-ratio-ish anchor */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;          /* spinner → status line */
+    text-align: center;
+  }
+  .recon-stack.has-progress {
+    top: calc(38% - 12px);          /* shifts up 12px when progress line appears */
+  }
+
+  /* 48×48 spinner */
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 4px solid var(--color-cream-edge);
+    border-top-color: var(--color-orange);
+    animation: spin 1200ms linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .status-line {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-warm-dark);
+    letter-spacing: -0.005em;
+    line-height: 1.2;
+    animation: fade-up var(--duration-slow) var(--ease-out) both;
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .progress-line {
+    /* 12px below status line — but we use gap on a wrapper */
+    margin-top: -20px;             /* compensate the 32px container gap → effective 12px */
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    letter-spacing: 0.02em;
+  }
+
+  .reassurance {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--color-warm-mute);
+    text-align: center;
+  }
+
+  .frame-label {
+    width: 1280px;
+    padding: 0 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: var(--color-warm-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .frame-label .ts { color: var(--color-orange); }
+  .frame-label .lbl { color: var(--color-warm-soft); }
+  .frame-label .meta { color: var(--color-warm-mute); }
+  .frame-label .rule {
+    flex: 1 1 auto; height: 1px;
+    background: var(--color-cream-edge);
+    transform: translateY(-3px);
+  }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-meta">
+    <span class="label">Mneme · Reconciliation overlay</span>
+    <span class="crumb">DR1 · every app launch · index-consistency over fast-launch</span>
+  </header>
+
+  <!-- ============================================================
+       FRAME 1 — 0–200ms initial
+       ============================================================ -->
+  <div class="frame-label">
+    <span class="ts">0–200ms</span>
+    <span class="lbl">initial</span>
+    <span class="rule"></span>
+    <span class="meta">spinner + heading only · typical fast launch</span>
+  </div>
+
+  <div class="frame" data-screen-label="01 Reconciliation · 0–200ms initial">
+    <div class="titlebar">
+      <div class="traffic-lights"><span class="tl close"></span><span class="tl min"></span><span class="tl max"></span></div>
+    </div>
+    <div class="recon">
+      <div class="recon-stack">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="status-line">Indexing vault…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       FRAME 2 — 200–500ms with progress
+       ============================================================ -->
+  <div class="frame-label">
+    <span class="ts">200–500ms</span>
+    <span class="lbl">with progress</span>
+    <span class="rule"></span>
+    <span class="meta">progress line appears · stack shifts up 12px</span>
+  </div>
+
+  <div class="frame" data-screen-label="02 Reconciliation · 200–500ms progress">
+    <div class="titlebar">
+      <div class="traffic-lights"><span class="tl close"></span><span class="tl min"></span><span class="tl max"></span></div>
+    </div>
+    <div class="recon">
+      <div class="recon-stack has-progress">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="status-line">Indexing vault…</div>
+        <div class="progress-line">47 / 152 files</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       FRAME 3 — >500ms with reassurance
+       ============================================================ -->
+  <div class="frame-label">
+    <span class="ts">&gt;500ms</span>
+    <span class="lbl">with reassurance</span>
+    <span class="rule"></span>
+    <span class="meta">bottom-aligned context line appears · calm, not apology</span>
+  </div>
+
+  <div class="frame" data-screen-label="03 Reconciliation · >500ms reassurance">
+    <div class="titlebar">
+      <div class="traffic-lights"><span class="tl close"></span><span class="tl min"></span><span class="tl max"></span></div>
+    </div>
+    <div class="recon">
+      <div class="recon-stack has-progress">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="status-line">Indexing vault…</div>
+        <div class="progress-line">89 / 152 files</div>
+      </div>
+      <div class="reassurance">First-time imports may take a few seconds.</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
